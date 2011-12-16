@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<shelfs name="Grid">
+	<shelf  name="Animation">
+		<node cmd="import ZvParentMaster;ZvParentMaster.ZvParentMaster()" icon='Parent.bmp' annot='ZvParentMaster' mode="python" iol="" style="iconOnly"></node>
+		<node cmd="zombie();" icon='Zombie.bmp' annot='Zombie' mode="mel" iol="" style="iconOnly"></node>
+		<node cmd="michelMotionTrail();" icon='mMotionTrail.bmp' annot='Motiontrail' mode="mel" iol="" style="iconOnly"></node>
+		<node cmd='ackSetup "setup";' icon='ack_Setup.bmp' annot='ack setup' mode="mel" iol="" style="iconOnly"></node>
+		<node cmd="autoTangent();" icon='Autotangent.bmp' annot='autotangent' mode="mel" iol="" style="iconOnly"></node>
+		<node cmd="keyScalerButtons();" icon='Key_multiscaler.bmp' annot='Multiscaler' mode="mel" iol="" style="iconOnly"></node>
+		<node cmd="zoomerate;" icon='zoomerator.bmp' annot='zoomerate' mode="mel" iol="" style="iconOnly"></node>
+		<node cmd="cra_copyAnim();" icon='AnimOffset.bmp' annot='cra_copyAnim' mode="mel" iol="" style="iconOnly"></node>
+		<node cmd="GraphEditor;" icon='GraphEditor.bmp' annot='graph editor' mode="mel" iol="" style="iconOnly"></node>
+		<node cmd="OutlinerWindow;" icon='OutLiner.bmp' annot='outliner' mode="mel" iol="" style="iconOnly"></node>
+		<node cmd="import grid.maya.general.toggleHVDisplay;grid.maya.general.toggleHVDisplay.toggle()" icon='HVToggle.bmp' annot='Snap' mode="python" iol="" style="iconOnly"></node>
+		<node cmd="import grid.maya.general.playblast;playblastWin=grid.maya.general.playblast.MayaSubWindow();playblastWin.show()" icon='PlayBlast.bmp' annot='Snap' mode="python" iol="" style="iconOnly"></node>
+		<node cmd="GhostMan()" icon='Ghost.bmp' annot='Ghost' mode="mel" iol="" style="iconOnly"></node>
+		<node cmd="LocOnLoc()" icon='Loc_on_Loc.bmp' annot='Loc On Loc' mode="mel" iol="" style="iconOnly"></node>
+		<node cmd="import grid.maya.animation.movePivot;grid.maya.animation.movePivot.togglePivotMoveVisibility()" icon='pythonFamily.png' annot='Toggle Pivot Move visibility' mode="python" iol="pivVis" style="iconOnly"></node>
+		<node cmd="import grid.maya.animation.movePivot;grid.maya.animation.movePivot.movePivot()" icon='pythonFamily.png' annot='Toggle Pivot Move visibility' mode="python" iol="pivVis" style="iconOnly"></node>
+		<node cmd="poseLib;" icon='PoseLIB.bmp' annot='Pose Library' mode="mel" iol="" style="iconOnly"></node>
+		<node cmd="abxPicker;" icon='abx.bmp' annot='Abx Picker' mode="mel" iol="" style="iconOnly"></node>
+		<node cmd="jcAnimCS;" icon='JCA-nu.bmp' annot='Abx Picker' mode="mel" iol="" style="iconOnly"></node>
+		<node cmd="import grid.maya.file.refRig;grid.maya.file.refRig.main('snap')" icon='' annot='reference snap rig' mode="python" iol="SNAP" style="iconOnly"></node>
+	</shelf>
+</shelfs>

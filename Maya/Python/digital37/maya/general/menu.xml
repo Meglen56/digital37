@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+<menu name="digital37">
+	<node type="subMenu" name="File">
+	</node>
+	
+	<node type="subMenu" name="Commons">
+	</node>
+	
+	<node type="subMenu" name="Modeling">
+		<node type="command" name="Check Model" comment="Check Model" cmd="import digital37.maya.modeling.checkModel;digital37.maya.modeling.checkModel.checkModel()" mode="python"></node>
+	</node>
+		
+	<node type="subMenu" name="Animation">
+		<node type="command" name="Camera" cmd="import digital37.maya.animation.renderCam;renderCam.CameraOnly();" comment='Camera' mode="python"></node>
+		<node type="command" name="Camera and Aim" cmd="import digital37.maya.animation.renderCam;renderCam.CameraOnly();" comment='Camera' mode="python"></node>
+		<node type="command" name="Camera" cmd="import digital37.maya.animation.renderCam;renderCam.CameraOnly();" comment='Camera' mode="python"></node>
+		<node type="command" name="Bake Camera" cmd="xxzBakeCamera();" comment='Bake Camera' mode="mel"></node>
+		<node type="command" name="Playblast Show" cmd="playblastShow();" comment='Playblast Show' mode="mel"></node>
+		<node type="command" name="Shot Camera List" cmd="shotCamLister();" comment='Shot Camera' mode="mel"></node>
+		<node type="command" name="Motion Trail" cmd="michelMotionTrail();" comment='Motiontrail' mode="mel"></node>
+		<node type="command" name="Auto Tangent" cmd="autoTangent();" comment='autotangent' mode="mel"></node>
+		<node type="command" name="Multi Scaler" cmd="keyScalerButtons();" comment='Multiscaler' mode="mel"></node>
+	</node>
+	
+	<node type="subMenu" name="Utils">
+		<node type="command" name="Check name" comment="Check if all nodes name are unique" cmd="import digital37.maya.utils;digital37.maya.utils.listNotUniqueName()" mode="python"></node>	
+		<node type="command" name="Delete unknown node" comment="Delete unknown node" cmd="import digital37.maya.utils;digital37.maya.utils.deleteUnknownNode()" mode="python"></node>
+		<node type="separator"></node>	
+		<node type="command" name="Reload menu" comment="reload the digital37 menu" cmd="import digital37.maya.general.menu;digital37.maya.general.menu.loadMenu()" mode="python"></node>
+		<node type="command" name="Reload shelf" comment="reload shelf custom shelf" cmd="import digital37.maya.general.shelf;digital37.maya.general.shelf.loadShelfs()" mode="python"></node>
+	</node>
+	
+	<node type="subMenu" name="Dynamic">
+		<node type="command" name="Create Geometry Cache" comment="Create Geometry Cache" cmd="import digital37.maya.dynamic.makeCache;digital37.maya.dynamic.makeCache.MakeCache()" mode="python"></node>
+	</node>
+	
+	<node type="subMenu" name="Lighting">
+		<node type="command" name="File Texture Manager" comment="File Texture Manager" cmd="FileTextureManager()" mode="mel"></node>
+		<node type="command" name="Cleanup Light Links" comment="Cleanup Light Links" cmd="jrLightLinksCleanUp()" mode="mel"></node>
+		<node type="command" name="Submit Job To Deadline" comment="Submit Job To Deadline" cmd="SubmitJobToDeadline" mode="mel"></node>
+	</node>
+			
+	<node type="subMenu" name="TD">
+		<node type="command" name="Bake to alembic" comment="Bake to alembic" cmd="import digital37.maya.animation.baking;digital37.maya.animation.baking.main()" mode="python"></node>
+		<node type="command" name="PyQt Test" comment="PyQt Test" cmd="import digital37.maya.general.windowPyQt2;digital37.maya.general.windowPyQt2.main()" mode="python"></node>
+	</node>
+	
+	<node type="subMenu" name="Rigging">
+	</node>
+</menu>
+
