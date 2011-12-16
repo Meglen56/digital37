@@ -172,7 +172,7 @@ class MRRenderLayer():
                                 AONode.samples.set(64)
                                 
                                 pm.select(eachSn)
-                                mel.hyperShade(assign=AOObjMat)
+                                mel.hyperShade(assign=shader)
                                 
                             else :
                                 pm.select(eachSn)
@@ -227,7 +227,7 @@ class MRRenderLayer():
         self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.imfPluginKey, 'iff')
         self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.multiCamNamingMode, 1)
         self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.bufferName, '<RenderPass>')
-                    
+
         # Remove cam lens and env shader            
         self.disConnectCamShader()
         
@@ -237,7 +237,7 @@ class MRMaterial():
     def __init__(self):
         logging.debug('Init MRRenderLayer class')
     
-    def createBlackMatertial(self):
+    def createBlackShader(self):
         pass
 
                     
