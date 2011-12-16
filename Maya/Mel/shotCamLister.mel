@@ -1,0 +1,495 @@
+// =======================
+// shotCamLister
+// =======================
+//
+// Purpose:
+// --------
+//		Creates a convenient UI to manage different shotCams, which are special camera rigs.
+//
+// Usage:
+// ------
+//		shotCamLister;
+//
+// Requirements:
+// -------------
+// shotCam.ma  <--- the shotCam rig file.
+//
+//-------------------------------------------------------------------------------
+
+// ---------------------------------
+// Initializing global variables.
+// ---------------------------------
+proc shotCamLister_globalVar(){
+//print "Run start...\n";
+global string $shotCamListerVersion;
+$shotCamListerVersion = "4.0b";
+global string $importShotCam;
+$importShotCam = "//Server-01/workflowtools/workflow/Tools/Scripts/shotCam.ma";
+//print $importShotCam;
+}
+
+// --------------------------------------------------------------------
+
+// =======================
+// Lock/unlock shotCam
+// =======================
+global proc lockShotCam( string $camera, int $value )
+{
+setAttr -lock $value ($camera + ".tx");
+setAttr -lock $value ($camera + ".ty");
+setAttr -lock $value ($camera + ".tz");
+setAttr -lock $value ($camera + ".visibility");
+setAttr -lock $value ($camera + ".horizontal");
+setAttr -lock $value ($camera + ".vertical");
+setAttr -lock $value ($camera + ".roll");
+setAttr -lock $value ($camera + ".dolly");
+setAttr -lock $value ($camera + ".focalLength");
+setAttr -lock $value ($camera + ".nearClipPlane");
+setAttr -lock $value ($camera + ".farClipPlane");
+setAttr -lock $value ($camera + ".frustum");
+setAttr -lock $value ($camera + ".frustumDistance");
+setAttr -lock $value ($camera + ".maskOpacity");
+setAttr -lock $value ($camera + ".aspectRatio");
+}
+
+// ===================
+// Near clip patch
+// ===================
+global proc nearClipPatch()
+{
+string $camera[] = `ls -sl`;
+
+if ( !`objExists ($camera[0] + "_CON|pan_horizontal|pan_vertical|dolly|" + $camera[0] + "_ROLL|turbulences|" + $camera[0] + "|cameraGeo_GRP|nearClipCompensate")` )
+	{
+	group -n "nearClipCompensate" frustumMask_GEO; xform -os -piv 0 0 0;
+	reorder -relative -2 nearClipCompensate;
+	setAttr ($camera[0] + ".nearClipPlane") .01;
+	setDrivenKeyframe -currentDriver shotCamSourceOriginal_CON.nearClipPlane nearClipCompensate.scaleX;
+	setDrivenKeyframe -currentDriver shotCamSourceOriginal_CON.nearClipPlane nearClipCompensate.scaleY;
+	setDrivenKeyframe -currentDriver shotCamSourceOriginal_CON.nearClipPlane nearClipCompensate.scaleZ;
+	setAttr ($camera[0] + ".nearClipPlane") 1;
+	setAttr "nearClipCompensate.scaleX" 24;
+	setAttr "nearClipCompensate.scaleY" 24;
+	setAttr "nearClipCompensate.scaleZ" 24;
+	setDrivenKeyframe -currentDriver ($camera[0] + ".nearClipPlane") nearClipCompensate.scaleX;
+	setDrivenKeyframe -currentDriver ($camera[0] + ".nearClipPlane") nearClipCompensate.scaleY;
+	setDrivenKeyframe -currentDriver ($camera[0] + ".nearClipPlane") nearClipCompensate.scaleZ;
+	setAttr "nearClipCompensate.translateZ" -0.458;
+	setDrivenKeyframe -currentDriver ($camera[0] + ".nearClipPlane") nearClipCompensate.translateZ;
+	setAttr ($camera[0] + ".nearClipPlane") .01;
+	select -r nearClipCompensate;
+	setAttr "nearClipCompensate.translateZ" 0;
+	setDrivenKeyframe -currentDriver ($camera[0] + ".nearClipPlane") nearClipCompensate.translateZ;
+	select -r $camera[0];
+	print "shotCam: nearClip plane patch done!";
+	}
+else
+	warning "This camera already a \"nearClipCompensate\" group!";
+}
+
+// =======================
+// Import shotCam
+// =======================
+global proc importShotCam ()
+{
+// -------------------------------------------------------------------------------
+// Build the UI to chose the name, color, and focal length of the new camera.
+// -------------------------------------------------------------------------------
+if (`window -exists importShotCamWindow` )
+	deleteUI importShotCamWindow;
+
+window -tlb on -w 50 -h 85 -title "Create New shotCam" importShotCamWindow;
+
+	frameLayout -h 200 -mw 2 -bv on -lv off -collapsable false -borderStyle "etchedOut";
+
+		columnLayout;
+
+			textFieldGrp -h 21 -cw2 100 100 -l "Camera Name:" -tx "shotCam" setCameraNameField;
+			floatFieldGrp -h 21 -cw2 100 100 -numberOfFields 1 -l "Focal Length:" -value1 35 setFocalLengthField;
+			separator -h 2 -style "none";
+
+			int $w = 25;
+
+			rowColumnLayout -numberOfColumns 8 -cw 1 $w -cw 2 $w -cw 3 $w -cw 4 $w -cw 5 $w -cw 6 $w -cw 7 $w -cw 8 $w;
+
+				iconTextRadioCollection shotCamColorChooseRC;
+
+					float $colorTmp[] = `colorIndex -q 13`;
+					iconTextRadioButton -bgc (`clamp 0 1 ($colorTmp[0]+.1)`) (`clamp 0 1 ($colorTmp[1]+.1)`) (`clamp 0 1 ($colorTmp[2]+.1)`) -l 1 -st "textOnly" -h 20 ("camColor" + 1);
+					float $colorTmp[] = `colorIndex -q 25`;
+					iconTextRadioButton -bgc (`clamp 0 1 ($colorTmp[0]+.1)`) (`clamp 0 1 ($colorTmp[1]+.1)`) (`clamp 0 1 ($colorTmp[2]+.1)`) -l 2 -st "textOnly" -h 20 ("camColor" + 2);
+					float $colorTmp[] = `colorIndex -q 15`;
+					iconTextRadioButton -bgc (`clamp 0 1 ($colorTmp[0]+.1)`) (`clamp 0 1 ($colorTmp[1]+.1)`) (`clamp 0 1 ($colorTmp[2]+.1)`) -l 3 -st "textOnly" -h 20 ("camColor" + 3);
+					float $colorTmp[] = `colorIndex -q 18`;
+					iconTextRadioButton -bgc (`clamp 0 1 ($colorTmp[0]+.1)`) (`clamp 0 1 ($colorTmp[1]+.1)`) (`clamp 0 1 ($colorTmp[2]+.1)`) -l 4 -st "textOnly" -h 20 ("camColor" + 4);
+					float $colorTmp[] = `colorIndex -q 28`;
+					iconTextRadioButton -bgc (`clamp 0 1 ($colorTmp[0]+.1)`) (`clamp 0 1 ($colorTmp[1]+.1)`) (`clamp 0 1 ($colorTmp[2]+.1)`) -l 5 -st "textOnly" -h 20 ("camColor" + 5);
+					float $colorTmp[] = `colorIndex -q 29`;
+					iconTextRadioButton -bgc (`clamp 0 1 ($colorTmp[0]+.1)`) (`clamp 0 1 ($colorTmp[1]+.1)`) (`clamp 0 1 ($colorTmp[2]+.1)`) -l 6 -st "textOnly" -h 20 ("camColor" + 6);
+					float $colorTmp[] = `colorIndex -q 30`;
+					iconTextRadioButton -bgc (`clamp 0 1 ($colorTmp[0]+.1)`) (`clamp 0 1 ($colorTmp[1]+.1)`) (`clamp 0 1 ($colorTmp[2]+.1)`) -l 7 -st "textOnly" -h 20 ("camColor" + 7);
+					float $colorTmp[] = `colorIndex -q 31`;
+					iconTextRadioButton -bgc (`clamp 0 1 ($colorTmp[0]+.1)`) (`clamp 0 1 ($colorTmp[1]+.1)`) (`clamp 0 1 ($colorTmp[2]+.1)`) -l 8 -st "textOnly" -h 20 ("camColor" + 8);
+
+				setParent.. ;
+
+			iconTextRadioButton -e -sl camColor6;
+
+			separator -h 4 -style "none";
+
+			rowColumnLayout -nc 2 -cs 2 2 -cw 1 100 -cw 2 100;
+				button -h 25 -w 100 -l "Apply" -al "center" -c "doImportShotCam;";//tgShowPlayBlastInfo;
+				button -h 25 -w 100 -l "Cancel" -al "center" -c "deleteUI importShotCamWindow";
+
+showWindow importShotCamWindow;
+}
+
+// ======================
+// Do import shotCam
+// ======================
+
+global proc doImportShotCam()
+{
+global string $importShotCam;
+print $importShotCam;
+// Get the info for the new shotCam.
+string $newShotCamName = `textFieldGrp -q -tx setCameraNameField`;
+float $newFocalLength = `floatFieldGrp -q -value1 setFocalLengthField`; //print ("\n$newFocalLength = " + $newFocalLength);
+
+// If there is no name conflict with existing cameras in the scene, import a new one.
+if ( (!`objExists $newShotCamName`) && (!`objExists "shotCamOriginalSource"`) )
+	{
+	// Rename everything with the chosen name.
+	file -import -type "mayaAscii" -rpr "" -options "v=0" $importShotCam;
+
+	rename "shotCamSourceOriginal_GRP" ($newShotCamName + "_GRP");
+	rename "shotCamSourceOriginal" $newShotCamName;
+	rename "shotCamSourceOriginal_CON" ($newShotCamName + "_CON");
+	rename "shotCamSourceOriginal_ROLL" ($newShotCamName + "_ROLL");
+	rename "shotCamSourceOriginalFrustum_SHD" ($newShotCamName + "Frustum_SHD");
+	rename "shotCamSourceOriginalMask_SHD" ($newShotCamName + "Mask_SHD");
+
+	// Update the newly imported shotCam's annotations with the relevant GUI info.
+	string $date = `about -cd`;
+	string $time = `about -ct`;
+	delete ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences|" + $newShotCamName + "|cameraGeo_GRP|nearClipCompensate|frustumMask_GEO|focalLength_annotation");
+	//setAttr -type "string" ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences|" + $newShotCamName + "|cameraGeo_GRP|nearClipCompensate|frustumMask_GEO|focalLength_annotation|timeAndDate_annotation.text") ($time + "          " + $date);
+	//setAttr -type "string" ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences|" + $newShotCamName + "|cameraGeo_GRP|nearClipCompensate|frustumMask_GEO|focalLength_annotation|shotCamName_annotation.text") $newShotCamName;
+	setAttr ($newShotCamName + "_CON.focalLength") $newFocalLength;
+	addAttr -ln "TAmplitudeMutiply"  -at double  -min 0 -dv 1 ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences");
+	setAttr -e -keyable true ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences.TAmplitudeMutiply");
+	addAttr -ln "TFrequencyMutiply"  -at double  -min 0 -dv 1 ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences");
+	setAttr -e -keyable true ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences.TFrequencyMutiply");
+	addAttr -ln "RAmplitudeMutiply"  -at double  -min 0 -dv 1 ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences");
+	setAttr -e -keyable true ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences.RAmplitudeMutiply");
+	addAttr -ln "RFrequencyMutiply"  -at double  -min 0 -dv 1 ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences");
+	setAttr -e -keyable true ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences.RFrequencyMutiply");
+	addAttr -ln "TCameraShake"  -at bool -dv 0 ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences");
+	setAttr -e -keyable true ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences.TCameraShake");
+	addAttr -ln "RCameraShake"  -at bool -dv 0 ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences");
+	setAttr -e -keyable true ($newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences.RCameraShake");
+	string $turbulencesLongPath = $newShotCamName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newShotCamName + "_ROLL|turbulences";
+	expression -s ($turbulencesLongPath + ".translateX = " + $turbulencesLongPath + ".TCameraShake*0.02*" + $turbulencesLongPath + ".TAmplitudeMutiply*noise(2*" + $turbulencesLongPath + ".TFrequencyMutiply*time);\r\n" + $turbulencesLongPath + ".translateY = " + $turbulencesLongPath + ".TCameraShake*0.02*" + $turbulencesLongPath + ".TAmplitudeMutiply*noise(2*" + $turbulencesLongPath + ".TFrequencyMutiply*time+2);\r\n" + $turbulencesLongPath + ".translateZ = " + $turbulencesLongPath + ".TCameraShake*0.02*" + $turbulencesLongPath + ".TAmplitudeMutiply*noise(2*" + $turbulencesLongPath + ".TFrequencyMutiply*time+4);\r\n" + $turbulencesLongPath + ".rotateX = " + $turbulencesLongPath + ".RCameraShake*.1*" + $turbulencesLongPath + ".RAmplitudeMutiply*noise(2*" + $turbulencesLongPath + ".RFrequencyMutiply*time);\r\n" + $turbulencesLongPath + ".rotateY = " + $turbulencesLongPath + ".RCameraShake*.1*" + $turbulencesLongPath + ".RAmplitudeMutiply*noise(2*" + $turbulencesLongPath + ".RFrequencyMutiply*time+3);\r\n" + $turbulencesLongPath + ".rotateZ = " + $turbulencesLongPath + ".RCameraShake*.1*" + $turbulencesLongPath + ".RAmplitudeMutiply*noise(2*" + $turbulencesLongPath + ".RFrequencyMutiply*time+6);")  -o $turbulencesLongPath -n ($newShotCamName + "ShakeExp");
+
+
+	// Color the shotCam.
+	string $cameraColorTmp = endString((`iconTextRadioCollection -q -sl shotCamColorChooseRC`), 1); //print ("\n$cameraColor = " + $cameraColor);
+	int $cameraColor = $cameraColorTmp;
+
+	if ( $cameraColor == 1 )
+		setAttr ($newShotCamName + "_CONShape.overrideColor") 13;
+	else if ( $cameraColor == 2 )
+		setAttr ($newShotCamName + "_CONShape.overrideColor") 25;
+	else if ( $cameraColor == 3 )
+		setAttr ($newShotCamName + "_CONShape.overrideColor") 15;
+	else if ( $cameraColor == 4 )
+		setAttr ($newShotCamName + "_CONShape.overrideColor") 18;
+	else if ( $cameraColor == 5 )
+		setAttr ($newShotCamName + "_CONShape.overrideColor") 28;
+	else if ( $cameraColor == 6 )
+		setAttr ($newShotCamName + "_CONShape.overrideColor") 29;
+	else if ( $cameraColor == 7 )
+		setAttr ($newShotCamName + "_CONShape.overrideColor") 30;
+	else if ( $cameraColor == 8 )
+		setAttr ($newShotCamName + "_CONShape.overrideColor") 31;
+
+	// Add the expression to drive the focal length annotation.
+	expression -s ("int $tmp = (`getAttr " + $newShotCamName + "_CON.focalLength`);") -o "" -n ($newShotCamName + "_EXP") -ae 1 -uc all;
+
+	// Create a shotCam mask shader if the camera doesn't have one.
+	if ( !`objExists ($newShotCamName + "Mask_SHD")` )
+		{
+		string $shdr = `shadingNode -asShader lambert -n ($newShotCamName + "Mask_SHD")`;
+		string $shdrSG = `sets -renderable true -noSurfaceShader true -empty -name ($shdr + "SG")`; //print ("\n$shdrSG = " + $shdrSG) ;
+		connectAttr -f ($shdr+".outColor") ($shdrSG+".surfaceShader");
+		setAttr ($newShotCamName + "Mask_SHD.color") -type double3 0 0 0;
+		setAttr ($newShotCamName + "Mask_SHD.transparency") -type double3 0.15702 0.15702 0.15702;
+		sets -e -forceElement $shdrSG ($newShotCamName + "|cameraGeo_GRP|nearClipCompensate|frustumMask_GEO");
+		}
+
+	// Re-launch the script to update everything.
+	shotCamLister;
+
+	string $currentPanel = `getPanel -withFocus`;
+
+	if (`modelEditor -q -displayAppearance $currentPanel` == "wireframe")
+		modelEditor -edit -displayAppearance "smoothShaded" $currentPanel;
+
+	// Finish up.
+	select -r ($newShotCamName + "_CON");
+	rename ($newShotCamName + "SourceOriginalShape") ($newShotCamName + "Shape");
+	print ("===> Created new shotCam called: \"" + $newShotCamName + "\" <===");
+	setFocus `getPanel -wf`;
+	}
+else
+	warning ("shotCam ==> The name \"" + $newShotCamName + "\" is not unique!");
+}
+
+// ===================
+// Delete shotCam
+// ===================
+
+global proc deleteShotCam ( string $cameraToDelete, string $cameraToDeleteShort )
+{
+delete (`rootOf( $cameraToDelete )`);
+delete ($cameraToDeleteShort + "Mask_SHD");
+delete ($cameraToDeleteShort + "Frustum_SHD");
+shotCamLister;
+print ("shotCam ==> The camera \"" + $cameraToDelete + "\" was successfuly deleted.");
+}
+
+// ====================================================
+// Rename shotCam
+// ====================================================
+global proc renameShotCam( string $camToRename )
+{
+if (`window -exists renameShotCamWindow` )
+	deleteUI renameShotCamWindow;
+
+string $bufferFirst[];
+int $numTokensFirst = `tokenize $camToRename "|" $bufferFirst`;
+string $shortName = $bufferFirst[$numTokensFirst- 1] ; //print (" exactName = " + $shortName) ;
+
+window -tlb on -w 300 -h 85 -title "Rename shotCamera" renameShotCamWindow;
+
+	frameLayout -h 200 -mw 2 -bv on -lv off -collapsable false -borderStyle "etchedOut";
+
+		columnLayout;
+
+			textFieldGrp -h 22 -cw2 100 100 -l "New Name:" -tx $shortName setNameField;
+			separator -h 4 -style "none";
+
+			rowColumnLayout -nc 2 -cs 2 2 -cw 1 100 -cw 2 100;
+
+				button -h 25 -w 100 -l "Apply" -al "center" -c ("doRenameShotCam ( \"" + $camToRename + "\", \"\" )");
+				button -h 25 -w 100 -l "Cancel" -al "center" -c "deleteUI renameShotCamWindow";
+
+showWindow renameShotCamWindow;
+}
+
+// ====================================================
+// Do rename shotCam
+// ====================================================
+global proc doRenameShotCam( string $camToRename, string $newName )
+{
+// If $newName is empty, it means we come from the duplicateShotCam proc, so get the name from the input field.
+if ( $newName == "" )
+	$newName = `textFieldGrp -q -tx setNameField`;
+
+string $bufferFirst[];
+$numTokensFirst = `tokenize $camToRename "|" $bufferFirst`;
+$camToRenameShort = $bufferFirst[$numTokensFirst- 1] ; //print (" $camToRenameShort = " + $camToRenameShort + "\n") ;
+
+if ( !`objExists $newName` )
+	{
+	// Rename the shotCam.
+	rename ($camToRenameShort + "_GRP") ($newName + "_GRP");
+	rename $camToRenameShort $newName;
+
+	// Rename the shape too.
+	string $tmp[] = `listRelatives -s $newName`;
+	rename $tmp[0] ($newName + "Shape");
+
+	rename ($camToRenameShort + "_CON") ($newName + "_CON");
+	rename ($camToRenameShort + "_ROLL") ($newName + "_ROLL");
+	rename ($camToRenameShort + "Frustum_SHD") ($newName + "Frustum_SHD");
+
+	string $date = `about -cd`;
+	string $time = `about -ct`;
+	setAttr -type "string" ($newName + "_GRP|" + "transform_A|transform_B|transform_C|" + $newName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newName + "_ROLL|turbulences|" + $newName + "|cameraGeo_GRP|nearClipCompensate|frustumMask_GEO|focalLength_annotation|timeAndDate_annotation.text") ($time + "          " + $date);
+	setAttr -type "string" ($newName + "_CON|pan_horizontal|pan_vertical|dolly|" + $newName + "_ROLL|turbulences|" + $newName + "|cameraGeo_GRP|nearClipCompensate|frustumMask_GEO|focalLength_annotation|shotCamName_annotation.text") $newName;
+
+	// Update the expression.
+	if ( `objExists ($camToRenameShort + "_EXP")` )
+		{
+		expression -e -s ("setAttr -type \"string\" \"" + $newName + "|cameraGeo_GRP|nearClipCompensate|frustumMask_GEO|focalLength_annotation|focalLength_annotationShape.text\" (`getAttr " + $newName + "_CON.focalLength` + \"mm\");")  -o "" -ae 1 -uc all ($camToRenameShort + "_EXP");
+		expression -edit -name ($newName + "_EXP") ($camToRenameShort + "_EXP");
+		}
+	else
+		expression -s ("int $tmp = (`getAttr " + $newName + "_CON.focalLength`); setAttr -type \"string\" \"" + $newName + "|cameraGeo_GRP|nearClipCompensate|frustumMask_GEO|focalLength_annotation|focalLength_annotationShape.text\" ($tmp + \"mm\");") -o "" -n ($newName + "_EXP") -ae 1 -uc all;
+
+	shotCamLister;
+	print ("===> shotCam renamed from: \"" + $camToRenameShort + "\" to: \"" + $newName + "\" <===");
+	}
+else
+	warning "This name is not unique!";
+}
+
+// ===================
+// Build the main UI
+// ===================
+global proc shotCamLister ()
+{
+shotCamLister_globalVar();
+global string $shotCamListerVersion;
+
+// Make sure all the shotCamLister windows are closed.
+if (`window -ex shotCamListerWindow` )
+	deleteUI shotCamListerWindow;
+
+if (`window -exists importShotCamWindow` )
+	deleteUI importShotCamWindow;
+
+if (`window -exists renameShotCamWindow` )
+	deleteUI renameShotCamWindow;
+
+// ----------------------------------
+// Build the UI for shotLister.
+// ----------------------------------
+window -tlb false -menuBar true -resizeToFitChildren true -sizeable true -title ("shotCamLister v" + $shotCamListerVersion) shotCamListerWindow;
+
+// Get a list of all the shotCam cameras in the scene.
+string $currentSelection[] = `ls -sl`;
+string $allNormalCams[] = `ls -long -exactType camera`; //print ("\n$allNormalCams = " + $allNormalCams[0]);
+string $allShotCams[];
+
+for ($i=0;$i<`size $allNormalCams`;$i++)
+	{
+	string $allShotCamsTmp[] = `listRelatives -fullPath -parent $allNormalCams[$i]`;
+	
+	if ( `attributeQuery -exists -node $allShotCamsTmp[0] "shotCam"` )
+		{
+		string $stringArrayTmp[] = { $allShotCamsTmp[0] };
+		$allShotCams = stringArrayCatenate( $stringArrayTmp, $allShotCams );
+		}
+	}
+
+// Build the UI.
+int $h = 20;
+
+	columnLayout -adjustableColumn true;
+
+		button -h $h -l "Import New shotCam" -c "importShotCam";
+		separator -h 2 -style "none";
+
+		frameLayout -bv off -lv off -collapsable false -borderStyle "etchedOut";
+			
+			// Create the UI frame for each camera.
+			for ($i=0;$i<`size $allShotCams`;$i++)
+				{
+				// Find camera short name.
+				string $buffer[];
+				int $numTokensFirst = `tokenize $allShotCams[$i] "|" $buffer`; //print ("\n$allShotCams[$i] 2 = " + $allShotCams[$i]) ;
+				string $shortName = $buffer[$numTokensFirst - 1] ; //print ("\n$shortName = " + $shortName);
+				string $topNodeName = $buffer[0] ; //print (" $topNodeName = " + $topNodeName) ;
+				string $camRoll[] = `listRelatives -pa -p $allShotCams[$i]`;
+				//string $shotCamCon[] = `listRelatives -pa -p $camRoll`; print ("\n$shotCamCon[1] = " + $shotCamCon[1]);
+				string $shotCamCon = $shortName + "_GRP|transform_A|transform_B|transform_C|" + $shortName + "_CON"; //print ("\n$shotCamCon = " + $shotCamCon);
+
+				// Assign Maya initial shader to the shotCam geometry.
+				select -r ( $shotCamCon + "|pan_horizontal|pan_vertical|dolly|camBody_GEO" );
+				select -add ( $allShotCams[$i] + "|camRoll_GEO" );
+				select -add ( $allShotCams[$i] + "|cameraGeo_GRP|rollSquare_GEO" );
+				sets -e -forceElement initialShadingGroup;
+
+				// If for some reason the mask attribute is not connected to the mask shader, then try to connect it.
+				if ( `objExists ($shortName + "Mask_SHD")` )
+					if ( !`isConnected ($shotCamCon + ".maskOpacity") ($shortName + "Mask_SHD.transparencyR")` )
+						{
+						connectAttr -f ($shotCamCon + ".maskOpacity") ($shortName + "Mask_SHD.transparencyR");
+						connectAttr -f ($shotCamCon + ".maskOpacity") ($shortName + "Mask_SHD.transparencyG");
+						connectAttr -f ($shotCamCon + ".maskOpacity") ($shortName + "Mask_SHD.transparencyB");
+						}
+
+				// -----------------
+				// Camera cell UI
+				// -----------------
+				frameLayout -lv off -collapsable false -borderStyle "etchedOut";
+					columnLayout -adjustableColumn true;
+						rowColumnLayout -numberOfColumns 4 -cw 1 100 -cw 2 20 -cw 3 25 -cw 4 45 -co 4 "left" 3;
+
+							int $colorIntTmp = `getAttr ($shortName + "_CONShape.overrideColor")`; //print $colorIntTmp;
+							float $colorTmp[] = `colorIndex -q $colorIntTmp`;
+							button -h $h -l $shortName -bgc (`clamp 0 1 ($colorTmp[0]+.1)`) (`clamp 0 1 ($colorTmp[1]+.1)`) (`clamp 0 1 ($colorTmp[2]+.1)`) -ann $allShotCams[$i] -c ("select -tgl " + $shotCamCon + "; setFocus `getPanel -wf`" );
+
+								popupMenu -button 3;
+								menuItem -en on -label "Select transform_A" -c ("select -r \"" + $shortName + "_GRP|transform_A\"; setFocus `getPanel -wf`");
+								menuItem -en on -label "Select transform_B" -c ("select -r \"" + $shortName + "_GRP|transform_A|transform_B\"; setFocus `getPanel -wf`");
+								menuItem -en on -label "Select transform_C" -c ("select -r \"" + $shortName + "_GRP|transform_A|transform_B|transform_C\"; setFocus `getPanel -wf`");
+								menuItem -en on -label "Select turbulences" -c ("select -r \"" + $shotCamCon + "|pan_horizontal|pan_vertical|dolly|" + $shortName + "_ROLL|turbulences\"; setFocus `getPanel -wf`");
+								menuItem -en on -label "Select Everything" -c ("select -r \"" + $shortName + "_GRP\" \"" + $shortName + "_GRP|transform_A\" \"" + $shortName + "_GRP|transform_A|transform_B\" \"" + $shortName + "_GRP|transform_A|transform_B|transform_C\" \"" + $shotCamCon + "\" \"" + $shotCamCon + "|pan_horizontal|pan_vertical|dolly|" + $shortName + "_ROLL\" " + $allShotCams[$i] + " " + $shotCamCon + "|pan_horizontal|pan_vertical|dolly|" + $shortName + "_ROLL|turbulences; setFocus `getPanel -wf`");
+								menuItem -divider true;
+								menuItem -en on -label "Rename Camera" -c ("renameShotCam( \"" + $allShotCams[$i] + "\" ); setFocus `getPanel -wf`");
+								menuItem -divider true;
+//								menuItem -en off -label "Duplicate Camera" -c ("importShotCam( \"" + $allShotCams[$i] + "\", \"" + $shortName + "\", " + `getAttr ($allShotCams[$i]+".focalLength")` + ", " + `getAttr ($allShotCams[$i]+".shotNumber")` + ", \"" + $allShotCamsAsString + "\" ); setFocus `getPanel -wf`");
+//								menuItem -divider true;
+								menuItem -en on -label "Delete Camera" -c ("deleteShotCam( \"" + $allShotCams[$i] + "\", \"" + $shortName + "\" )");
+								menuItem -divider true;
+								menuItem -en on -subMenu true -label "Set Camera Color";
+									menuItem -en on -label "Red" -c ("setAttr ( \"" + $shortName + "_CONShape.overrideColor\" ) 13; shotCamLister; setFocus `getPanel -wf`");
+									menuItem -en on -label "Blue" -c ("setAttr ( \"" + $shortName + "_CONShape.overrideColor\" ) 25; shotCamLister; setFocus `getPanel -wf`");
+									menuItem -en on -label "Dark Blue" -c ("setAttr ( \"" + $shortName + "_CONShape.overrideColor\" ) 15; shotCamLister; setFocus `getPanel -wf`");
+									menuItem -en on -label "Very Light Blue" -c ("setAttr ( \"" + $shortName + "_CONShape.overrideColor\" ) 18; shotCamLister; setFocus `getPanel -wf`");
+									menuItem -en on -label "Orange" -c ("setAttr ( \"" + $shortName + "_CONShape.overrideColor\" ) 28; shotCamLister; setFocus `getPanel -wf`");
+									menuItem -en on -label "Yellow" -c ("setAttr ( \"" + $shortName + "_CONShape.overrideColor\" ) 29; shotCamLister; setFocus `getPanel -wf`");
+									menuItem -en on -label "Light Blue" -c ("setAttr ( \"" + $shortName + "_CONShape.overrideColor\" ) 30; shotCamLister; setFocus `getPanel -wf`");
+									menuItem -en on -label "Magenta" -c ("setAttr ( \"" + $shortName + "_CONShape.overrideColor\" ) 31; shotCamLister; setFocus `getPanel -wf`");
+
+							button -h $h -l "F" -bgc .81 1 .81 -c ("setAttr (\"" + $shotCamCon + ".frustum\") (1-`getAttr (\"" + $shotCamCon + ".frustum\")`); setFocus `getPanel -wf`" );
+							iconTextCheckBox -h $h -onc ("lockShotCam(\"" + $shotCamCon + "\", 1)") -ofc ("lockShotCam(\"" + $shotCamCon + "\", 0)") -style "iconOnly" -ann "Lock this shotCam" -image1 "lock.xpm" ("lock" + $i + "ICB");
+							iconTextCheckBox -e -v (`getAttr -lock ($shortName + "_CON.tx")`) ("lock" + $i + "ICB");
+							checkBox -l "Vis" -v (`getAttr ($shortName + "_GRP.visibility")`) -onc ("setAttr (\"" + $shortName + "_GRP.visibility\") 1") -ofc ("setAttr (\"" + $shortName + "_GRP.visibility\") 0");
+
+						separator -h 1 -style "none";
+
+						setParent..;
+						setParent..;
+					setParent..;
+				setParent..;
+
+				separator -h 2 -style "none";
+				}
+
+			setParent..;
+		setParent..;
+
+		separator -h 2 -style "none";
+
+		button -h $h -l "Toggle Headsup Display" -en 0 -c "tgShowPlayBlastInfo";
+
+		separator -h 4 -style "none";
+
+		button -h $h -l "Close" -c "deleteUI shotCamListerWindow";
+
+select -r $currentSelection;
+showWindow shotCamListerWindow;//print "shotCamLister ===> Launch successful!";
+window -e -h (($h*2+34) + (6*`size $allShotCams`) + (22*`size $allShotCams`) + 26) shotCamListerWindow;
+
+if ( !`size $allShotCams` )
+	window -e -h ($h*2+34 + 26) shotCamListerWindow;
+
+// This is to refresh the UI every time we open a new scene (but only if shoCamLister is opened, of course).
+/*
+if ( !$shotCamListerScriptJob )
+	{
+	string $tmp = "scriptJob -p shotCamListerWindow -e \"SceneOpened\" \"if (`window -q -exists shotCamListerWindow`) shotCamLister\"";
+	$shotCamListerScriptJob = eval($tmp);
+	}
+*/
+}
+
+/*
+string $camera[] = `ls -sl`;
+addAttr -ln "aspectRatio" -at "enum" -en "1.85:2.35:" $camera[0];
+setAttr -e -channelBox true ($camera[0] + ".aspectRatio");
+*/

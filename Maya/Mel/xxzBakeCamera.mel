@@ -1,0 +1,47 @@
+global proc xxzBakeCamera(){
+
+	string $cams[] = `listTransforms -cameras`;
+	for ($c in $cams) {
+        string $buf[];
+        tokenize $c "|" $buf;
+        $n = $buf[size($buf)-1];    // Remove the path
+		if (`gmatch $n "renderCam*"` || `gmatch $n "shotCam*"`) {
+			string $renderCamTmp[] = `duplicate -rr $c`;
+			string $renderCam = $renderCamTmp[0];
+			setAttr -l 0 ($renderCam + ".tx");
+			setAttr -l 0 ($renderCam + ".ty");
+			setAttr -l 0 ($renderCam + ".tz");
+			setAttr -l 0 ($renderCam + ".rx");
+			setAttr -l 0 ($renderCam + ".ry");
+			setAttr -l 0 ($renderCam + ".rz");
+			setAttr -l 0 ($renderCam + ".sx");
+			setAttr -l 0 ($renderCam + ".sy");
+			setAttr -l 0 ($renderCam + ".sz");
+			setAttr -l 0 ($renderCam + ".v");
+			$renderCamTmp = `parent -w $renderCam`;
+			string $cleanName[] = stringToStringArray($c,"|:");
+            $min = `playbackOptions -q -min`;
+            $max = `playbackOptions -q -max`;
+			$renderCam = `rename $renderCamTmp[0] ("renderCamera_"+$min+"to"+$max)`;//("bake_" + $cleanName[size($cleanName)-1])`;
+			string $chd[] = `listRelatives -c -f -type "transform" $renderCam`;
+			if(size($chd))
+				delete $chd;//`listRelatives -c -f -type "transform" $renderCam`;
+			parentConstraint -mo -weight 1 $c $renderCam;
+			connectAttr -f ($c + ".focalLength") ($renderCam + ".focalLength");
+			connectAttr -f ($c + ".horizontalFilmAperture") ($renderCam + ".horizontalFilmAperture");
+			connectAttr -f ($c + ".verticalFilmAperture") ($renderCam + ".verticalFilmAperture");
+			bakeResults 
+				-simulation true 
+				-t ((`playbackOptions -q -min`-5) +":"+ (`playbackOptions -q -max`+5)) -sampleBy 1 
+				-disableImplicitControl true 
+				-preserveOutsideKeys true 
+				-sparseAnimCurveBake false 
+				-at "tx" -at "ty" -at "tz" -at "rx" -at "ry" -at "rz" -at "focalLength" -at "horizontalFilmAperture" -at "verticalFilmAperture"
+				$renderCam;
+			delete `listRelatives -c -type "parentConstraint" $renderCam`;
+			select -r $renderCam;
+
+		}
+	}
+
+}

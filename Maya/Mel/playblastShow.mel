@@ -1,0 +1,386 @@
+// Edit from lxHUD.mel
+//2009/12/24
+
+/*
+HUD Manager
+*/
+/*
+2008/8/1
+2008/8/5		
+*/
+
+proc int lxHUDCounter()
+{
+	int $count = 0;
+	for( $hud in `headsUpDisplay -lh` )
+		if( `endsWith $hud "HUD"` )
+			$count++;
+	return $count;
+}
+proc string lxHUD_padding( float $data, int $length )
+{
+	//int $length = 4;
+	
+	string $str = $data;
+	int $s = $length - size($str);
+	if( $data < 0 )
+		$str = abs($data);
+	
+	while( $s > 0 )
+	{
+		$str = "0" + $str;
+		$s--;
+	}
+	
+	if( $data < 0 )
+		$str = "-" + $str;
+	
+	return $str;
+}
+global proc lxHUDExpression()
+{
+	if( !`objExists "lxHUD_Exp"` )
+		//delete "lxHUD_Exp";
+	expression -s "lxHUDRefresh()" -n "lxHUD_Exp" -ae 1 -uc all ;
+}
+proc lxHUDScriptJob()
+{
+	int $job = `scriptJob -e "NewSceneOpened" "lxHUDExpression()"`;
+	optionVar -iv "lxHUD_job" $job;
+	print "Created scriptJob\n";
+}
+global proc string updateHUD( string $data )
+{
+	string $output;
+	//lxHUDExpression();
+    
+	string $sn = basenameEx(`file -q -sn`);
+    string $buf[];
+    tokenize $sn "_" $buf;
+
+	switch( $data ){
+	case "sizeHUD":
+        string $cams[] = `ls -type camera`;
+        for ($cam in $cams)
+            setAttr ($cam+".displayResolution") 0;
+        $w = `getAttr "defaultResolution.width"`;
+        $h = `getAttr "defaultResolution.height"`;
+        $sn = $w + " X " + $h;
+		$output = $sn;
+		//headsUpDisplay -e -l $sn $data;
+		break;
+	case "projNameHUD":
+        $sn = $buf[0] + "   " + $buf[1];
+		$output = $sn;
+		//headsUpDisplay -e -l $sn $data;
+		break;
+	case "shotNameHUD":
+        $sn = `substitute "shot" $buf[2] ""`;
+		$output = $sn;
+		//headsUpDisplay -e -l $sn $data;
+		break;
+	case "artistNameHUD":
+        $sn = $buf[4];
+		$output = $sn;
+		//headsUpDisplay -e -l $sn $data;
+		break;
+	case "fileNameHUD":   
+		string $sn = basenameEx(`file -q -sn`);
+		$output = $sn;
+		//headsUpDisplay -e -l $sn $data;
+		break;
+		
+	case "dateHUD":
+		string $date = substring( system("date /t"), 1, 10 );
+		string $time = substring( system("time /t"), 1, 5 );
+		string $buf[2];
+		tokenizeList($date, $buf);
+		$date = $buf[0] + " " + $time;
+		$output = $date;
+		//headsUpDisplay -e -l $date $data;
+		break;
+
+	case "frameNumHUD":
+		string $fn = lxHUD_padding(`currentTime -q`, 4 );
+		$output = $fn;
+		//headsUpDisplay -e -l $fn $data;
+		break;
+		
+	case "userNameHUD":
+		//string $user[1] = `fileInfo -q "User"`;
+		string $user = `optionVar -q "lxHUD_user"`;
+		$output = $user;
+		//headsUpDisplay -e -l ("User: " + $lxHUD_user) $data;
+		break;
+	
+	case "camFocalLengthHUD":
+		optionVar -sv "lxHUD_cam" "persp";
+		string $mPanel[8] = `getPanel -type "modelPanel"`;
+		string $panel = `getPanel -wf`;
+		if( stringArrayCount( $panel, $mPanel ) > 0 ){
+			string $c = `modelPanel -q -camera $panel`;
+			optionVar -sv "lxHUD_cam" $c;
+		}
+		string $cam = `optionVar -q "lxHUD_cam"`;
+		float $fl = `getAttr ($cam+".focalLength")`;	//print $fl;print "\n";
+		string $str = $fl;	//print $str;print "\n";
+		$str = startString($str, 4);	//print $str;print "\n";
+		$fl = $str;		//print $fl;print "\n";
+		$str = lxHUD_padding( $fl, 3 );	//print $str;print "\n";
+		$output = $str;
+		//headsUpDisplay -e -l $str $data;
+		break;
+	}
+	
+	//print ( "Update HUD: " + $data + "\n" );
+	return $output;
+}
+global proc lxHUDCreator( string $data, int $section )
+{
+	string $fontSize = "large";	// 	small
+	
+	int $block = `headsUpDisplay -nextFreeBlock $section`;
+	
+	switch( $data ){
+	case "size":
+        $name = $data + "HUD";
+		if( `headsUpDisplay -ex $name` )
+			headsUpDisplay -rem $name;
+		headsUpDisplay -dfs $fontSize -lfs $fontSize
+			-section $section
+			-block $block
+			-l "Size: "
+			-ev "NewSceneOpened"
+			-c ("updateHUD(\""+$name+"\")")
+			$name;
+		//updateHUD($name);
+		break;
+	case "projName":
+        $name = $data + "HUD";
+		if( `headsUpDisplay -ex $name` )
+			headsUpDisplay -rem $name;
+		headsUpDisplay -dfs $fontSize -lfs $fontSize
+			-section $section
+			-block $block
+			-l "Project: "
+			-ev "NewSceneOpened"
+			-c ("updateHUD(\""+$name+"\")")
+			$name;
+		//updateHUD($name);
+		break;
+	case "artistName":
+        $name = $data + "HUD";
+		if( `headsUpDisplay -ex $name` )
+			headsUpDisplay -rem $name;
+		headsUpDisplay -dfs $fontSize -lfs $fontSize
+			-section $section
+			-block $block
+			-l "Artist: "
+			-ev "NewSceneOpened"
+			-c ("updateHUD(\""+$name+"\")")
+			$name;
+		//updateHUD($name);
+		break;
+	case "shotName":
+        $name = $data + "HUD";
+		if( `headsUpDisplay -ex $name` )
+			headsUpDisplay -rem $name;
+		headsUpDisplay -dfs $fontSize -lfs $fontSize
+			-section $section
+			-block $block
+			-l "Shot: "
+			-ev "NewSceneOpened"
+			-c ("updateHUD(\""+$name+"\")")
+			$name;
+		//updateHUD($name);
+		break;
+	case "fileName":
+        $name = $data + "HUD";
+		if( `headsUpDisplay -ex $name` )
+			headsUpDisplay -rem $name;
+		headsUpDisplay -dfs $fontSize -lfs $fontSize
+			-section $section
+			-block $block
+			-l "Scene: "
+			-ev "NewSceneOpened"
+			-c ("updateHUD(\""+$name+"\")")
+			$name;
+		//updateHUD($name);
+		break;
+		
+	case "camName":
+        $name = $data + "HUD";
+		//setCameraNamesVisibility(`optionVar -q cameraNamesVisibility`);
+		if( `headsUpDisplay -ex $name` )
+			headsUpDisplay -rem $name;
+		headsUpDisplay -dfs $fontSize -lfs $fontSize
+			-section $section
+			-block $block
+			-pre "cameraNames"
+			//-ev "NewSceneOpened"
+			//-c ("updateHUD(\""+$name+"\")")
+			$name;
+		break;
+
+	case "camFocalLength":
+        $name = $data + "HUD";
+		//camFocalLengthHUD( $section );
+		if( `headsUpDisplay -ex $name` )
+			headsUpDisplay -rem $name;
+		headsUpDisplay -dfs $fontSize -lfs $fontSize
+			-section $section
+			-block $block
+			-l "Focal Length: "
+			-ev "NewSceneOpened" //"timeChanged"
+			//-ac ($lxHUD_currentCam+".focalLength")
+			-c ("updateHUD(\""+$name+"\")")
+			$name;
+		//updateHUD($name);
+		//int $id = `scriptJob -ac ($lxHUD_currentCam+".focalLength") ("updateHUD(\""+$name+"\")")`;
+		//scriptJob -kill
+		break;		
+		
+	case "date":
+        $name = $data + "HUD";
+		if( `headsUpDisplay -ex $name` )
+			headsUpDisplay -rem $name;
+		headsUpDisplay -dfs $fontSize -lfs $fontSize
+			-section $section
+			-block $block
+			-l "Date: "
+			-ev "NewSceneOpened" //"timeChanged"
+			-c ("updateHUD(\""+$name+"\")")
+			$name;
+		//updateHUD($name);
+		break;
+		
+	case "frameNum":
+        $name = $data + "HUD";
+		if( `headsUpDisplay -ex $name` )
+			headsUpDisplay -rem $name;
+		headsUpDisplay -dfs $fontSize -lfs $fontSize
+			-section $section
+			-block $block
+			-l "Frame: "
+			//-ct "playingBack"
+			-ev "NewSceneOpened" //"timeChanged"
+			-c ("updateHUD(\""+$name+"\")")
+			$name;
+		//updateHUD($name);
+		break;
+		
+	case "userName":
+        $name = $data + "HUD";
+		if( `headsUpDisplay -ex $name` )
+			headsUpDisplay -rem $name;
+		headsUpDisplay -dfs $fontSize -lfs $fontSize
+			-section $section
+			-block $block
+			-l "User: "
+			-ev "NewSceneOpened" //"timeChanged"
+			-c ("updateHUD(\""+$name+"\")")
+			$name;
+		//updateHUD($name);
+		break;
+	}
+}
+proc lxHUD_clearEnv(){
+    for($i in `headsUpDisplay -lh` )
+		headsUpDisplay -e -vis 0 $i;
+}
+global proc lxHUD_docreate()
+{
+    lxHUD_clearEnv();
+	
+	//lxHUDCreator "fileName" 0;
+	//lxHUDCreator "userName" 5;
+	//lxHUDCreator "camName" 7;
+	//lxHUDCreator "frameNum" 9;
+    
+	lxHUDCreator "shotName" 0;
+	lxHUDCreator "size" 2;
+	lxHUDCreator "projName" 4;
+	lxHUDCreator "artistName" 5;
+	lxHUDCreator "camFocalLength" 7;
+	lxHUDCreator "date" 9;
+    
+	lxHUDExpression();
+	lxHUDScriptJob();
+}
+proc lxHUDController()  // No need
+{
+	if( `window -ex lxHUDController` )
+		deleteUI lxHUDController;
+	
+	window lxHUDController;
+		columnLayout -adj 1;
+			rowColumnLayout -numberOfColumns 2
+				-columnAttach 1 "right" 0
+				-columnWidth 1 60
+				-columnWidth 2 100;
+			 	text -label "User:";
+				//string $user[1] = `fileInfo -q "User"`;
+				string $user = `optionVar -q "lxHUD_user"`;
+				if( $user == "0" ) $user = "";
+			 	textField -tx $user -cc "lxHUD_setUser" HUDC_user;
+			setParent ..;
+			separator -h 10;
+			int $count = lxHUDCounter();
+			if( $count == 0 )
+			button -l "Create HUD" -c "/*lxHUD_setUser();*/lxHUD_docreate();deleteUI lxHUDController";
+			else
+			button -l "Remove HUD" -c "lxHUDRemove();deleteUI lxHUDController";
+
+	window -q -wh lxHUDController;
+	window -e -wh 200 80 lxHUDController;
+	showWindow lxHUDController;
+}
+proc lxHUDStart(){
+    int $count = lxHUDCounter();
+    if( $count == 0 )
+        lxHUD_docreate();
+    else
+        lxHUDRemove();
+}
+global proc lxHUD_setUser() // No need
+{
+	string $user = `textField -q -tx HUDC_user`;
+	//fileInfo "User" $user;
+	//putenv "lxHUD_user" $user;
+	optionVar -sv "lxHUD_user" $user;
+	print ( "Set user: " + $user + "\n" );
+}
+global proc lxHUDRemove()
+{
+	for( $hud in `headsUpDisplay -lh` )
+		if( `endsWith $hud "HUD"` )
+			headsUpDisplay -rem $hud;
+	if( `objExists "lxHUD_Exp"` )
+		delete "lxHUD_Exp";
+	int $job = `optionVar -q "lxHUD_job"`;
+	scriptJob -k $job;
+}
+global proc lxHUDRefresh()
+{
+	int $count = lxHUDCounter();	//print $count;
+	// Create exp
+	if( $count > 0 )
+		for($i in `headsUpDisplay -lh`)
+			headsUpDisplay -r $i ;
+	else
+	{
+		//disconnectAttr "time1.outTime" "lxHUD_Exp.time";
+		print "lxHUD do not exist...";
+		//expression -e -s "" "lxHUD_Exp";
+		//delete "lxHUD_Exp";
+	}
+}
+global proc playblastShow()
+{
+	displayColor -dormant headsUpDisplayLabels 22;
+	displayColor -dormant headsUpDisplayValues 16;
+	//lxHUDController();
+    lxHUDStart();
+}
+
+// playblastShow()
