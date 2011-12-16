@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #Description:
 #Author:honglou(hongloull@gmail.com)
@@ -7,7 +5,6 @@
 #Update:
 #How to use :
 import logging
-from pymel.core.general import PyNode
 LOG_LEVELS = {'debug': logging.DEBUG,
               'info': logging.INFO,
               'warning': logging.WARNING,
@@ -15,6 +12,11 @@ LOG_LEVELS = {'debug': logging.DEBUG,
               'critical': logging.CRITICAL}
 LOG_LEVEL = LOG_LEVELS.get('debug')
 logging.basicConfig(level=LOG_LEVEL)
+                                     
+import maya.cmds as cmds
+import pymel.core as pm
+from pymel.all import mel
+from pymel.core.general import PyNode
 
 LIGHT_TYPES = ['<class \'pymel.core.nodetypes.SpotLight\'>',\
                '<class \'pymel.core.nodetypes.DirectionLight\'>',\
@@ -26,11 +28,34 @@ GEOMETRY_TYEPS = ['<class \'pymel.core.nodetypes.Mesh\'>',\
                   '<class \'pymel.core.nodetypes.NurbsSurface\'>',\
                   '<class \'pymel.core.nodetypes.Subdiv\'>']   
 SHADING_ENGINE_TYPE = '<class \'pymel.core.nodetypes.ShadingEngine\'>'
-                                     
-import maya.cmds as cmds
-import pymel.core as pm
-from pymel.all import mel
 
+DEFAULT_RENDER_GLOBALS = PyNode('defaultRenderGlobals')
+MI_DEFAULT_OPTIONS = PyNode('miDefaultOptions')
+MI_DEFAULT_FRAME_BUFFER = PyNode('miDefaultFramebuffer')
+            
+def getSelection():
+    logging.debug('MRREnderLayer getSelection')
+    selObjShort = pm.ls(sl=1)
+    selObj = pm.ls(sl=1,dag=1)
+    logging.debug(str(selObjShort))
+    if not selObjShort :
+        logging.warning('select some objects first.')
+        return None
+    else :
+        return selObj
+
+def createShader(shaderType,shaderName):
+    '''string $RGBObjMat = `shadingNode -n ("MATTE_" + $eachSn[0] + "_MAT") -asShader surfaceShader`;
+        string $RGBObjSG = `sets -renderable true -noSurfaceShader true -empty -name ($RGBObjMat + "_SG")`;
+        setAttr ($RGBObjMat + ".outColor") -type double3 0 0 0 ;
+        setAttr ($RGBObjMat + ".outMatteOpacity") -type double3 1 1 1 ; 
+        connectAttr -f ($RGBObjMat + ".outColor") ($RGBObjSG + ".surfaceShader");
+        connectAttr -f $dispCon[0] ($RGBObjSG + ".displacementShader");'''
+    surfaceShader = pm.shadingNode(shaderType,n=shaderName,asShader=True)
+    shadingSG = pm.sets(renderable=True,noSurfaceShader=True,empty=True,name=(shaderName+'_SG'))
+    surfaceShader.outColor.connect(shadingSG.surfaceShader)
+    return ( surfaceShader, shadingSG )
+                
 class MRRenderLayerPass():
     def __init__(self):
         logging.debug('Init MRRenderLayerPass class')
@@ -45,28 +70,13 @@ class MRRenderLayerPass():
 class MRRenderLayer():
     def __init__(self):
         logging.debug('Init MRRenderLayer class')
-        self.defaultRenderGlobals = PyNode('defaultRenderGlobals')
-        self.miDefaultOptions = PyNode('miDefaultOptions')
-        self.miDefaultFrameBuffer = PyNode('miDefaultFramebuffer')
-        
-    def getSelection(self):
-        logging.debug('MRREnderLayer getSelection')
-        selObjShort = pm.ls(sl=1)
-        selObj = pm.ls(sl=1,dag=1)
-        logging.debug(str(selObjShort))
-        if not selObjShort :
-            logging.warning('select some objects first.')
-            return None
-        else :
-            return selObj
-    
+
     def createNewLayer(self,layerName):
         newLayer = pm.createRenderLayer(n=layerName)
         pm.editRenderLayerGlobals(currentRenderLayer=newLayer)
         #editRenderLayerAdjustment "defaultRenderGlobals.currentRenderer"
-        defaultRenderGlobals = PyNode('defaultRenderGlobals')
-        pm.editRenderLayerAdjustment(defaultRenderGlobals.currentRenderer)
-        defaultRenderGlobals.currentRenderer.set('mentalRay')    
+        pm.editRenderLayerAdjustment(DEFAULT_RENDER_GLOBALS.currentRenderer)
+        DEFAULT_RENDER_GLOBALS.currentRenderer.set('mentalRay')    
         return newLayer     
     
     def setRenderLayerAttr(self,attr,val):
@@ -121,7 +131,7 @@ class MRRenderLayer():
                     renderCamEnv[0].message.disconnect(cam.miEnvironmentShader)
                        
     def createAmbientOcclusionLayer(self):
-        selObj = self.getSelection()
+        selObj = getSelection()
         
         newLayer = self.createNewLayer('AO')
         
@@ -148,15 +158,17 @@ class MRRenderLayer():
                             if len(dispCon) >= 1 :
                                 logging.debug('displacement shader: '+str(dispCon[0]))
                                 logging.debug('eachSn[0]: ' + str(eachSn))
-                                AOObjMat = pm.shadingNode('lambert',n=(newLayer+'_'+str(eachSn)+'_MAT'),asShader=True)
-                                AOObjMat.color.set([0,0,0])
-                                AOObjMat.transparency.set([0,0,0])
+#                                AOObjMat = pm.shadingNode('lambert',n=(newLayer+'_'+str(eachSn)+'_MAT'),asShader=True)
+#                                AOObjSG = pm.sets(renderable=True,noSurfaceShader=True,empty=True,name=(str(AOObjMat)+'_SG'))
+#                                AOObjMat.outColor.connect(AOObjSG+'.surfaceShader')
+                                shader,shaderSG = createShader('lambert',(newLayer+'_'+str(eachSn)+'_MAT'))
                                 
-                                AOObjSG = pm.sets(renderable=True,noSurfaceShader=True,empty=True,name=(str(AOObjMat)+'_SG'))
-                                AOObjMat.outColor.connect(AOObjSG+'.surfaceShader')
-                                dispCon[0].connect(AOObjSG+'.displacementShader')
+                                shader.color.set([0,0,0])
+                                shader.transparency.set([0,0,0])
+                                
+                                dispCon[0].connect(shaderSG.displacementShader)
                                 AONode = pm.createNode('mib_amb_occlusion')
-                                AONode.outValue.connect(str(AOObjMat)+'.incandescence')
+                                AONode.outValue.connect(shader.incandescence)
                                 AONode.samples.set(64)
                                 
                                 pm.select(eachSn)
@@ -199,27 +211,35 @@ class MRRenderLayer():
        
 #        pm.editRenderLayerAdjustment(mrFrameBuffer.datatype)
 #        mrFrameBuffer.datatype.set(2)
-#        pm.editRenderLayerAdjustment(self.defaultRenderGlobals.imageFormat)
-#        self.defaultRenderGlobals.imageFormat.set(7)
-#        pm.editRenderLayerAdjustment(self.defaultRenderGlobals.imfPluginKey)
-#        self.defaultRenderGlobals.imfPluginKey.set('iff')
-#        self.defaultRenderGlobals.multiCamNamingMode.set(1)
-#        self.defaultRenderGlobals.bufferName.set('<RenderPass>')
+#        pm.editRenderLayerAdjustment(DEFAULT_RENDER_GLOBALS.imageFormat)
+#        DEFAULT_RENDER_GLOBALS.imageFormat.set(7)
+#        pm.editRenderLayerAdjustment(DEFAULT_RENDER_GLOBALS.imfPluginKey)
+#        DEFAULT_RENDER_GLOBALS.imfPluginKey.set('iff')
+#        DEFAULT_RENDER_GLOBALS.multiCamNamingMode.set(1)
+#        DEFAULT_RENDER_GLOBALS.bufferName.set('<RenderPass>')
 
         # Adjust render layer attr
-        self.setRenderLayerAttr(self.miDefaultOptions.finalGather, 0)
-        self.setRenderLayerAttr(self.miDefaultOptions.caustics, 0)
-        self.setRenderLayerAttr(self.miDefaultOptions.globalIllum, 0)
-        self.setRenderLayerAttr(self.miDefaultFrameBuffer.datatype, 2)
-        self.setRenderLayerAttr(self.defaultRenderGlobals.imageFormat, 7)
-        self.setRenderLayerAttr(self.defaultRenderGlobals.imfPluginKey, 'iff')
-        self.setRenderLayerAttr(self.defaultRenderGlobals.multiCamNamingMode, 1)
-        self.setRenderLayerAttr(self.defaultRenderGlobals.bufferName, '<RenderPass>')
+        self.setRenderLayerAttr(MI_DEFAULT_OPTIONS.finalGather, 0)
+        self.setRenderLayerAttr(MI_DEFAULT_OPTIONS.caustics, 0)
+        self.setRenderLayerAttr(MI_DEFAULT_OPTIONS.globalIllum, 0)
+        self.setRenderLayerAttr(MI_DEFAULT_FRAME_BUFFER.datatype, 2)
+        self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.imageFormat, 7)
+        self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.imfPluginKey, 'iff')
+        self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.multiCamNamingMode, 1)
+        self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.bufferName, '<RenderPass>')
                     
         # Remove cam lens and env shader            
         self.disConnectCamShader()
         
         pm.select(cl=1)
-            
+
+class MRMaterial():
+    def __init__(self):
+        logging.debug('Init MRRenderLayer class')
+    
+    def createBlackMatertial(self):
+        pass
+
+                    
 #MRRenderLayerPass()
 MRRenderLayer().createAmbientOcclusionLayer()

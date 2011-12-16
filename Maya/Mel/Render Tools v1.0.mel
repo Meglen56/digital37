@@ -1,0 +1,3131 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RENDER LAYER TOOLS 1.0                                                                                  //
+// By Mariano Antico                                                                                       //
+// Barraca Post                                                                                            //
+// www.barraca.com.ar                                                                                      //
+// www.marianoantico.blogspot.com                                                                          //
+// Last Updated: May 06, 2011.                                                                           //
+// All Rights Reserved .                                                                                   //
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// LOAD PLUGINS
+
+if (`pluginInfo -query -l objExport`){
+    print "OBJ Export is loaded.\n";
+} else {
+    loadPlugin "C:/Program Files/Autodesk/Maya2012/bin/plug-ins/objExport.mll";    
+}
+
+if (`pluginInfo -query -l Mayatomr`){
+    print "Mental Ray is loaded.\n";
+} else {
+    loadPlugin "C:/Program Files/Autodesk/Maya2012/bin/plug-ins/Mayatomr.mll";   
+}
+
+setAttr -type "string" "defaultRenderGlobals.currentRenderer" "mentalRay";
+
+// INTERFAZ 
+
+if (`window -ex Renderizator`) {
+   deleteUI -window Renderizator;
+}
+if (`window -ex rllWindow`) {
+   deleteUI -window rllWindow;
+}
+window -s 0 -t "Render Layer Tools 1.0" -w 350 -h 900 Renderizator;
+    menuBarLayout menuLoco;
+//        menu -l "FILE" -en true m1;
+//        menuItem -l "reset" -en true;
+        menu -l "HELP" -en true m2;
+        menuItem -l "about" -en true -c "aboutHelp()";
+        separator;
+    string $form = `formLayout`;
+    string $tabs = `tabLayout -innerMarginWidth 5 -innerMarginHeight 5`;
+        formLayout -edit
+        -attachForm $tabs "top" 5
+        -attachForm $tabs "left" 5
+        -attachForm $tabs "bottom" 5
+        -attachForm $tabs "right" 5
+    $form;
+
+//TAB 1
+
+    string $tab1 = ` rowColumnLayout -numberOfColumns 2 `;
+        separator -style "none" -h 5;separator -style "none" -h 5;
+        text -font "boldLabelFont" -l "CREATE RENDER LAYERS:"; text -l "" ;
+        separator -style "none" -h 5;separator -style "none" -h 5;
+        button -l "COLOR" -c "createColor()"; button -l "AO" -c "createAO()";
+        button -l "AO TRANSPARENCY" -c "createAOTransp()"; button -l "KEY LIGTH" -c "createLuzKey Light_Key";
+        button -l "FILL LIGHT" -c "createLuzKey Light_Fill"; button -l "BACK LIGHT" -c "createLuzKey Light_Back";
+        button -l "SHADOW" -c "createSHADOW()"; button -l "MASK RGB" -c "createRGB()";
+         
+        separator -style "none" -h 5;separator -style "none" -h 5;
+        text -font "boldLabelFont" -l "MATERIALS:"; text -l "" ;
+        separator -style "none" -h 5;separator -style "none" -h 5;        
+        button -l "BLACK" -c "black()"; button -l "BLACK NO ALPHA" -c "blackNoAlpha()";
+        button -l "RED" -c "red()"; button -l "GREEN" -c "green()";
+        button -l "BLUE" -c "blue()"; button -l "USE BACKGROUND" -c "shadow()";
+        button -l "Z DEPTH" -c "zDepth()"; button -l "AO TRANSPARENCY" -c "AOTransparency()";
+        
+        separator -style "none" -h 2; separator -style "none" -h 2;
+ 
+        separator;separator;
+
+//RENDER STATS INTERFAZ
+ 
+        separator -style "none" -h 2;separator -style "none" -h 2;
+        text -font "boldLabelFont" -l "RENDER STATS :"; checkBoxGrp -ncb 1 -l1 "Select All" -v1 1 -onc "AllOn()" -ofc "AllOff()" SelAllBox;
+ 
+        checkBoxGrp -ncb 1 -vr -l1 "Casts Shadows" -v1 1 Statsbox1;
+        checkBoxGrp -ncb 1 -vr -l1 "Receive Shadows" -v1 1 Statsbox2;
+        checkBoxGrp -ncb 1 -vr -l1 "Motion Blur" -v1 1 Statsbox3;
+        checkBoxGrp -ncb 1 -vr -l1 "Primary Visibility" -v1 1 Statsbox4;
+        checkBoxGrp -ncb 1 -vr -l1 "Smooth Shading" -v1 1 Statsbox5;
+        checkBoxGrp -ncb 1 -vr -l1 "Visible In Reflections" -v1 1 Statsbox6;
+        checkBoxGrp -ncb 1 -vr -l1 "Visible In Refractions" -v1 1 Statsbox7;
+        checkBoxGrp -ncb 1 -vr -l1 "Double Sided" -v1 1 Statsbox8;
+        checkBoxGrp -ncb 1 -vr -l1 "Opposite" -v1 1 Statsbox9;
+        separator -style "none" -h 5;
+ 
+        separator -style "none" -h 1;separator -style "none" -h 1;
+        text -font "boldLabelFont" -l "FINAL GATHER :"; separator -style "none" -h 5;
+        separator -style "none" -h 1;separator -style "none" -h 1;
+ 
+        checkBoxGrp -ncb 1 -vr -l1 "miFinalGatherCast" -v1 1 Statsbox10;
+        checkBoxGrp -ncb 1 -vr -l1 "miFinalGatherReceive" -v1 1 Statsbox11;
+        separator -style "none" -h 5;separator -style "none" -h 5;
+ 
+        button -l " APPLY " -c "StatusCheck()" -ann "Apply changes to render stats."; 
+        button -l " Override Off " -c "overrideOff()";
+ 
+        separator -style "none" -h 2;separator -style "none" -h 2;
+        separator;separator;
+        separator -style "none" -h 2;separator -style "none" -h 2;
+
+//ANTIDOTO INTERFAZ
+
+        button -l " ANTIDOTO " -c "antidoto()";        
+        button -l " Select Objects with Antidoto " -c "selectAntidoto()";
+        
+        separator -style "none" -h 2;separator -style "none" -h 2;
+        separator;separator;
+        separator -style "none" -h 2;separator -style "none" -h 2;
+       
+        button -l "Copy selected Render Layer" -bgc .5 .8 .5 -c "copySelRLayer()";
+        button -l " RENDER LAYER MANAGER " -bgc .5 .8 .5 -c "RenderManager()";  
+   
+
+        setParent ..;
+
+//TAB 2
+
+    string $tab2 = `rowColumnLayout -numberOfColumns 2`;
+
+//RENDER SUBSET INTERFAZ
+
+        separator -style "none" -h 5; separator -style "none" -h 5;
+        text -font "boldLabelFont" -l "CREATE RENDER SUBSET"; textField renderSubsetName;
+        separator -style "none" -h 5; separator -style "none" -h 5;
+        button -l "RENDER SUBSET" -c "RenderSubset ()" -ann "Create a render subset and connects it to the camera." btnRenderSubset; textScrollList -nr 4 -ams false renderSubsetScroll;
+
+        updateRenderSubset();
+
+        separator -style "none" -h 5; separator -style "none" -h 5;
+        button -l "ADD OBJECT" -ann "Add object to the select render subset node." -c "addObjRenderSubset ()" addObjRS;button -l "REMOVE OBJECT" -ann "Remove object to the select render subset node." -c "removeObjRenderSubset ()" removeObjRS;;
+        button -l "DELETE RENDER SUBSET" -ann "Delete selected render subset node." -c "deleteRenderSubset()" deleteRS; button -l "PASS CUSTOM ALPHA" -ann "Alpha channel Pass" -c "customPass()" btnAlpha;
+        button -l "SELECT RENDER SUBSET OBJECTS" -ann "Select objects in render subset." -c "selRenderSubset()" selObjsRS; button -l "REFRESH RENDER SUBSET LIST" -ann "Check all existing render layers" -c "updateRenderSubset()" btnUpdate;
+        separator -style "none" -h 3; separator -style "none" -h 3;
+        separator; separator;
+
+//OBEJEITOR INTERFAZ
+
+        separator -style "none" -h 3;separator -style "none" -h 3;
+        text -font "boldLabelFont" -l "SET PATH:"; textField objRuta;
+        separator -style "none" -h 3;separator -style "none" -h 3;
+        button -l "OBEJEITOR" -c "obejeitor ()" -ann "Export selected objects as an OBJ"; text -l "Obejeitor by MDR";
+        separator -style "none" -h 3;separator -style "none" -h 3;
+        separator;separator;
+
+//Transfer UVS       
+       
+        separator -style "none" -h 3;separator -style "none" -h 3;
+        button -l "TRANSFER UVs" -c "transferUvs()" -ann "Transfer uv to multiple objects."; checkBoxGrp -ncb 1 -l1 "Delete History" -v1 1 TransUvBox1;
+        button -l "SELECT RENDER CAMERA" -c "renderCamSel()";
+        
+        setParent ..;
+       
+//TAB 3
+
+    string $tab3 = `rowColumnLayout -numberOfColumns 1`;
+        separator -style "none" -h 3; 
+        text -font "boldLabelFont" -align "left" -l "  RENDER LAYER TOOLS 1.0";
+        separator -style "none" -h 3;
+        text -font "boldLabelFont" -align "left" -l "  Description:";
+        separator -style "none" -h 3;
+        scrollField -font "plainLabelFont" -ww 1 -ed 0 -h 420 helpList;
+        string $HelpText = "Introduction:\n\n";
+        
+            $HelpText += "This script was designed to simplify the making and manipulation of the renders layers, it only works with with Mental ray as render engine. For this reason, as soon as this script is loaded, it automatically verifies if mental ray is loaded and assigns it as renderer.\n";
+            $HelpText += "I created it to work faster, after dealing with a lot of people who can´t follow a workflow, but this is not the case of my personal friend facundo morgade. It also has some other tools that are useful in every day work as a generalist.\n";
+            $HelpText += "It´s currently on trial period , and it is the first script I developed, so it may need some modifications.\n\n";
+            $HelpText += "Structure:\n\n";
+            $HelpText += "The Render Tools is divided into 3 main tabs: Render Layers, Tools and Help.\n\n";
+            $HelpText += "RENDER LAYERS TAB\n\n";
+            $HelpText += "RENDER LAYERS SECTION\n"; 
+            $HelpText += "This includes 8 buttons to create different types of render layers,and 8 buttons to create materials.\n\n"; 
+            $HelpText += "Important note:\n";
+            $HelpText += "The working method for all the created layers would be the next: you should select the object, light or node you would like to include into the render layer and then push the corresponding button to create the render layer you want.\n\n";                        
+            $HelpText += "- Color button\n"; 
+            $HelpText += "This button creates a masterlayer copy that contains the most common passes i use to composite. (passes: beauty, depth, diffuse, incandescense, indirect, normal,reflection, refraction, shadow, specular).\n"; 
+            $HelpText += "Sets the framebuffer to 32 bits, image format to open exr.\n\n"; 
+            $HelpText += "- AO button\n"; 
+            $HelpText += "This button creates an Ambient Occlusion layer by doing a surface shader material connected to a mib_amb_occlusion and assignning it to selected objects. If there are objects with displacement, it will create a material for each object, with the displacement node connected to its shading group.\n"; 
+            $HelpText += "Sets the framebuffer to 8 bits, image format to iff. It disables camera lenses, camera environment nodes, Final Gather and Global Illumination.\n\n"; 
+            $HelpText += "-AO transparency button\n"; 
+            $HelpText += "This button creates an Ambient Occlusion layer based on final gathering by doing a surface shader material connected to a mib_fg_occlusion and assignning it to selected objects. If there are objects with displacement, it will create a material for each object, with the displacement node connected to its shading group.\n"; 
+            $HelpText += "Sets the framebuffer to 8 bits, image format to iff. Disable camera lenses or camera environment nodes.\n\n"; 
+            $HelpText += "- Key/Fill/Back Light button\n"; 
+            $HelpText += "It creates a layer to manage the exposure of the shot in the compositing process. Using the green channel for illumination, and the blue channel to handle the shadows.\n"; 
+            $HelpText += "It creates and assign a middle gray lambert shader. If there are objects with displacement, it will create a material for each object, with the displacement node connected to its shading group.\n";
+            $HelpText += "Sets the framebuffer to 8 bits, image format to iff. Disable camera lenses, camera environment nodes, final Gather and Global Illumination.\n\n";            
+            $HelpText += "- Shadow button\n";
+            $HelpText += "This button creates a shadow layer by assigning a background material to selected objects. If there are objects with displacement, it will create a material for each object, with the displacement node connected to its shading group.\n";
+            $HelpText += "Sets the framebuffer to 8 bits, image format to iff. Disable camera lenses, camera environment nodes, final Gather and Global Illumination.\n\n";
+            $HelpText += "- Mask RGB button\n";
+            $HelpText += "This button does a mask layer by creating and assigning 5 surface shader materials (black, black without alpha, red, green, blue) to selected objects. If there are objects with displacement, it will create a material for each object, with the displacement node connected to its shading group.\n";
+            $HelpText += "Since it wouldn´t be practical to assing a random color for each object the layer connects all objects to a black surface shader. And then you can assign diferent materials with the color buttons on the materials section of the script.\n";
+            $HelpText += "Sets the framebuffer to 8 bits, image format to iff and disables raytracing.Disable camera lenses or camera environment nodes.\n\n";
+            $HelpText += "MATERIAL SECTION\n\n";
+            $HelpText += "- Black button\n";
+            $HelpText += "Create a black surface shader material, with alpha. If the object has displacement, it will create a black surface shader with the displacement node connected to its shading group.\n\n";
+            $HelpText += "- Black no alpha button\n";
+            $HelpText += "Create a black surface shader material, without alpha. If the object has displacement, it will create a black surface shader with the displacement node connected to its shading group.\n\n";
+            $HelpText += "- Red button\n";
+            $HelpText += "Create a red surface shader material, with alpha. If the object has displacement, it will create a red surface shader with the displacement node connected to its shading group.\n\n";
+            $HelpText += "- Green button\n";
+            $HelpText += "Create a green surface shader material, with alpha. If the object has displacement, it will create a green surface shader with the displacement node connected to its shading group.\n\n";
+            $HelpText += "- Blue button\n";
+            $HelpText += "Create a blue surface shader material, with alpha. If the object has displacement, it will create a blue surface shader with the displacement node connected to its shading group.\n\n";
+            $HelpText += "- Use Background button\n";
+            $HelpText += "Creates a use background material called \"SHADOW_mat. \".\n\n";
+            $HelpText += "- Z-Depth button\n";
+            $HelpText += "Creates a z-depth shader and assign it to selected objects.\n\n";
+            $HelpText += "- AO Transparency button\n";
+            $HelpText += "Creates the shading network of an Ambient Occlusion with transparency. It can be used in two ways.\n";
+            $HelpText += "1. Select a file node to be use as transparency map. Select the objects you want to assign this shader. Press AO TRANSPARENCY button.\n";    
+            $HelpText += "2. Select objects. Press AO TRANSPARENCY button. It will open a browser to select the transparency map. Once selected it will make all the shader connections.\n\n";    
+            $HelpText += "RENDER STATS SECTION\n";    
+            $HelpText += "Based on 12 check box, which handle all rendering options on selected objects.\n";    
+            $HelpText += "APPLY button modify the properties you choose.  \n";    
+            $HelpText += "OVERRIDE OFF button removes layer overrides from this properties.\n\n";    
+            $HelpText += "- Antidoto button\n";    
+            $HelpText += "Antidoto is a script I develop previously to manage low poly objects in viewport . It sets viewport preview division levels into value 0 and keeps render division levels in value 2.\n\n";    
+            $HelpText += "- Select Objects with Antidoto button\n";    
+            $HelpText += "Select objects that have the Antidoto script applied.\n\n";    
+            $HelpText += "-Copy Selected RL button\n";    
+            $HelpText += "Copy selected render layer.\n\n";    
+            $HelpText += "- Render Layer Manager button\n";
+            $HelpText += "Open Render Layer Manager. Its functionality is to modify all the connections the render layers have.\n\n";
+            $HelpText += "TOOLS TAB\n\n";
+            $HelpText += "- Create Render Subset button\n\n";
+            $HelpText += "(more information on the production shaders pdf, available on http://www.mentalimages.com/fileadmin/user_upload/PDF/production.pdf)\n\n";
+            $HelpText += "Create a render subset node with all selected objects, and connects it into your active viewport camera.\n";
+            $HelpText += "1. Enter a name in the CREATE RENDER SUBSET text field.\n";
+            $HelpText += "2. Select objects.\n";
+            $HelpText += "3. Press RENDER SUBSET button.\n\n";
+            $HelpText += "- Add Object button\n";
+            $HelpText += "Add selected objects to selected render subset.\n\n";
+            $HelpText += "- Remove Object button\n";
+            $HelpText += "Remove selected objects from selected render subset.\n\n";
+            $HelpText += "- Delete Render Subset button\n";
+            $HelpText += "Delete selected render subset.\n\n";
+            $HelpText += "- Pass Custom Alpha button\n";
+            $HelpText += "Create layer override to Custom Entities/ Pass Custom Alpha Channel.\n\n";
+            $HelpText += "- Select Render Subset Objects button\n";
+            $HelpText += "Select objects from selected render subset.\n\n";
+            $HelpText += "- Refresh Render Subset List button\n";
+            $HelpText += "Refresh render subset list.\n\n";
+            $HelpText += "- Obejeitor button\n";
+            $HelpText += "Export multiple objects as OBJ.\n";
+            $HelpText += "1. Set destination path. Do not forget to use backslash (D: /).\n";
+            $HelpText += "2. Select objects.\n";
+            $HelpText += "3. Press OBEJEITOR button.\n\n";
+            $HelpText += "- Transfer UVs button\n";
+            $HelpText += "Transfer UVs to multiple objects.\n";
+            $HelpText += "First select object with UVs and then the other objects.\n\n";
+            $HelpText += "- Select Render Camera button\n";
+            $HelpText += "Select render camera.\n\n";
+            $HelpText += "RENDER LAYER MANAGER WINDOW\n\n";
+            $HelpText += "The render layer manager is a separate window within the script. Its functionality is to see all the connections the render layers have.\n\n";
+            $HelpText += "It's divided into 8 lists:\n\n";
+            $HelpText += "1. Render Layers. Shows render layers. Double click to move to current layer.\n";
+            $HelpText += "2. Objects. Shows objects in selected render layer. Double click to select current object.\n";
+            $HelpText += "3. Overrides. Shows layer overrides in selected render layer.\n";
+            $HelpText += "4. Scene Passes. Shows all the scene passes. Double click to select current pass.\n";
+            $HelpText += "5. Associated Passes. Shows passes associated with selected render layer. Double click to select current pass.\n";
+            $HelpText += "6. Associated Contr. Maps. Shows pass contribution maps associated with selected render layer.\n";
+            $HelpText += "7. Passes used by Contribution Maps. Shows passes associated with selected pass contribution map. \n";
+            $HelpText += "8. Objects in Contribution Maps. Shows objects associated with selected pass contribution map.\n\n";
+            $HelpText += "- Refresh\n";
+            $HelpText += "Refresh all lists.\n\n";
+            $HelpText += "- Delete Layer\n";
+            $HelpText += "Delete selected layers.\n\n";
+            $HelpText += "- Go to Master Layer\n";
+            $HelpText += "Go to MasterLayer.\n\n";                                                                                                                
+            $HelpText += "- Add Object\n";
+            $HelpText += "Add selected objects to selected render layer.\n\n";
+            $HelpText += "- Remove Object\n";
+            $HelpText += "Remove selected objects form selected render layer.\n\n";
+            $HelpText += "- Rename Layer\n";
+            $HelpText += "Rename selected render layer. Enter a new name in the text field and press the RENAME LAYER button.\n\n";
+            $HelpText += "- Remove Override\n";
+            $HelpText += "Remove selected render layer override.\n\n";
+            $HelpText += "- Select Objects\n";
+            $HelpText += "Select objects form the last selected render layer.\n\n";
+            $HelpText += "- Create My Default Passes\n";
+            $HelpText += "Create several passes that I use in produccion. PointPass, Beauty, Depth, Difusse, incandescense, indirect, mv2DToxik, normalWorld, reflection, refraction, shadow, specular.\n\n";
+            $HelpText += "- Delete Pass \n";
+            $HelpText += "Delete selected passes.\n\n";
+            $HelpText += "- Create Contribution Map\n";
+            $HelpText += "Create pass contribution map. Associate with selected render layer.\n\n";
+            $HelpText += "- Associate Pass\n";
+            $HelpText += "Associate selected passes with the last selected render layer.\n\n";
+            $HelpText += "- De-associate Pass\n";
+            $HelpText += "De-associate selected passes from the last selected render layer.\n\n";
+            $HelpText += "- Delete Contribution Map\n";
+            $HelpText += "Delete selected pass contribution map. \n\n";
+            $HelpText += "- Add Object\n";
+            $HelpText += "Add selected objects to selected pass contribution map.\n\n";
+            $HelpText += "- Remove Object\n";
+            $HelpText += "Remove selected objects form selected pass contribution map.\n\n";
+            $HelpText += "- Rename Pass Contribution Map\n";
+            $HelpText += "Rename selected pass contribution map. Enter a new name in the text field and press the RENAME PASS CONTRIBUTION LAYER button.\n\n";
+            $HelpText += "- Associate Pass from Contribution Map\n";
+            $HelpText += "Associate selected passes with selected pass contribution map.\n\n";
+            $HelpText += "- De-associate Pass from Contribution Map\n";
+            $HelpText += "De-associate selected passes from selected pass contribution map.\n\n";
+            $HelpText += "- Select Objects\n";
+            $HelpText += "Select objects in the selected contribution map.\n\n";
+            $HelpText += "- Create Passes Window\n";
+            $HelpText += "Open the Create Render Passes window.\n\n";
+            $HelpText += "- Copy selected Render Layer\n";
+            $HelpText += "Copy selected render layer.\n\n";
+            $HelpText += "- Export Seleted Render Layers\n";
+            $HelpText += "Export selected render layers selected, and save them in a MEL file.\n\n";
+            $HelpText += "- Import Render Layers\n";
+            $HelpText += "Imports previously exported render layers.";
+        
+        scrollField -e -font "plainLabelFont" -text $HelpText helpList; 
+        separator -style "none" -h 7;
+        text -font "boldLabelFont" -align "right" -l "by Mariano Antico.                   ";
+        text -font "boldLabelFont" -align "right" -l "www.marianoantico.blogspot.com      "; 
+      
+    tabLayout -edit -tabLabel $tab1 "Render Layers" -tabLabel $tab2 "Tools" -tabLabel $tab3 "Help" $tabs;
+
+showWindow;
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//PROCEDIMIENTOS                                                                                        //
+//RENDER SUBSET                                                                                         //
+//crear render subset                                                                                   // 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+global proc RenderSubset () {
+   string $selObjects[] = `ls -sl`;
+   string $panel = `getPanel -withFocus`;
+   string $camera = `modelEditor -q -camera $panel`;
+   string $subsetShader=`mrCreateCustomNode -asUtility "" mip_render_subset`;
+   string $nombreRenderSubset = `textField -q -tx renderSubsetName`;
+   if ($nombreRenderSubset == ""){
+       warning ("You haven't defined a name.");
+       delete $subsetShader;
+   } else {
+       rename $subsetShader ($nombreRenderSubset + "_rSubset");
+       string $subsetShader = $nombreRenderSubset + "_rSubset";
+       string $resultShader= $subsetShader;
+       connectAttr -f ($subsetShader + ".message") ($camera + ".miLensShader");
+       textField -e -tx "" renderSubsetName;
+       textScrollList -e -a $subsetShader renderSubsetScroll;
+       $num = -1;
+       for ($each in $selObjects) {
+           if ($num == $num) {
+               $num += 1;
+               connectAttr -force ($each + ".message")($resultShader + ".objects["+$num+"]");
+           }
+       }
+   }
+}
+
+//add object
+
+global proc addObjRenderSubset () {
+   string $selObjects[] = `ls -sl`;
+   string $rSel[] = `textScrollList -q -selectItem renderSubsetScroll`;
+   if ($rSel[0] == "") {
+       warning ("Please select a Render Subset Node.");
+   }else{
+       for ($each in $selObjects){
+           string $rSCon[] = `listConnections -d off $rSel`;
+           $num = size($rSCon);
+           select -r $each;
+           string $rVcon[] = `connectionInfo -destinationFromSource ($each + ".message")`;
+           if ($rVcon[0] == ""){
+               connectAttr -force ($each + ".message")( $rSel[0] + ".objects[" + $num + "]" );
+           }else{
+               //warning ($each + " is connect.");
+           }
+       }
+   }
+}
+
+//remove object
+
+global proc removeObjRenderSubset () {
+   string $selObjects[] = `ls -sl`;
+   string $rSel[] = `textScrollList -q -selectItem renderSubsetScroll`;
+   for ($each in $selObjects) {
+       string $rDcon[] = `connectionInfo -destinationFromSource ($each + ".message")`;
+       if ($rDcon[0] == "") {
+           //warning ($each + " is disconnect.");
+       }else{
+           disconnectAttr ($each + ".message")$rDcon;
+       }
+   }
+}
+
+// update render subset
+
+global proc updateRenderSubset() {
+    textScrollList -e -ra renderSubsetScroll;   
+    string $allObjects[] = `ls -l`;
+    for ($each in $allObjects){
+        if ( `nodeType $each` == "mip_render_subset" ) {    
+            textScrollList -e -a $each renderSubsetScroll;
+        }
+    }
+}
+ 
+//delete render subset
+
+global proc deleteRenderSubset() {
+   string $rSel[] = `textScrollList -q -selectItem renderSubsetScroll`;
+   delete $rSel;
+   textScrollList -e -ri $rSel renderSubsetScroll;
+}
+
+//Custom pass entities
+
+global proc customPass() {
+   int $entity = `getAttr "mentalrayGlobals.passAlphaThrough"`;
+   if($entity == 1){
+       editRenderLayerAdjustment "mentalrayGlobals.passAlphaThrough";
+       setAttr "mentalrayGlobals.passAlphaThrough" 0;
+   } else {
+       editRenderLayerAdjustment -r "mentalrayGlobals.passAlphaThrough";
+   }
+}
+
+//Select objects in render subset
+
+global proc selRenderSubset() {
+    string $rSel[] = `textScrollList -q -selectItem renderSubsetScroll`;
+    string $rSCon[] = `listConnections -d off $rSel`;
+    for ($each in $rSCon){
+        select -add $each;       
+    }
+}
+
+
+//OBEJEITOR 0.1, script simple pero efectivo para exportar un obj por elemento seleccionado
+//2010
+
+global proc obejeitor(){
+    string $ruta = `textField -q -tx objRuta`;
+    string $sel[] = `ls -sl`;
+    if ($ruta == "") {
+        warning ("You haven't defined the path.");
+    }else{
+        if (size($sel) == 0) {
+            warning ("You haven't select any object.");
+        }else{
+            for ($each in $sel){
+                select -r $each;
+                $ruta += "/";
+                $ruta = substituteAllString($ruta, "\\", "/");
+                file -force -options "groups=1;ptgroups=1;materials=1;smoothing=1;normals=1" -type "OBJexport" -pr -es ($ruta+$each+".obj");
+                print "Export OK! ";
+            }
+        }
+    }
+}
+
+//RENDER STATS
+
+proc AllOn()
+{
+   checkBoxGrp -e -value1 1 Statsbox1;
+   checkBoxGrp -e -value1 1 Statsbox2;
+   checkBoxGrp -e -value1 1 Statsbox3;
+   checkBoxGrp -e -value1 1 Statsbox4;
+   checkBoxGrp -e -value1 1 Statsbox5;
+   checkBoxGrp -e -value1 1 Statsbox6;
+   checkBoxGrp -e -value1 1 Statsbox7;
+   checkBoxGrp -e -value1 1 Statsbox8;
+   checkBoxGrp -e -value1 1 Statsbox9;
+   checkBoxGrp -e -value1 1 Statsbox10;
+   checkBoxGrp -e -value1 1 Statsbox11;
+}
+
+proc AllOff()
+{
+   checkBoxGrp -e -value1 0 Statsbox1;
+   checkBoxGrp -e -value1 0 Statsbox2;
+   checkBoxGrp -e -value1 0 Statsbox3;
+   checkBoxGrp -e -value1 0 Statsbox4;
+   checkBoxGrp -e -value1 0 Statsbox5;
+   checkBoxGrp -e -value1 0 Statsbox6;
+   checkBoxGrp -e -value1 0 Statsbox7;
+   checkBoxGrp -e -value1 0 Statsbox8;
+   checkBoxGrp -e -value1 0 Statsbox9;
+   checkBoxGrp -e -value1 0 Statsbox10;
+   checkBoxGrp -e -value1 0 Statsbox11;
+}
+
+proc onCS(string $stats){
+    string $sel[] = `ls -sl -dag`;
+    for ($each in $sel){
+        string $ObjType = `nodeType $each`;
+        if($ObjType == "mesh" || $ObjType == "nurbsSurface" || $ObjType == "subdiv" ){
+            int $statState = `getAttr ($each + "." + $stats)`;          
+            if ( $statState == 1 ) {        
+            } else {
+                setAttr ($each + "." + $stats) 1;
+    print "Done\n";             
+            }
+        }
+    }
+}    
+
+proc offCS(string $stats){
+    string $sel[] = `ls -sl -dag`;
+    for ($each in $sel){
+        string $ObjType = `nodeType $each`;
+        if($ObjType == "mesh" || $ObjType == "nurbsSurface" || $ObjType == "subdiv" ){
+            int $statState = `getAttr ($each + "." + $stats)`;            
+            if ( $statState == 0 ) {        
+            } else {
+                setAttr ($each + "." + $stats) 0;
+    print "Done\n";             
+            }
+        }
+    }
+}      
+    
+//override button commands
+
+proc overOff(string $stats){
+   string $sel[] = `ls -sl -dag`;
+   int $i;
+   for ($i=0; $i< size($sel);$i++){
+       string $obj = $sel[$i];
+       string $ShapeNode =$sel[$i+1];
+       string $ObjType = `nodeType $ShapeNode `;
+       if($ObjType == "mesh" || $ObjType == "nurbsSurface" || $ObjType == "subdiv" ){
+           editRenderLayerAdjustment -r ($obj + "." +$stats);
+       }
+   }
+}
+
+proc overrideOff(){
+
+   int $checkCS =`checkBoxGrp -q -value1 Statsbox1`;
+   int $checkRS =`checkBoxGrp -q -value1 Statsbox2`;
+   int $checkMB =`checkBoxGrp -q -value1 Statsbox3`;
+   int $checkPV =`checkBoxGrp -q -value1 Statsbox4`;
+   int $checkSS =`checkBoxGrp -q -value1 Statsbox5`;
+   int $checkVIR =`checkBoxGrp -q -value1 Statsbox6`;
+   int $checkVIRF =`checkBoxGrp -q -value1 Statsbox7`;
+   int $checkDS =`checkBoxGrp -q -value1 Statsbox8`;
+   int $checkOP =`checkBoxGrp -q -value1 Statsbox9`;
+   int $checkFG =`checkBoxGrp -q -value1 Statsbox10`;
+   int $checkFR =`checkBoxGrp -q -value1 Statsbox11`;
+
+   if ($checkCS == 1) overOff("castsShadows");
+   if ($checkRS == 1) overOff("receiveShadows");
+   if ($checkMB == 1) overOff("motionBlur");
+   if ($checkPV == 1) overOff("primaryVisibility");
+   if ($checkSS == 1) overOff("smoothShading");
+   if ($checkVIR == 1) overOff("visibleInReflections");
+   if ($checkVIRF == 1) overOff("visibleInRefractions");
+   if ($checkDS == 1) overOff("doubleSided");
+   if ($checkOP == 1) overOff("opposite");
+   if ($checkFG == 1) overOff("miFinalGatherCast");
+   if ($checkFR == 1) overOff("miFinalGatherReceive");
+
+   print("Done");
+}
+
+proc StatusCheck(){
+      
+    int $checkCS =`checkBoxGrp -q -value1 Statsbox1`;
+    int $checkRS =`checkBoxGrp -q -value1 Statsbox2`;
+    int $checkMB =`checkBoxGrp -q -value1 Statsbox3`;
+    int $checkPV =`checkBoxGrp -q -value1 Statsbox4`;
+    int $checkSS =`checkBoxGrp -q -value1 Statsbox5`;
+    int $checkVIR =`checkBoxGrp -q -value1 Statsbox6`;
+    int $checkVIRF =`checkBoxGrp -q -value1 Statsbox7`;
+    int $checkDS =`checkBoxGrp -q -value1 Statsbox8`;
+    int $checkOP =`checkBoxGrp -q -value1 Statsbox9`;
+    int $checkFG =`checkBoxGrp -q -value1 Statsbox10`;
+    int $checkFR =`checkBoxGrp -q -value1 Statsbox11`;
+
+    if ($checkCS == 1) onCS("castsShadows");
+    if ($checkCS == 0) offCS("castsShadows");
+    
+    if ($checkRS == 1) onCS("receiveShadows");
+    if ($checkRS == 0) offCS("receiveShadows");
+    
+    if ($checkMB == 1) onCS("motionBlur");
+    if ($checkMB == 0) offCS("motionBlur");
+    
+    if ($checkPV == 1) onCS("primaryVisibility");
+    if ($checkPV == 0) offCS("primaryVisibility");
+    
+    if ($checkSS == 1) onCS("smoothShading");
+    if ($checkSS == 0) offCS("smoothShading");
+    
+    if ($checkVIR == 1) onCS("visibleInReflections");
+    if ($checkVIR == 0) offCS("visibleInReflections");
+    
+    if ($checkVIRF == 1) onCS("visibleInRefractions");
+    if ($checkVIRF == 0) offCS("visibleInRefractions");
+    
+    if ($checkDS == 1) onCS("doubleSided");
+    if ($checkDS == 0) offCS("doubleSided");
+    
+    if ($checkOP == 1) onCS("opposite");
+    if ($checkOP == 0) offCS("opposite");
+    
+    if ($checkFG == 1) onCS("miFinalGatherCast");
+    if ($checkFG == 0) offCS("miFinalGatherCast");
+    
+    if ($checkFR == 1) onCS("miFinalGatherReceive");
+    if ($checkFR == 0) offCS("miFinalGatherReceive");
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Antidoto 1.2                                                                                            //
+//Seleccionar el objeto y despues correr el antidoto                                                      //                  
+//meter a todos subdiv 0 en previo y en render 2 y te pasa todo a 3                                       // 
+//toggle de preview display                                                                               // 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+global proc antidoto(){
+   // SelectHierarchy; 
+    string $selection[] = `ls -sl`;
+    
+    if (`objExists Antidoto`){
+        print "Antidoto exist.";
+    }else{
+        sets -name "Antidoto";
+    }
+    
+    for ($myNode in $selection) {
+                
+        $smoothState = `getAttr ($myNode + ".smoothLevel")`;
+        
+        if ( $smoothState >= 1 ) {
+            $smoothState = 0;
+            sets -edit -fe  Antidoto $myNode ;
+        
+        } else { 
+            $smoothState = 2;
+            sets -edit -rm Antidoto $myNode ;
+        }
+        setAttr ( $myNode + ".smoothLevel") $smoothState;
+        
+    }
+
+
+//desactiva que el rendersmooth sea igual que el preview
+
+    for ($myNode in $selection) {
+        $previewRender = `getAttr ($myNode + ".useSmoothPreviewForRender")`;
+        if ( $previewRender == 1 ) { $previewRender = 0; }
+        else { $previewRender = 0; }
+        setAttr ( $myNode + ".useSmoothPreviewForRender") $previewRender;
+    }
+
+//setea el rendersmooth en 2
+
+    for ($myNode in $selection) {
+        $renderSmooth = `getAttr ($myNode + ".renderSmoothLevel")`;
+        if ( $renderSmooth <= 6 ) { $renderSmooth = 2; }
+        else { $renderSmooth = 2; }
+        setAttr ( $myNode + ".renderSmoothLevel") $renderSmooth;
+    }
+
+// pasa los objetos a 3 en subdiv
+
+    displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+    subdivDisplaySmoothness -smoothness 3;
+
+}
+
+//select Antidoto
+
+global proc selectAntidoto(){
+    select Antidoto;
+    displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+    subdivDisplaySmoothness -smoothness 3;
+}
+
+
+// TRANSFER UVs
+
+global proc transferUvs(){
+    string $sel[] = `ls -sl`;
+    for ($i = 1; $i <(size($sel)); ++$i){
+        select $sel[0];
+        select -add $sel[$i];
+        transferAttributes -transferPositions 0 -transferNormals 0 -transferUVs 2 -transferColors 2 -sampleSpace 4 -sourceUvSpace "map1" -targetUvSpace "map1" -searchMethod 3-flipUVs 0 -colorBorders 1 ;
+        int $checkTrasnUvs =`checkBoxGrp -q -value1 TransUvBox1`;
+        if ($checkTrasnUvs == 1) {
+            DeleteHistory;
+        }
+    }
+}
+
+// LOOKTHROUGH RENDER CAM
+
+global proc renderCamSel(){
+    string $allCams[] = `ls -ca`;
+    int $num = 0;
+    for ($each in $allCams){
+        string $camRenderAttr = `getAttr ($each + ".renderable")`;
+        if ($camRenderAttr == 1){
+            string $renderCam = $each;
+            select $renderCam;
+            lookThroughModelPanelClipped $renderCam modelPanel4 0.001 10000;
+            if ($num >= 2){
+                print "You have multiple renderalble cameras.";
+            }
+        }
+    }
+}
+
+// GET RENDER CAM
+
+global proc getRenderCam(){
+    string $allCams[] = `ls -ca`;
+    int $num = 0;
+    for ($each in $allCams){
+        string $camRenderAttr = `getAttr ($each + ".renderable")`;
+        if ($camRenderAttr == 1){
+            string $renderCam = $each;
+            if ($num >= 2){
+                print "You have multiple renderalble cameras.";
+            }
+        }
+    }
+}
+
+//Create color
+
+global proc createColor(){
+    string $selObj[] = `ls -sl`;
+    if (size($selObj) == 0 ){
+        warning "select an object.";    
+    } else {   
+        string $Newlayer = `createRenderLayer -n "color"`;
+        editRenderLayerGlobals -currentRenderLayer $Newlayer;
+        createMyColorRPasses $Newlayer;        
+        editRenderLayerAdjustment "defaultRenderGlobals.imageFilePrefix";
+        editRenderLayerAdjustment "defaultRenderGlobals.imageFormat";
+        editRenderLayerAdjustment "defaultRenderGlobals.imfPluginKey";
+        setAttr "defaultRenderGlobals.imageFormat" 51;
+        setAttr -type "string" "defaultRenderGlobals.imfPluginKey" "exr";
+        setAttr "defaultRenderGlobals.multiCamNamingMode" 1;
+        setAttr -type "string" "defaultRenderGlobals.bufferName" "<RenderPass>";
+        setAttr -type "string" "defaultRenderGlobals.imageFilePrefix" "images/<Scene>/<RenderLayer>/<RenderLayer>";
+        setAttr "miDefaultFramebuffer.datatype" 5;
+        editRenderLayerAdjustment "miDefaultFramebuffer.datatype";
+/*        string $allCams[] = `ls -ca`;
+        for ($each in $allCams){
+            string $camRenderAttr = `getAttr ($each + ".renderable")`;
+            if ($camRenderAttr == 1){
+                string $renderCam = $each;
+                string $renderCamLens = `getAttr ($each + ".miLensShader")`;
+                if ($renderCamLens == ""){
+                    string $CamNode = `mrCreateCustomNode -asUtility "" mia_exposure_photographic`;
+                    setAttr ($CamNode + ".cm2_factor") 10000 ;
+                    setAttr ($CamNode + ".f_number") 5.6 ;
+                    setAttr ($CamNode + ".gamma") 1 ;
+                    editRenderLayerAdjustment ($renderCam + ".miLensShader");
+                    connectAttr -f ($CamNode + ".message") ($renderCam + ".miLensShader");
+                }
+                string $renderCamEnv = `getAttr ($each + ".miEnvironmentShader")`;                 
+            }
+        }    
+        for ($each in $selObj){        
+            select $each;            
+            string $eachSn[] = `pickWalk -d down`;
+            if ($each == $eachSn[0]){            
+            } else {            
+                editRenderLayerMembers -remove $Newlayer $eachSn[0];   
+            }
+        }    
+*/        select -cl;    
+    }
+}
+
+// create my default render passes Color Layer
+
+global proc createMyColorRPasses(string $layer){
+
+    createNode -name ("beauty_" + $layer) renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/beauty.mel" 1;
+    connectAttr -nextAvailable ($layer + ".renderPass") ($sel[0] + ".owner");    
+    
+    createNode -name ("depth_" + $layer) renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/cameraDepth.mel" 1;
+    connectAttr -nextAvailable ($layer + ".renderPass") ($sel[0] + ".owner");    
+    
+    createNode -name ("diffuse_" + $layer) renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/diffuse.mel" 1;
+    connectAttr -nextAvailable ($layer + ".renderPass") ($sel[0] + ".owner");
+    
+    createNode -name ("incandescence_" + $layer) renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/incandescence.mel" 1;
+    connectAttr -nextAvailable ($layer + ".renderPass") ($sel[0] + ".owner");    
+    
+    createNode -name ("indirect_" + $layer) renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/indirect.mel" 1;
+    connectAttr -nextAvailable ($layer + ".renderPass") ($sel[0] + ".owner");
+    
+    createNode -name ("normalWorld_" + $layer) renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/normalWorld.mel" 1;
+    connectAttr -nextAvailable ($layer + ".renderPass") ($sel[0] + ".owner");
+    
+    createNode -name ("reflection_" + $layer) renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/reflection.mel" 1;
+    connectAttr -nextAvailable ($layer + ".renderPass") ($sel[0] + ".owner");
+    
+    createNode -name ("refraction_" + $layer) renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/refraction.mel" 1;
+    connectAttr -nextAvailable ($layer + ".renderPass") ($sel[0] + ".owner");
+    
+    createNode -name ("shadow_" + $layer) renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/shadow.mel" 1;
+    connectAttr -nextAvailable ($layer + ".renderPass") ($sel[0] + ".owner");
+    
+    createNode -name ("specular_" + $layer) renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/specular.mel" 1;
+    connectAttr -nextAvailable ($layer + ".renderPass") ($sel[0] + ".owner");
+
+}
+
+//Create AO
+
+global proc createAO(){
+    string $selObjShort[] = `ls -sl`;   
+    string $selObj[] = `ls -sl -dag`;
+    if (size($selObjShort) == 0 ){
+        warning "select an object.";    
+    } else {   
+        string $Newlayer = `createRenderLayer -n "AO"`;
+        string $AOMat = `shadingNode -n "AO_mat" -asShader surfaceShader`;
+        string $AOnode = `mrCreateCustomNode -asUtility "" mib_amb_occlusion`;
+        connectAttr -force ($AOnode + ".outValue") ($AOMat + ".outColor");
+        setAttr ($AOnode + ".samples") 64;
+        editRenderLayerGlobals -currentRenderLayer $Newlayer;        
+        for ($each in $selObj){
+            string $nodeType = `nodeType $each`;
+            if ($nodeType == "mesh"){
+                select $each;   
+                string $eachSn[] = `pickWalk -d up`; 
+                string $conAll[] = `listConnections -d 1 $each`;
+                for ($con in $conAll){
+                    string $conType = `nodeType $con`;                    
+                    if ($conType == "shadingEngine"){
+                        string $dispCon[] = `listConnections -d 1 -p 1 ($con + ".displacementShader")`;
+                        print ($dispCon[0] + "\n");
+                        if (size($dispCon) >= 1){
+                            string $AOObjMat = `shadingNode -n ($Newlayer + "_" + $eachSn[0] + "_MAT") -asShader lambert`;
+                            setAttr ($AOObjMat + ".color") 0 0 0 ;
+                            setAttr ($AOObjMat + ".transparency") 0 0 0 ;                             
+                            setAttr ($AOObjMat + ".ambientColor") 0 0 0 ;                             
+                            setAttr ($AOObjMat + ".diffuse") 1;
+                            setAttr ($AOObjMat + ".translucence") 1;
+                            setAttr ($AOObjMat + ".translucenceDepth") 1;
+                            setAttr ($AOObjMat + ".translucenceFocus") 1;                           
+                            string $AOObjSG = `sets -renderable true -noSurfaceShader true -empty -name ($AOObjMat + "_SG")`;
+                            connectAttr -f ($AOObjMat + ".outColor") ($AOObjSG + ".surfaceShader");
+                            connectAttr -f $dispCon[0] ($AOObjSG + ".displacementShader");
+                            string $AOnode = `mrCreateCustomNode -asUtility "" mib_amb_occlusion`;
+                            connectAttr -force ($AOnode + ".outValue") ($AOObjMat + ".incandescence");
+                            setAttr ($AOnode + ".samples") 64;
+                            select $eachSn[0];                            
+                            hyperShade -assign $AOObjMat;
+                        } else {
+                            select $eachSn[0];
+                            hyperShade -assign $AOMat;
+                        }
+                    }                
+                }
+            } else if ($nodeType == "spotLight" || $nodeType == "directionalLight" || $nodeType == "volumeLight" ||$nodeType == "areaLight" || $nodeType == "ambientLight" || $nodeType == "pointLight"){
+                select $each;                
+                string $lightSn[] = `pickWalk -d up`;                 
+                editRenderLayerMembers -remove $Newlayer $lightSn[0];
+                editRenderLayerMembers -remove $Newlayer $each;
+            } 
+        }
+        for ($each in $selObj){        
+            select $each;            
+            string $eachSn[] = `pickWalk -d down`;
+            if ($each == $eachSn[0]){            
+            } else {            
+                editRenderLayerMembers -remove $Newlayer $eachSn[0];   
+            }
+        }
+        if (`getAttr "miDefaultOptions.finalGather"`){
+            editRenderLayerAdjustment "miDefaultOptions.finalGather";    
+            setAttr "miDefaultOptions.finalGather" 0;
+        } 
+        if (`getAttr "miDefaultOptions.globalIllum"`){
+            editRenderLayerAdjustment "miDefaultOptions.globalIllum";    
+            setAttr "miDefaultOptions.globalIllum" 0;
+        } 
+        if (`getAttr "miDefaultOptions.caustics"`){
+            editRenderLayerAdjustment "miDefaultOptions.caustics";    
+            setAttr "miDefaultOptions.caustics" 0;
+        }
+        editRenderLayerAdjustment "miDefaultFramebuffer.datatype";
+        editRenderLayerAdjustment "defaultRenderGlobals.imageFormat";
+        editRenderLayerAdjustment "defaultRenderGlobals.imfPluginKey";
+        setAttr "miDefaultFramebuffer.datatype" 2;
+        setAttr "defaultRenderGlobals.imageFormat" 7;
+        setAttr -type "string" "defaultRenderGlobals.imfPluginKey" "iff";
+        setAttr "defaultRenderGlobals.multiCamNamingMode" 1;
+        setAttr -type "string" "defaultRenderGlobals.bufferName" "<RenderPass>";
+        string $allCams[] = `ls -ca`;
+        for ($each in $allCams){
+            string $camRenderAttr = `getAttr ($each + ".renderable")`;
+            if ($camRenderAttr == 1){
+                string $renderCam = $each;
+                string $renderCamLensSHD[] = `listConnections -d 1 ($renderCam + ".miLensShader")`;
+                if ($renderCamLensSHD[0] != ""){
+                    editRenderLayerAdjustment ($renderCam + ".miLensShader");
+                    disconnectAttr ($renderCamLensSHD[0] + ".message") ($renderCam + ".miLensShader");
+                }
+                string $renderCamEnv[] = `getAttr ($each + ".miEnvironmentShader")`;
+                if ($renderCamEnv[0] != ""){
+                    editRenderLayerAdjustment ($renderCam + ".miEnvironmentShader");
+                    disconnectAttr ($renderCamEnv[0] + ".message") ($renderCam + ".miEnvironmentShader");
+                }                 
+            }
+        }
+//        string $selObjLay[] = `editRenderLayerMembers -q -fn -nr $Newlayer`;
+        select -cl;   
+    }
+}
+
+//Create AO TRANSPARENCY
+
+global proc createAOTransp(){
+    string $selObjShort[] = `ls -sl`;   
+    string $selObj[] = `ls -sl -dag`;
+    if (size($selObjShort) == 0 ){
+        warning "select an object.";    
+    } else {   
+        string $Newlayer = `createRenderLayer -n "AO_Transp"`;
+        string $AOMat = `shadingNode -n "AO_Transp_mat" -asShader surfaceShader`;
+        string $AOnode = `mrCreateCustomNode -asUtility "" mib_fg_occlusion`;
+        connectAttr -force ($AOnode + ".outValue") ($AOMat + ".outColor");
+        editRenderLayerGlobals -currentRenderLayer $Newlayer;        
+        for ($each in $selObj){
+            string $nodeType = `nodeType $each`;
+            if ($nodeType == "mesh"){
+                select $each;   
+                string $eachSn[] = `pickWalk -d up`; 
+                string $conAll[] = `listConnections -d 1 $each`;
+                for ($con in $conAll){
+                    string $conType = `nodeType $con`;                    
+                    if ($conType == "shadingEngine"){
+                        string $dispCon[] = `listConnections -d 1 -p 1 ($con + ".displacementShader")`;
+                        print ($dispCon[0] + "\n");
+                        if (size($dispCon) >= 1){
+                            string $AOObjMat = `shadingNode -n ($Newlayer + "_" + $eachSn[0] + "_MAT") -asShader surfaceShader`;
+                            string $AOnode = `mrCreateCustomNode -asUtility "" mib_fg_occlusion`;
+                            connectAttr -force ($AOnode + ".outValue") ($AOObjMat + ".outColor");                        
+                            string $AOObjSG = `sets -renderable true -noSurfaceShader true -empty -name ($AOObjMat + "_SG")`;
+                            connectAttr -f ($AOObjMat + ".outColor") ($AOObjSG + ".surfaceShader");
+                            connectAttr -f $dispCon[0] ($AOObjSG + ".displacementShader");
+                            select $eachSn[0];                            
+                            hyperShade -assign $AOObjMat;
+                        } else {
+                            select $eachSn[0];
+                            hyperShade -assign $AOMat;
+                        }
+                    }                
+                }
+            } else if ($nodeType == "spotLight" || $nodeType == "directionalLight" || $nodeType == "volumeLight" ||$nodeType == "areaLight" || $nodeType == "ambientLight" || $nodeType == "pointLight"){
+                select $each;                
+                string $lightSn[] = `pickWalk -d up`;                 
+                editRenderLayerMembers -remove $Newlayer $lightSn[0];
+                editRenderLayerMembers -remove $Newlayer $each;
+            } 
+        }
+        for ($each in $selObj){        
+            select $each;            
+            string $eachSn[] = `pickWalk -d down`;
+            if ($each == $eachSn[0]){            
+            } else {            
+                editRenderLayerMembers -remove $Newlayer $eachSn[0];   
+            }
+        }
+        if (`getAttr "miDefaultOptions.finalGather"`){
+            editRenderLayerAdjustment "miDefaultOptions.finalGather";    
+            setAttr "miDefaultOptions.finalGather" 0;
+        } 
+        if (`getAttr "miDefaultOptions.globalIllum"`){
+            editRenderLayerAdjustment "miDefaultOptions.globalIllum";    
+            setAttr "miDefaultOptions.globalIllum" 0;
+        } 
+        if (`getAttr "miDefaultOptions.caustics"`){
+            editRenderLayerAdjustment "miDefaultOptions.caustics";    
+            setAttr "miDefaultOptions.caustics" 0;
+        }
+        editRenderLayerAdjustment "miDefaultFramebuffer.datatype";
+        editRenderLayerAdjustment "defaultRenderGlobals.imageFormat";
+        editRenderLayerAdjustment "defaultRenderGlobals.imfPluginKey";
+        editRenderLayerAdjustment "miDefaultOptions.finalGather";        
+        editRenderLayerAdjustment "miDefaultOptions.finalGatherRays";
+        editRenderLayerAdjustment "miDefaultOptions.finalGatherPresampleDensity";
+        editRenderLayerAdjustment "miDefaultOptions.finalGatherPoints";
+        setAttr "miDefaultFramebuffer.datatype" 2;
+        setAttr "defaultRenderGlobals.imageFormat" 7;
+        setAttr -type "string" "defaultRenderGlobals.imfPluginKey" "iff";
+        setAttr "defaultRenderGlobals.multiCamNamingMode" 1;
+        setAttr -type "string" "defaultRenderGlobals.bufferName" "<RenderPass>";
+        setAttr "miDefaultOptions.finalGather" 1;
+        setAttr "miDefaultOptions.finalGatherRays" 100;
+        setAttr "miDefaultOptions.finalGatherPresampleDensity" 60;
+        setAttr "miDefaultOptions.finalGatherPoints" 4;
+        string $allCams[] = `ls -ca`;
+        for ($each in $allCams){
+            string $camRenderAttr = `getAttr ($each + ".renderable")`;
+            if ($camRenderAttr == 1){
+                string $renderCam = $each;
+                string $renderCamLensSHD[] = `listConnections -d 1 ($renderCam + ".miLensShader")`;
+                if ($renderCamLensSHD[0] != ""){
+                    editRenderLayerAdjustment ($renderCam + ".miLensShader");
+                    disconnectAttr ($renderCamLensSHD[0] + ".message") ($renderCam + ".miLensShader");
+                }
+                string $renderCamEnv[] = `getAttr ($each + ".miEnvironmentShader")`;
+                if ($renderCamEnv[0] != ""){
+                    editRenderLayerAdjustment ($renderCam + ".miEnvironmentShader");
+                    disconnectAttr ($renderCamEnv[0] + ".message") ($renderCam + ".miEnvironmentShader");
+                }                 
+            }
+        }
+//        string $selObjLay[] = `editRenderLayerMembers -q -fn -nr $Newlayer`;
+        select -cl;   
+    }
+}
+
+//Create Light layer
+
+global proc createLuzKey(string $name){
+    string $selObj[] = `ls -sl -dag`;
+    int $countObj = 0;    
+    int $count = 0;
+    for ($obj in $selObj){
+        string $nodeType = `nodeType $obj`;
+        if ($nodeType == "mesh"){
+            $countObj += 1;
+        }                                 
+    }
+    for ($light in $selObj){
+        string $nodeType = `nodeType $light`;
+        if ($nodeType == "spotLight" || $nodeType == "directionalLight" || $nodeType == "volumeLight" ||$nodeType == "areaLight" || $nodeType == "ambientLight" || $nodeType == "pointLight"){
+            $count += 1;
+        }                                 
+    } 
+    if ($countObj == 0 ){
+        warning "select object.";    
+    } else if ($count == 0){
+        warning "select a Light.";    
+    } else {
+        string $Newlayer = `createRenderLayer -n $name`;
+        editRenderLayerGlobals -currentRenderLayer $Newlayer;
+        string $LuzMat = `shadingNode -n ($name + "_MAT") -asShader lambert`;
+        setAttr ($LuzMat + ".diffuse") 1;
+        setAttr "miDefaultOptions.rayTracing" 1;
+        //setAttr "miDefaultOptions.finalGather" 0;
+        for ($each in $selObj){
+            string $nodeType = `nodeType $each`;
+            if ($nodeType == "mesh"){
+                select $each;   
+                string $eachSn[] = `pickWalk -d up`; 
+                string $conAll[] = `listConnections -d 1 $each`;
+                for ($con in $conAll){
+                    string $conType = `nodeType $con`;                    
+                    if ($conType == "shadingEngine"){
+                        string $dispCon[] = `listConnections -d 1 -p 1 ($con + ".displacementShader")`;
+                        print ($dispCon[0] + "\n");
+                        if (size($dispCon) >= 1){
+                            string $LuzObjMat = `shadingNode -n ($name + "_" + $eachSn[0] + "_MAT") -asShader lambert`;
+                            setAttr ($LuzObjMat + ".diffuse") 1;                           
+                            string $LuzObjSG = `sets -renderable true -noSurfaceShader true -empty -name ($LuzObjMat + "_SG")`;
+                            connectAttr -f ($LuzObjMat + ".outColor") ($LuzObjSG + ".surfaceShader");
+                            connectAttr -f $dispCon[0] ($LuzObjSG + ".displacementShader");
+                            select $eachSn[0];                            
+                            hyperShade -assign $LuzObjMat;
+                        } else {
+                            select $each;
+                            hyperShade -assign $LuzMat;
+                        }
+                    }
+                }
+            } else if ($nodeType == "spotLight" || $nodeType == "directionalLight" || $nodeType == "volumeLight" ||$nodeType == "areaLight" || $nodeType == "ambientLight" || $nodeType == "pointLight"){
+                editRenderLayerAdjustment ($each + ".color");
+                setAttr ($each + ".color") 0 1 0 ;
+                editRenderLayerAdjustment ($each + ".intensity");
+                setAttr ($each + ".intensity") 5;
+                editRenderLayerAdjustment ($each + ".shadowColor");
+                setAttr ($each + ".lightAngle") 5;
+                setAttr ($each + ".shadowColor") 0 0 1 ;
+                setAttr ($each + ".useRayTraceShadows") 1;
+                setAttr ($each + ".shadowRays") 20;
+            }         
+        } 
+        for ($each in $selObj){        
+            select $each;            
+            string $eachSn[] = `pickWalk -d down`;
+            if ($each == $eachSn[0]){            
+            } else {            
+                editRenderLayerMembers -remove $Newlayer $eachSn[0];   
+            }
+        }
+        if (`getAttr "miDefaultOptions.finalGather"`){
+            editRenderLayerAdjustment "miDefaultOptions.finalGather";    
+            setAttr "miDefaultOptions.finalGather" 0;
+        } 
+        if (`getAttr "miDefaultOptions.globalIllum"`){
+            editRenderLayerAdjustment "miDefaultOptions.globalIllum";    
+            setAttr "miDefaultOptions.globalIllum" 0;
+        } 
+        if (`getAttr "miDefaultOptions.caustics"`){
+            editRenderLayerAdjustment "miDefaultOptions.caustics";    
+            setAttr "miDefaultOptions.caustics" 0;
+        }
+        editRenderLayerAdjustment "miDefaultFramebuffer.datatype";
+        editRenderLayerAdjustment "defaultRenderGlobals.imageFormat";
+        editRenderLayerAdjustment "defaultRenderGlobals.imfPluginKey";
+        setAttr "miDefaultFramebuffer.datatype" 2;
+        setAttr "defaultRenderGlobals.imageFormat" 7;
+        setAttr -type "string" "defaultRenderGlobals.imfPluginKey" "iff";
+        setAttr "defaultRenderGlobals.multiCamNamingMode" 1;
+        setAttr -type "string" "defaultRenderGlobals.bufferName" "<RenderPass>";
+        string $allCams[] = `ls -ca`;
+        for ($each in $allCams){
+            string $camRenderAttr = `getAttr ($each + ".renderable")`;
+            if ($camRenderAttr == 1){
+                string $renderCam = $each;
+                string $renderCamLensSHD[] = `listConnections -d 1 ($renderCam + ".miLensShader")`;
+                if ($renderCamLensSHD[0] != ""){
+                    editRenderLayerAdjustment ($renderCam + ".miLensShader");
+                    disconnectAttr ($renderCamLensSHD[0] + ".message") ($renderCam + ".miLensShader");
+                }
+                string $renderCamEnv[] = `getAttr ($each + ".miEnvironmentShader")`;
+                if ($renderCamEnv[0] != ""){
+                    editRenderLayerAdjustment ($renderCam + ".miEnvironmentShader");
+                    disconnectAttr ($renderCamEnv[0] + ".message") ($renderCam + ".miEnvironmentShader");
+                }                 
+            }
+        }    
+        select -cl;    
+    }
+}
+
+
+//Crear MASK
+
+global proc createRGB(){
+    string $selObjShort[] = `ls -sl`;   
+    string $selObj[] = `ls -sl -dag`;
+    if (size($selObjShort) == 0 ){
+        warning "select an object.";    
+    } else {   
+        string $Newlayer = `createRenderLayer -n "MASK_RGB"`;
+        string $BlackNoAlpha = "BLACK_no_Alpha_mat";
+        string $Red = "RED_mat";
+        string $Green = "GREEN_mat";
+        string $Blue = "BLUE_mat";
+        string $RGBMat = "BLACK_mat";
+        if (`objExists "BLACK_no_Alpha_mat"` && `objExists "RED_mat"` && `objExists "GREEN_mat"` && `objExists "BLUE_mat"` && `objExists "BLACK_mat"`){
+        } else {
+            string $BlackNoAlpha = `shadingNode -n "BLACK_no_Alpha_mat" -asShader surfaceShader`;
+            setAttr ($BlackNoAlpha + ".outMatteOpacity") 0 0 0 ;
+            string $Red = `shadingNode -n "RED_mat" -asShader surfaceShader`;
+            setAttr ($Red + ".outColor") 1 0 0 ;
+            string $Green = `shadingNode -n "GREEN_mat" -asShader surfaceShader`;
+            setAttr ($Green + ".outColor") 0 1 0 ;        
+            string $Blue = `shadingNode -n "BLUE_mat" -asShader surfaceShader`;
+            setAttr ($Blue + ".outColor") 0 0 1 ;
+            string $RGBMat = `shadingNode -n "BLACK_mat" -asShader surfaceShader`;
+        }
+        editRenderLayerGlobals -currentRenderLayer $Newlayer;        
+        for ($each in $selObj){
+            string $nodeType = `nodeType $each`;
+            if ($nodeType == "mesh"){
+                select $each;   
+                string $eachSn[] = `pickWalk -d up`; 
+                string $conAll[] = `listConnections -d 1 $each`;
+                for ($con in $conAll){
+                    string $conType = `nodeType $con`;                    
+                    if ($conType == "shadingEngine"){
+                        string $dispCon[] = `listConnections -d 1 -p 1 ($con + ".displacementShader")`;
+                        print ($dispCon[0] + "\n");
+                        if (size($dispCon) >= 1){
+                            string $RGBObjMat = `shadingNode -n ("MATTE_" + $eachSn[0] + "_MAT") -asShader surfaceShader`;
+                            string $RGBObjSG = `sets -renderable true -noSurfaceShader true -empty -name ($RGBObjMat + "_SG")`;
+                            connectAttr -f ($RGBObjMat + ".outColor") ($RGBObjSG + ".surfaceShader");
+                            connectAttr -f $dispCon[0] ($RGBObjSG + ".displacementShader");
+                            select $eachSn[0];                            
+                            hyperShade -assign $RGBObjMat;
+                        } else {
+                            select $eachSn[0];
+                            hyperShade -assign $RGBMat;
+                        }
+                    }                
+                }
+            } else if ($nodeType == "spotLight" || $nodeType == "directionalLight" || $nodeType == "volumeLight" ||$nodeType == "areaLight" || $nodeType == "ambientLight" || $nodeType == "pointLight"){
+                select $each;                
+                string $lightSn[] = `pickWalk -d up`;                 
+                editRenderLayerMembers -remove $Newlayer $lightSn[0];
+                editRenderLayerMembers -remove $Newlayer $each;
+            } 
+        }
+        for ($each in $selObj){        
+            select $each;            
+            string $eachSn[] = `pickWalk -d down`;
+            if ($each == $eachSn[0]){            
+            } else {            
+                editRenderLayerMembers -remove $Newlayer $eachSn[0];   
+            }
+        }
+        editRenderLayerAdjustment "miDefaultFramebuffer.datatype";
+        editRenderLayerAdjustment "defaultRenderGlobals.imageFormat";
+        editRenderLayerAdjustment "defaultRenderGlobals.imfPluginKey";
+        editRenderLayerAdjustment "miDefaultOptions.rayTracing";
+        setAttr "miDefaultFramebuffer.datatype" 2;
+        setAttr "miDefaultOptions.rayTracing" 0;
+        setAttr "defaultRenderGlobals.imageFormat" 7;
+        setAttr -type "string" "defaultRenderGlobals.imfPluginKey" "iff";
+        setAttr "defaultRenderGlobals.multiCamNamingMode" 1;
+        setAttr -type "string" "defaultRenderGlobals.bufferName" "<RenderPass>";
+        string $allCams[] = `ls -ca`;
+        for ($each in $allCams){
+            string $camRenderAttr = `getAttr ($each + ".renderable")`;
+            if ($camRenderAttr == 1){
+                string $renderCam = $each;
+                string $renderCamLensSHD[] = `listConnections -d 1 ($renderCam + ".miLensShader")`;
+                if ($renderCamLensSHD[0] != ""){
+                    editRenderLayerAdjustment ($renderCam + ".miLensShader");
+                    disconnectAttr ($renderCamLensSHD[0] + ".message") ($renderCam + ".miLensShader");
+                }
+                string $renderCamEnv[] = `getAttr ($each + ".miEnvironmentShader")`;
+                if ($renderCamEnv[0] != ""){
+                    editRenderLayerAdjustment ($renderCam + ".miEnvironmentShader");
+                    disconnectAttr ($renderCamEnv[0] + ".message") ($renderCam + ".miEnvironmentShader");
+                }                 
+            }
+        } 
+//        string $selObjLay[] = `editRenderLayerMembers -q -fn -nr $Newlayer`;
+        select -cl;   
+    }
+}
+
+//Crear SHADOW
+
+global proc createSHADOW(){
+    string $selObjShort[] = `ls -sl`;   
+    string $selObj[] = `ls -sl -dag`;
+    int $count = 0; 
+    int $countObj = 0;    
+    for ($obj in $selObj){
+        string $nodeType = `nodeType $obj`;
+        if ($nodeType == "mesh"){
+            $countObj += 1;
+        }                                 
+    }
+    for ($light in $selObj){
+        string $nodeType = `nodeType $light`;
+        if ($nodeType == "spotLight" || $nodeType == "directionalLight" || $nodeType == "volumeLight" ||$nodeType == "areaLight" || $nodeType == "ambientLight" || $nodeType == "pointLight"){
+            $count += 1;
+        }
+    }                                 
+    if ($countObj == 0 ){
+        warning "select object.";    
+    } else if ($count == 0){
+        warning "select a Light.";    
+    } else {
+        string $ShadowMat = "SHADOW_mat";   
+        string $Newlayer = `createRenderLayer -n "shadow"`;
+        if (`objExists "SHADOW_mat"`){
+        } else {        
+            string $Shadow = `shadingNode -n "SHADOW_mat" -asShader useBackground`;
+            string $ShadowSG = `sets -renderable true -noSurfaceShader true -empty -name ($Shadow + "_SG")`;
+            connectAttr -f ($Shadow + ".outColor") ($ShadowSG + ".surfaceShader");
+            setAttr ($Shadow + ".specularColor") 0 0 0 ;
+            setAttr ($Shadow + ".reflectivity") 0;
+            setAttr ($Shadow + ".reflectionLimit") 0;
+            setAttr ($Shadow + ".miOcclusionMask") 0;
+        }
+        editRenderLayerGlobals -currentRenderLayer $Newlayer;        
+        for ($each in $selObj){
+            string $nodeType = `nodeType $each`;
+            if ($nodeType == "mesh"){
+                select $each;   
+                string $eachSn[] = `pickWalk -d up`; 
+                string $conAll[] = `listConnections -d 1 $each`;
+                for ($con in $conAll){
+                    string $conType = `nodeType $con`;                    
+                    if ($conType == "shadingEngine"){
+                        string $dispCon[] = `listConnections -d 1 -p 1 ($con + ".displacementShader")`;
+                        print ($dispCon[0] + "\n");
+                        if (size($dispCon) >= 1){
+                            string $ShadowMat = `shadingNode -n ("SHADOW_" + $eachSn[0] + "_MAT") -asShader useBackground`;
+                            string $ShadowMatSG = `sets -renderable true -noSurfaceShader true -empty -name ($ShadowMat + "_SG")`;
+                            connectAttr -f ($ShadowMat + ".outColor") ($ShadowMatSG + ".surfaceShader");
+                            connectAttr -f $dispCon[0] ($ShadowMatSG + ".displacementShader");
+                            setAttr ($ShadowMat + ".specularColor") 0 0 0 ;
+                            setAttr ($ShadowMat + ".reflectivity") 0;
+                            setAttr ($ShadowMat + ".reflectionLimit") 0;
+                            setAttr ($ShadowMat + ".miOcclusionMask") 0;
+                            select $eachSn[0];                            
+                            hyperShade -assign $ShadowMat;
+                        } else {
+                            select $eachSn[0];
+                            hyperShade -assign $ShadowMat;
+                        }
+                    }                
+                }
+            } else if ($nodeType == "spotLight" || $nodeType == "directionalLight" || $nodeType == "volumeLight" ||$nodeType == "areaLight" || $nodeType == "ambientLight" || $nodeType == "pointLight"){
+                select $each;                
+                string $lightSn[] = `pickWalk -d up`;
+                editRenderLayerAdjustment ($each + ".useDepthMapShadows");
+                setAttr ($each + ".useDepthMapShadows") 0;
+                editRenderLayerAdjustment ($each + ".useRayTraceShadows");
+                setAttr ($each + ".useRayTraceShadows") 1;
+                editRenderLayerAdjustment ($each + ".lightAngle");                
+                setAttr ($each + ".lightAngle") 5;
+                editRenderLayerAdjustment ($each + ".shadowRays");                
+                setAttr ($each + ".shadowRays") 20;                 
+//                editRenderLayerMembers -remove $Newlayer $lightSn[0];
+                editRenderLayerMembers -remove $Newlayer $each;
+            } 
+        }
+        for ($each in $selObj){        
+            select $each;            
+            string $eachSn[] = `pickWalk -d down`;
+            if ($each == $eachSn[0]){            
+            } else {            
+                editRenderLayerMembers -remove $Newlayer $eachSn[0];   
+            }
+        }
+        if (`getAttr "miDefaultOptions.finalGather"`){
+            editRenderLayerAdjustment "miDefaultOptions.finalGather";    
+            setAttr "miDefaultOptions.finalGather" 0;
+        } 
+        if (`getAttr "miDefaultOptions.globalIllum"`){
+            editRenderLayerAdjustment "miDefaultOptions.globalIllum";    
+            setAttr "miDefaultOptions.globalIllum" 0;
+        } 
+        if (`getAttr "miDefaultOptions.caustics"`){
+            editRenderLayerAdjustment "miDefaultOptions.caustics";    
+            setAttr "miDefaultOptions.caustics" 0;
+        }
+        editRenderLayerAdjustment "miDefaultFramebuffer.datatype";
+        editRenderLayerAdjustment "defaultRenderGlobals.imageFormat";
+        editRenderLayerAdjustment "defaultRenderGlobals.imfPluginKey";
+        setAttr "miDefaultFramebuffer.datatype" 2;
+        setAttr "defaultRenderGlobals.imageFormat" 7;
+        setAttr -type "string" "defaultRenderGlobals.imfPluginKey" "iff";
+        setAttr "defaultRenderGlobals.multiCamNamingMode" 1;
+        setAttr -type "string" "defaultRenderGlobals.bufferName" "<RenderPass>";
+        string $allCams[] = `ls -ca`;
+        for ($each in $allCams){
+            string $camRenderAttr = `getAttr ($each + ".renderable")`;
+            if ($camRenderAttr == 1){
+                string $renderCam = $each;
+                string $renderCamLensSHD[] = `listConnections -d 1 ($renderCam + ".miLensShader")`;
+                if ($renderCamLensSHD[0] != ""){
+                    editRenderLayerAdjustment ($renderCam + ".miLensShader");
+                    disconnectAttr ($renderCamLensSHD[0] + ".message") ($renderCam + ".miLensShader");
+                }
+                string $renderCamEnv[] = `getAttr ($each + ".miEnvironmentShader")`;
+                if ($renderCamEnv[0] != ""){
+                    editRenderLayerAdjustment ($renderCam + ".miEnvironmentShader");
+                    disconnectAttr ($renderCamEnv[0] + ".message") ($renderCam + ".miEnvironmentShader");
+                }                 
+            }
+        } 
+//        string $selObjLay[] = `editRenderLayerMembers -q -fn -nr $Newlayer`;
+        select -cl;   
+    }
+}
+
+
+//Asign Material
+//BLACK
+
+global proc black(){
+    string $selObjShort[] = `ls -o -sl`;   
+    string $selObj[] = `ls -sl -dag`;
+    if (size($selObjShort) == 0 ){
+        warning "select an object.";    
+    } else {
+        for ($each in $selObj){
+            string $nodeType = `nodeType $each`;
+            if ($nodeType == "mesh"){
+                select $each;
+                string $conAll[] = `listConnections -d 1 $each`;
+                string $eachSn[0] = `pickWalk -d up`;
+                for ($con in $conAll){
+                    string $conType = `nodeType $con`;
+                    if ($conType == "shadingEngine"){
+                        string $dispCon[] = `listConnections -d 1 -p 1 ($con + ".displacementShader")`;
+                        if (size($dispCon) >= 1){
+                            if (`objExists ("MATTE_" + $eachSn[0] + "_MAT")`){
+                                setAttr ("MATTE_" + $eachSn[0] + "_MAT.outColor") -type double3 0 0 0 ;
+                                setAttr ("MATTE_" + $eachSn[0] + "_MAT.outMatteOpacity") -type double3 1 1 1 ;
+                                hyperShade -assign ("MATTE_" + $eachSn[0] + "_MAT");
+                            } else {                          
+                                string $RGBObjMat = `shadingNode -n ("MATTE_" + $eachSn[0] + "_MAT") -asShader surfaceShader`;
+                                string $RGBObjSG = `sets -renderable true -noSurfaceShader true -empty -name ($RGBObjMat + "_SG")`;
+                                setAttr ($RGBObjMat + ".outColor") -type double3 0 0 0 ;
+                                setAttr ($RGBObjMat + ".outMatteOpacity") -type double3 1 1 1 ; 
+                                connectAttr -f ($RGBObjMat + ".outColor") ($RGBObjSG + ".surfaceShader");
+                                connectAttr -f $dispCon[0] ($RGBObjSG + ".displacementShader");
+                                select $eachSn[0];                            
+                                hyperShade -assign $RGBObjMat;                                
+                            }
+                        } else {
+                            string $Black = "BLACK_mat";
+                            if (`objExists "BLACK_mat"`){
+                                setAttr ($Black + ".outColor") -type double3 0 0 0 ;
+                                setAttr ($Black + ".outMatteOpacity") -type double3 1 1 1 ; 
+                                select $each;
+                                hyperShade -assign $Black;
+                            } else {
+                                string $Black = `shadingNode -n "BLACK_mat" -asShader surfaceShader`;
+                                setAttr ($Black + ".outColor") -type double3 0 0 0 ;
+                                setAttr ($Black + ".outMatteOpacity") -type double3 1 1 1 ;                  
+                                select $each;
+                                hyperShade -assign $Black;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+//RED
+
+global proc red(){
+    string $selObjShort[] = `ls -o -sl`;   
+    string $selObj[] = `ls -sl -dag`;
+    if (size($selObjShort) == 0 ){
+        warning "select an object.";    
+    } else {
+        for ($each in $selObj){
+            string $nodeType = `nodeType $each`;
+            if ($nodeType == "mesh"){
+                select $each;
+                string $conAll[] = `listConnections -d 1 $each`;
+                string $eachSn[0] = `pickWalk -d up`;
+                for ($con in $conAll){
+                    string $conType = `nodeType $con`;
+                    if ($conType == "shadingEngine"){
+                        string $dispCon[] = `listConnections -d 1 -p 1 ($con + ".displacementShader")`;
+                        if (size($dispCon) >= 1){
+                            if (`objExists ("MATTE_" + $eachSn[0] + "_MAT")`){
+                                setAttr ("MATTE_" + $eachSn[0] + "_MAT.outColor") -type double3 1 0 0 ;
+                                setAttr ("MATTE_" + $eachSn[0] + "_MAT.outMatteOpacity") -type double3 1 1 1 ;
+                                hyperShade -assign ("MATTE_" + $eachSn[0] + "_MAT");
+                            } else {                          
+                                string $RGBObjMat = `shadingNode -n ("MATTE_" + $eachSn[0] + "_MAT") -asShader surfaceShader`;
+                                string $RGBObjSG = `sets -renderable true -noSurfaceShader true -empty -name ($RGBObjMat + "_SG")`;
+                                setAttr ($RGBObjMat + ".outColor") -type double3 1 0 0 ; 
+                                setAttr ($RGBObjMat + ".outMatteOpacity") -type double3 1 1 1 ;                                
+                                connectAttr -f ($RGBObjMat + ".outColor") ($RGBObjSG + ".surfaceShader");
+                                connectAttr -f $dispCon[0] ($RGBObjSG + ".displacementShader");
+                                select $eachSn[0];                            
+                                hyperShade -assign $RGBObjMat;                                
+                            }
+                        } else {
+                            string $Red = "RED_mat";
+                            if (`objExists "RED_mat"`){
+                                setAttr ($Red + ".outColor") -type double3 1 0 0 ;
+                                setAttr ($Red + ".outMatteOpacity") -type double3 1 1 1 ;
+                                select $each;
+                                hyperShade -assign $Red;
+                            } else {
+                                string $Red = `shadingNode -n "RED_mat" -asShader surfaceShader`;
+                                setAttr ($Red + ".outColor") -type double3 1 0 0 ;
+                                setAttr ($Red + ".outMatteOpacity") -type double3 1 1 1 ;                 
+                                select $each;
+                                hyperShade -assign $Red;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+//BLUE
+
+global proc blue(){
+    string $selObjShort[] = `ls -o -sl`;   
+    string $selObj[] = `ls -sl -dag`;
+    if (size($selObjShort) == 0 ){
+        warning "select an object.";    
+    } else {
+        for ($each in $selObj){
+            string $nodeType = `nodeType $each`;
+            if ($nodeType == "mesh"){
+                select $each;
+                string $conAll[] = `listConnections -d 1 $each`;
+                string $eachSn[0] = `pickWalk -d up`;
+                for ($con in $conAll){
+                    string $conType = `nodeType $con`;
+                    if ($conType == "shadingEngine"){
+                        string $dispCon[] = `listConnections -d 1 -p 1 ($con + ".displacementShader")`;
+                        if (size($dispCon) >= 1){
+                            if (`objExists ("MATTE_" + $eachSn[0] + "_MAT")`){
+                                setAttr ("MATTE_" + $eachSn[0] + "_MAT.outColor") -type double3 0 0 1 ;
+                                setAttr ("MATTE_" + $eachSn[0] + "_MAT.outMatteOpacity") -type double3 1 1 1 ;
+                                hyperShade -assign ("MATTE_" + $eachSn[0] + "_MAT");
+                            } else {                          
+                                string $RGBObjMat = `shadingNode -n ("MATTE_" + $eachSn[0] + "_MAT") -asShader surfaceShader`;
+                                string $RGBObjSG = `sets -renderable true -noSurfaceShader true -empty -name ($RGBObjMat + "_SG")`;
+                                setAttr ($RGBObjMat + ".outColor") -type double3 0 0 1 ;
+                                setAttr ($RGBObjMat + ".outMatteOpacity") -type double3 1 1 1 ; 
+                                connectAttr -f ($RGBObjMat + ".outColor") ($RGBObjSG + ".surfaceShader");
+                                connectAttr -f $dispCon[0] ($RGBObjSG + ".displacementShader");
+                                select $eachSn[0];                            
+                                hyperShade -assign $RGBObjMat;                                
+                            }
+                        } else {
+                            string $Blue = "BLUE_mat";
+                            if (`objExists "BLUE_mat"`){
+                                setAttr ($Blue + ".outColor") -type double3 0 0 1 ;
+                                setAttr ($Blue + ".outMatteOpacity") -type double3 1 1 1 ; 
+                                select $each;
+                                hyperShade -assign $Blue;
+                            } else {
+                                string $Blue = `shadingNode -n "BLUE_mat" -asShader surfaceShader`;
+                                setAttr ($Blue + ".outColor") -type double3 0 0 1 ;
+                                setAttr ($Blue + ".outMatteOpacity") -type double3 1 1 1 ;                  
+                                select $each;
+                                hyperShade -assign $Blue;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+//GREEN
+
+global proc green(){
+    string $selObjShort[] = `ls -o -sl`;   
+    string $selObj[] = `ls -sl -dag`;
+    if (size($selObjShort) == 0 ){
+        warning "select an object.";    
+    } else {
+        for ($each in $selObj){
+            string $nodeType = `nodeType $each`;
+            if ($nodeType == "mesh"){
+                select $each;
+                string $conAll[] = `listConnections -d 1 $each`;
+                string $eachSn[0] = `pickWalk -d up`;
+                for ($con in $conAll){
+                    string $conType = `nodeType $con`;
+                    if ($conType == "shadingEngine"){
+                        string $dispCon[] = `listConnections -d 1 -p 1 ($con + ".displacementShader")`;
+                        if (size($dispCon) >= 1){
+                            if (`objExists ("MATTE_" + $eachSn[0] + "_MAT")`){
+                                setAttr ("MATTE_" + $eachSn[0] + "_MAT.outColor") -type double3 0 1 0 ;
+                                setAttr ("MATTE_" + $eachSn[0] + "_MAT.outMatteOpacity") -type double3 1 1 1 ;
+                                hyperShade -assign ("MATTE_" + $eachSn[0] + "_MAT");
+                            } else {                          
+                                string $RGBObjMat = `shadingNode -n ("MATTE_" + $eachSn[0] + "_MAT") -asShader surfaceShader`;
+                                string $RGBObjSG = `sets -renderable true -noSurfaceShader true -empty -name ($RGBObjMat + "_SG")`;
+                                setAttr ($RGBObjMat + ".outColor") -type double3 0 1 0 ;
+                                setAttr ($RGBObjMat + ".outMatteOpacity") -type double3 1 1 1 ; 
+                                connectAttr -f ($RGBObjMat + ".outColor") ($RGBObjSG + ".surfaceShader");
+                                connectAttr -f $dispCon[0] ($RGBObjSG + ".displacementShader");
+                                select $eachSn[0];                            
+                                hyperShade -assign $RGBObjMat;                                
+                            }
+                        } else {
+                            string $Green = "GREEN_mat";
+                            if (`objExists "GREEN_mat"`){
+                                setAttr ($Green + ".outColor") -type double3 0 1 0 ;
+                                setAttr ($Green + ".outMatteOpacity") -type double3 1 1 1 ; 
+                                select $each;
+                                hyperShade -assign $Green;
+                            } else {
+                                string $Green = `shadingNode -n "GREEN_mat" -asShader surfaceShader`;
+                                setAttr ($Green + ".outColor") -type double3 0 1 0 ;
+                                setAttr ($Green + ".outMatteOpacity") -type double3 1 1 1 ;                  
+                                select $each;
+                                hyperShade -assign $Green;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+//BLACK NO ALPHA
+
+global proc blackNoAlpha(){
+    string $selObjShort[] = `ls -o -sl`;   
+    string $selObj[] = `ls -sl -dag`;
+    if (size($selObjShort) == 0 ){
+        warning "select an object.";    
+    } else {
+        for ($each in $selObj){
+            string $nodeType = `nodeType $each`;
+            if ($nodeType == "mesh"){
+                select $each;
+                string $conAll[] = `listConnections -d 1 $each`;
+                string $eachSn[0] = `pickWalk -d up`;
+                for ($con in $conAll){
+                    string $conType = `nodeType $con`;
+                    if ($conType == "shadingEngine"){
+                        string $dispCon[] = `listConnections -d 1 -p 1 ($con + ".displacementShader")`;
+                        if (size($dispCon) >= 1){
+                            if (`objExists ("MATTE_" + $eachSn[0] + "_MAT")`){
+                                setAttr ("MATTE_" + $eachSn[0] + "_MAT.outColor") -type double3 0 0 0 ;
+                                setAttr ("MATTE_" + $eachSn[0] + "_MAT.outMatteOpacity") -type double3 0 0 0 ;
+                                hyperShade -assign ("MATTE_" + $eachSn[0] + "_MAT");
+                            } else {                          
+                                string $RGBObjMat = `shadingNode -n ("MATTE_" + $eachSn[0] + "_MAT") -asShader surfaceShader`;
+                                string $RGBObjSG = `sets -renderable true -noSurfaceShader true -empty -name ($RGBObjMat + "_SG")`;
+                                setAttr ($RGBObjMat + ".outColor") -type double3 0 0 0 ;
+                                setAttr ($RGBObjMat + ".outMatteOpacity") -type double3 0 0 0 ; 
+                                connectAttr -f ($RGBObjMat + ".outColor") ($RGBObjSG + ".surfaceShader");
+                                connectAttr -f $dispCon[0] ($RGBObjSG + ".displacementShader");
+                                select $eachSn[0];                            
+                                hyperShade -assign $RGBObjMat;                                
+                            }
+                        } else {
+                            string $BlackNoAlpha = "BLACK_no_Alpha_mat";
+                            if (`objExists "BLACK_no_Alpha_mat"`){
+                                setAttr ($BlackNoAlpha + ".outColor") -type double3 0 0 0 ;
+                                setAttr ($BlackNoAlpha + ".outMatteOpacity") -type double3 0 0 0 ;
+                                select $each;
+                                hyperShade -assign $BlackNoAlpha;
+                            } else {
+                                string $BlackNoAlpha = `shadingNode -n "BLACK_no_Alpha_mat" -asShader surfaceShader`;
+                                setAttr ($BlackNoAlpha + ".outColor") -type double3 0 0 0 ;
+                                setAttr ($BlackNoAlpha + ".outMatteOpacity") -type double3 0 0 0 ;                 
+                                select $each;
+                                hyperShade -assign $BlackNoAlpha;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+//USE BACKGROUND
+
+global proc shadow(){
+    string $selObjShort[] = `ls -sl`;   
+    string $selObj[] = `ls -sl -dag`;
+    if (size($selObjShort) == 0 ){
+        warning "select an object.";    
+    } else {   
+        for ($each in $selObj){
+            string $nodeType = `nodeType $each`;
+            if ($nodeType == "mesh"){
+                string $shadow = "Shadow_Mask_MAT";
+                if (`objExists "Shadow_Mask_MAT"`){
+                    select $selObj;
+                    hyperShade -assign $shadow;
+                } else {
+                    string $shadow = `shadingNode -n "Shadow_Mask_MAT" -asShader useBackground`;
+                    setAttr ($shadow + ".specularColor") 0 0 0 ;
+                    setAttr ($shadow + ".reflectivity") 0 ;
+                    setAttr ($shadow + ".reflectionLimit") 0 ;
+                    select $selObj;
+                    hyperShade -assign $shadow;
+                }
+            } 
+        }
+    }
+}
+
+
+//Z-DEPTH
+
+global proc zDepth(){
+    string $selObjShort[] = `ls -sl`;   
+    string $selObj[] = `ls -sl -dag`;
+    if (size($selObjShort) == 0 ){
+        warning "select an object.";    
+    } else {   
+        for ($each in $selObj){
+            string $nodeType = `nodeType $each`;
+            if ($nodeType == "mesh"){
+                string $zDepth = "Z_Depth_MAT";
+                if (`objExists "Z_Depth_MAT"`){
+                    select $selObj;
+                    hyperShade -assign $zDepth;
+                } else {
+                    string $zDepth = `shadingNode -n "Z_Depth_MAT" -asShader surfaceShader`;
+                    string $zDepthRange = `shadingNode -n "Z_Depth_setRange" -au "setRange"`;
+                    connectAttr -force ($zDepthRange + ".outValueX") ($zDepth + ".outColorR");
+                    connectAttr -force ($zDepthRange + ".outValueX") ($zDepth + ".outColorG");
+                    connectAttr -force ($zDepthRange + ".outValueX") ($zDepth + ".outColorB");
+                    setAttr ($zDepthRange + ".minX") 1;
+                    string $zDepthMultDiv = `shadingNode -n "Z_Depth_multiplyDivide" -au "multiplyDivide"`;
+                    setAttr ($zDepthMultDiv + ".input2X") -1;
+                    connectAttr -force ($zDepthMultDiv + ".outputX") ($zDepthRange + ".valueX");
+                    string $zDepthSampInfo = `shadingNode -n "Z_Depth_samplerInfo" -au "samplerInfo"`;
+                    addAttr -ln "cameraNearClipPlane"  -at double  -dv 0.100 $zDepthSampInfo;
+                    addAttr -ln "cameraFarClipPlane"  -at double  -dv 10000 $zDepthSampInfo;
+                    connectAttr -force ($zDepthSampInfo + ".pointCameraZ") ($zDepthMultDiv + ".input1X");
+                    connectAttr -force ($zDepthSampInfo + ".cameraNearClipPlane") ($zDepthRange + ".oldMinX");
+                    connectAttr -force ($zDepthSampInfo + ".cameraFarClipPlane") ($zDepthRange + ".oldMaxX");
+                    select $selObj;
+                    hyperShade -assign $zDepth;
+                }
+            } 
+        }
+    }
+}
+
+//AO TRANSPARENCY
+
+global proc AOTransparency(){
+    string $selObjShort[] = `ls -sl`;
+    string $selObj[] = `ls -sl -dag`;
+    string $fileNew = "";
+    string $fileExist = "";
+    if (size($selObjShort) == 0 ){
+        warning "select an object.";    
+    } else {
+        int $obj = 0;        
+        for ($each in $selObj){
+            string $nodeType = `nodeType $each`;
+            if ($nodeType == "mesh"){
+                ++$obj;                
+            }
+        }
+        if ($obj == 0) {
+            warning "select an object.";
+        } else {
+            string $selObjShort[] = `ls -sl`;
+            string $selObj[] = `ls -sl -dag`;
+            int $num = 0;            
+            for ($each in $selObjShort){
+                string $nodeType = `nodeType $each`;
+                if ($nodeType == "file" && $num == 0){
+                    ++$num;                
+                    string $fileExist = $each;
+                    CreateEmptyGroup;
+                } else if ($nodeType == "file" && $num >= 1){
+                    print $num;                    
+                    warning "Please select only one File Node";
+                }
+            }
+            if ($num == 0) {
+                string $fileNew = `shadingNode -asTexture file`;
+                string $place2dNew = `shadingNode -asUtility place2dTexture`;
+                connectAttr -f ($place2dNew + ".coverage") ($fileNew + ".coverage");
+                connectAttr -f ($place2dNew + ".translateFrame") ($fileNew + ".translateFrame");
+                connectAttr -f ($place2dNew + ".rotateFrame") ($fileNew + ".rotateFrame");
+                connectAttr -f ($place2dNew + ".mirrorU") ($fileNew + ".mirrorU");
+                connectAttr -f ($place2dNew + ".mirrorV") ($fileNew + ".mirrorV");
+                connectAttr -f ($place2dNew + ".stagger") ($fileNew + ".stagger");
+                connectAttr -f ($place2dNew + ".wrapU") ($fileNew + ".wrapU");
+                connectAttr -f ($place2dNew + ".wrapV") ($fileNew + ".wrapV");
+                connectAttr -f ($place2dNew + ".repeatUV") ($fileNew + ".repeatUV");
+                connectAttr -f ($place2dNew + ".offset") ($fileNew + ".offset");
+                connectAttr -f ($place2dNew + ".rotateUV") ($fileNew + ".rotateUV");
+                connectAttr -f ($place2dNew + ".noiseUV") ($fileNew + ".noiseUV");
+                connectAttr -f ($place2dNew + ".vertexUvOne") ($fileNew + ".vertexUvOne");
+                connectAttr -f ($place2dNew + ".vertexUvTwo") ($fileNew + ".vertexUvTwo");
+                connectAttr -f ($place2dNew + ".vertexUvThree") ($fileNew + ".vertexUvThree");
+                connectAttr -f ($place2dNew + ".vertexCameraOne") ($fileNew + ".vertexCameraOne");
+                connectAttr -f ($place2dNew + ".outUV") ($fileNew + ".uv");
+                connectAttr -f ($place2dNew + ".outUvFilterSize") ($fileNew + ".uvFilterSize");
+                string $DirName = `workspace -q -fullName`;
+                string $openFileName[] = `fileDialog2  -caption "Please select a transparency map." -fileMode 1 -startingDirectory $DirName -fileFilter "*.*"`;
+                setAttr -type "string" ($fileNew + ".fileTextureName") (substituteAllString($openFileName[0], ($DirName + "/"), ""));
+                string $mipCardOpacity = `mrCreateCustomNode -asShader "" mip_card_opacity`;
+                connectAttr -f ($fileNew + ".outAlpha") ($mipCardOpacity + ".opacity");
+                string $mibFgOcclusion = `mrCreateCustomNode  -asUtility "" mib_fg_occlusion`;
+                connectAttr -f ($mibFgOcclusion + ".outValue") ($mipCardOpacity + ".input");
+                select $selObj;
+                hyperShade -assign $mipCardOpacity;                
+            } else {
+                string $selFile[] = `ls -type "file" $selObjShort`;
+                for ($each in $selObj){
+                    string $nodeType = `nodeType $each`;
+                    if ($nodeType == "mesh"){
+                        print ($selFile[0] + "\n");                        
+                        string $mipCardOpacity = `mrCreateCustomNode -asShader "" mip_card_opacity`;
+                        print ($selFile[0] + "\n");
+                        connectAttr -f ($selFile[0] + ".outAlpha") ($mipCardOpacity + ".opacity");
+                                                
+                        string $mibFgOcclusion = `mrCreateCustomNode -asUtility "" mib_fg_occlusion`;
+                        connectAttr -f ($mibFgOcclusion + ".outValue") ($mipCardOpacity + ".input");
+                        select $selObj;
+                        hyperShade -assign $mipCardOpacity;
+                    } 
+                }    
+            }
+        }
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RENDER LAYER MANAGER 1.0                                                                                //
+// By Mariano Antico                                                                                       //
+// Barraca Post                                                                                            //
+// www.barraca.com.ar                                                                                      //
+// www.marianoantico.blogspot.com                                                                          //
+// Last Updated: April 18, 2011.                                                                           //
+// All Rights Reserved .                                                                                   //
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+global proc RenderManager(){
+    if (`window -ex rllWindow`) {
+       deleteUI -window rllWindow;
+    }
+    window -s 0 -t "Render Layer Manager 1.0" -w 450 -h 600 rllWindow;
+        
+        menuBarLayout -h 5 menurlmanager;
+        menu -l "help" -en true m2;
+        menuItem -l "about" -en true -c "aboutHelp()";
+        separator;    
+            
+        rowColumnLayout -numberOfColumns 1;    
+        separator -style "none" -h 5;    
+        text -font "boldLabelFont" -l "RENDER LAYERS MANAGER";    
+        separator -style "none" -h 3;    
+        rowColumnLayout -numberOfColumns 3;
+        
+        text -font "boldLabelFont" -l "RENDER LAYERS";text -font "boldLabelFont" -l "OBJECTS"; text -font "boldLabelFont" -l "OVERRIDES";    
+        textScrollList -nr 4 -ams 1 -sc "listConnect()" -dcc "gotoRLayer()" layList; textScrollList -nr 4 -ams 1 -dcc "selPass objList" objList; textScrollList -nr 4 -ams 1 conList;    
+        listLayers();
+    
+        button -l "Refresh" -c "updateRLayer()" btn1;button -l "Add Object" -ann "Add object to the select render layer." -c "addObjLayer()" btn2; button -l "Remove Override" -ann "Remove override to the select render layer." -c "removeOverLayer()" btn3;
+        button -l "Delete Layer" -ann "Delete Render Layer." -c "deleteRLayer()" btn4;button -l "Remove Object" -ann "remove object to the select render layer." -c "removeObjLayer()" btn5; button -l "Select Objects" -ann "Select objects selected in the Objects List." -c "selectObjList objList" btn6;
+        button -l "Go to MasterLayer" -c "gotoMLayer()" btn7;button -l "Rename Layer" -ann "Rename selected render layer." -c "renameLayer()" btn8;textField renameLayers;
+        
+        setParent ..;
+        
+        rowColumnLayout -w 60 -numberOfColumns 5;
+        text -font "boldLabelFont" -l "Scene Passes";text -font "boldLabelFont" -l "Associated Passes";text -font "boldLabelFont" -l "Associated Contr. Maps"; text -font "boldLabelFont" -l "Passes used by Contr. Map"; text -font "boldLabelFont" -l "Objects in Contr. Map";    
+        textScrollList -nr 4 -ams 1 -dcc "selPass scenePassList" scenePassList; textScrollList -nr 4 -ams 1 -dcc "selPass passList" passList; textScrollList -nr 4 -sc "listContMapObj()" contMapList; textScrollList -nr 4 -ams 1 -dcc "selPass assoContMapList" assoContMapList; textScrollList -nr 4 -ams 1 -dcc "selPass objContMapList" objContMapList;
+        listPasses();
+      
+        button -l "Create My Default Passes" -c "createMyRPasses()" btn9; button -l "Associate Pass" -c "associatePass()" btn10; button -l "Add Object"  -c "addObjContrPass()" btn11; button -l "Associate Contr. Pass" -c "associatePassContMap()" btn12; button -l "Select Objects" -ann "Select objects selected in the Objects List." -c "selectObjListCont" btn13;
+        button -l "Delete Pass" -c "deletePass()" btn14; button -l "De-associate Pass" -c "removePass()" btn15; button -l "Remove Object" -c "removeObjContrPass()" btn16; button -l "De-associate Contr. Pass" -c "disassociatePass()" btn17; button -l "Create Passes Window" -c "renderPassesCreateRenderPassNode 0" btn18;     
+        button -l "Create Contr. Map" -c "createContrMap()" btn19; button -l "Delete Contr. Map" -c "deleteContrMap()" btn20; button -l "Rename Contr. Map" -c "renameContrMap()" btn21;textField renameContrMap;
+        
+        setParent ..;
+        rowColumnLayout -numberOfColumns 3;
+        button -l "Copy selected Render Layer" -bgc .5 .8 .5 -c "copyRLayer()" btn22;button -l "Export Selected Render Layers" -bgc .5 .8 .5 -c "exportRenderLayer()" btn23;button -l "Import Render Layers" -bgc .5 .8 .5 -c "importRenderLayer()" btn24;
+        enableBtn();
+        
+    showWindow;
+    listConnect();
+    print "Vamos la Acade!!";   
+}
+
+
+//PROC
+
+//enable
+global proc enableBtn(){
+    string $Layers[] = `textScrollList -q -ai layList`;
+    if ($Layers[0] == ""){
+        textScrollList -e -ra scenePassList;textScrollList -e -ra assoContMapList;
+        textScrollList -e -ra passList; textScrollList -e -ra contMapList; 
+        textScrollList -e -ra conList; textScrollList -e -ra objContMapList; 
+        button -e -en 1 btn1;button -e -en 0 btn2;button -e -en 0 btn3;
+        button -e -en 0 btn4;button -e -en 0 btn5;button -e -en 0 btn6;
+        button -e -en 0 btn7;button -e -en 0 btn8;button -e -en 0 btn9;
+        button -e -en 0 btn10;button -e -en 0 btn11;button -e -en 0 btn12;
+        button -e -en 0 btn13;button -e -en 0 btn14;button -e -en 0 btn15;
+        button -e -en 0 btn16;button -e -en 0 btn17;button -e -en 0 btn18;
+        button -e -en 0 btn19;button -e -en 0 btn20;button -e -en 0 btn21;
+        button -e -en 0 btn22;button -e -en 0 btn23;button -e -en 1 btn24;
+        textField -e -en 0 renameLayers; textField -e -en 0 renameContrMap; 
+    } else {
+        button -e -en 1 btn1;button -e -en 1 btn2;button -e -en 1 btn3;
+        button -e -en 1 btn4;button -e -en 1 btn5;button -e -en 1 btn6;
+        button -e -en 1 btn7;button -e -en 1 btn8;button -e -en 1 btn9;
+        button -e -en 1 btn10;button -e -en 1 btn11;button -e -en 1 btn12;
+        button -e -en 1 btn13;button -e -en 1 btn14;button -e -en 1 btn15;
+        button -e -en 1 btn16;button -e -en 1 btn17;button -e -en 1 btn18;
+        button -e -en 1 btn19;button -e -en 1 btn20;button -e -en 1 btn21;
+        button -e -en 1 btn22;button -e -en 1 btn23;button -e -en 1 btn24;
+        textField -e -en 1 renameLayers; textField -e -en 1 renameContrMap; //textScrollList -e -en 0 scenePassList;
+    }
+}
+
+//list LAYERS
+
+global proc listLayers() {
+    string $Layers[] = `ls -type "renderLayer"`;
+    for ($each in $Layers){
+        if ($each == "defaultRenderLayer"){
+            //print "Vamos la Acade!!";            
+        } else {   
+            textScrollList -e -a $each layList;
+        }    
+    }
+    textScrollList -e -sii 1 layList;
+}
+
+//delete LAYERS
+
+global proc deleteRLayer() {
+    string $selLay[] = `textScrollList -q -si layList`;
+    gotoMLayer();   
+    for ($each in $selLay){
+        delete $each; 
+    }
+    textScrollList -e -ra layList;
+    textScrollList -e -ra contMapList; 
+    textScrollList -e -ra objContMapList;
+    textScrollList -e -ra assoContMapList;     
+    listLayers();
+    refreshObjList();
+    updateRLayer();
+    enableBtn();
+}
+
+//refresh OBJ list
+
+global proc refreshObjList() {
+    
+    textScrollList -e -ra objList;    
+    string $selLay[] = `textScrollList -q -si layList`;     
+    if($selLay[0] == ""){
+    } else {
+        string $objLay[] = `editRenderLayerMembers -q -fn $selLay`;
+        //string $objLay[] = `stringArrayRemoveDuplicates($objLay)`;
+        string $Object[] = `ls -l -tr $objLay`;
+        for ($each in $Object){
+            textScrollList -e -a $each objList;
+        }          
+    }    
+}  
+
+//refresh OVERRIDE list
+
+global proc refreshOverrideList() {
+    
+    textScrollList -e -ra objList;    
+    string $selLay[] = `textScrollList -q -si layList`;     
+    if($selLay[0] == ""){
+    } else {
+        string $conLayer[] = `editRenderLayerAdjustment -q -layer $selLay`;
+        for ($each in $conLayer){
+            textScrollList -e -a $each conList;
+        }
+    }    
+}   
+
+ 
+//list OBJ and OVERRIDES textscrollList 
+
+global proc listConnect() {
+    textScrollList -e -ra conList;
+    textScrollList -e -ra objList;    
+    string $selLay[] = `textScrollList -q -si layList`;     
+    if($selLay[0] == ""){
+    } else {
+        string $objLay[] = `editRenderLayerMembers -q -fn $selLay`;
+        string $Object[] = `ls -l -tr -type "transform" $objLay`;        
+        for ($each in $Object){
+            textScrollList -e -a $each objList;
+        } 
+        string $conLayer[] = `editRenderLayerAdjustment -q -layer $selLay`;
+        for ($each in $conLayer){
+            textScrollList -e -a $each conList;
+        }        
+
+        updateRPass();
+        associatePassList();
+        updateContMap();
+        textScrollList -e -ra objContMapList;
+        textScrollList -e -ra assoContMapList; 
+    }
+}
+
+//update overrides
+global proc updateOverrides() {
+    textScrollList -e -ra conList;
+    string $selLay[] = `textScrollList -q -si layList`;     
+    string $conLayer[] = `editRenderLayerAdjustment -q -layer $selLay`;
+    for ($each in $conLayer){
+        textScrollList -e -a $each conList;
+    }
+}
+
+//Update render layers
+
+global proc updateRLayer() {
+    string $selLayer[] = `textScrollList -q -si layList`;
+    enableBtn();        
+    listLayers();
+    string $selAllLay[] = `textScrollList -q -ai layList`;     
+    if ($selAllLay[0] == ""){
+        warning "Create a render layer.";
+    } else {
+        string $currentLay[] = `textScrollList -q -si layList`;       
+        textScrollList -e -ra layList;
+        listLayers();
+        textScrollList -e -si $selLayer[0] layList;
+        refreshObjList();
+        updateRPass();
+        updateOverrides();
+    }
+}
+
+//add Object to the selected render layers
+
+global proc addObjLayer() {
+    string $sel[] = `ls -sl`;
+    if ($sel[0] == ""){
+        warning "Select object.";    
+    } else {    
+        string $selLay[] = `textScrollList -q -si layList`;    
+        string $selObj[] = `textScrollList -q -ai objList`;   
+        for ($each in $sel){
+            editRenderLayerMembers -nr $selLay $each;
+            textScrollList -e -a $each objList;
+        }
+        refreshObjList();
+    }    
+}
+
+
+//remove Override to the selected render layers
+
+global proc removeOverLayer() {
+    string $sel[] = `textScrollList -q -si conList`;
+    if ($sel[0] == ""){
+        warning "Select override in render layer.";    
+    } else { 
+        string $selLay[] = `textScrollList -q -si layList`;    
+        for ($each in $sel){
+            editRenderLayerGlobals -currentRenderLayer $selLay;        
+            editRenderLayerAdjustment -r $each $selLay;
+            textScrollList -e -ri $each conList;
+        }
+    }
+}
+
+//go to selected render layer
+
+global proc gotoRLayer() {
+    string $selLay[] = `textScrollList -q -si layList`;    
+    editRenderLayerGlobals -currentRenderLayer $selLay;
+}
+
+//remove Object to the selected render layers
+
+global proc removeObjLayer() {
+    string $sel[] = `textScrollList -q -si objList`;
+    if ($sel[0] == ""){
+        warning "Select object in render layer.";    
+    } else {    
+        string $selLay[] = `textScrollList -q -si layList`;    
+        for ($each in $sel){
+            select -r $each;
+            string $ObjNew[] = `ls -dag $each`;
+            for ($obj in $ObjNew){
+                editRenderLayerMembers -r -nr $selLay $obj;
+            }
+            textScrollList -e -ri $each objList;    
+        }
+    }
+}
+
+//Select objs render layer
+
+global proc selectObjList(string $objsList) {
+    string $selObjs[] = `textScrollList -q -ai $objsList`;
+    if ($selObjs[0] == ""){
+        warning "Render layer is empty.";    
+    } else {    
+        string $sel[] = `textScrollList -q -si $objsList`;        
+        string $selLay[] = `textScrollList -q -si layList`;    
+        if ($sel[0] == ""){
+            string $objLay[] = `textScrollList -q -ai $objsList`;
+            select $objLay;     
+        } else {    
+            select $sel; 
+        }
+    }
+}
+
+//go to master layer
+
+global proc gotoMLayer() {
+    editRenderLayerGlobals -currentRenderLayer defaultRenderLayer;
+}
+
+//rename selected layer
+
+global proc renameLayer() {
+    string $selLay[] = `textScrollList -q -si layList`;
+    string $RLayName = `textField -q -tx renameLayers`;    
+    if ($RLayName == ""){
+       warning ("You haven't defined a name.");
+    } else {    
+        select $selLay;    
+        rename $selLay $RLayName;
+        textField -e -tx "" renameLayers;
+        updateRLayer();
+        textScrollList -e -si $RLayName layList;
+    }    
+}
+
+// create my default render passes
+
+global proc createMyRPasses(){
+
+    createNode -name "beauty" renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/beauty.mel" 1;
+    
+    createNode -name "depth" renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/cameraDepth.mel" 1;
+    
+    createNode -name "diffuse" renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/diffuse.mel" 1;
+    
+    createNode -name "incandescence" renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/incandescence.mel" 1;
+    
+    createNode -name "indirect" renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/indirect.mel" 1;
+    
+    createNode -name "normalWorld" renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/normalWorld.mel" 1;
+    
+    createNode -name "mv2DToxik" renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/2DMotionVector.mel" 1;
+    
+    createNode -name "reflection" renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/reflection.mel" 1;
+    
+    createNode -name "refraction" renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/refraction.mel" 1;
+    
+    createNode -name "shadow" renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/shadow.mel" 1;
+    
+    createNode -name "specular" renderPass;
+    string $sel[] = `ls -sl`;
+    applyAttrPreset $sel[0] "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/specular.mel" 1;
+
+    string $posPass = `createNode -name "PointPass" renderPass`;
+    applyAttrPreset $posPass "C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/customVector.mel" 1;
+    setAttr ($posPass + ".filtering") 0;
+    string $writeToVector = `createNode -name "writeToVectorBuffer_PointWorld" writeToVectorBuffer`;
+    connectAttr ($posPass + ".message") ($writeToVector + ".renderPass");
+    string $samplerInfoWTV = `shadingNode -asUtility samplerInfo`;
+    connectAttr -f ($samplerInfoWTV + ".pointWorld") ($writeToVector + ".vector");    
+    
+    listPasses();
+}
+
+//refresh scene render pass list
+global proc updateRPass() {
+     textScrollList -e -ra scenePassList; 
+     listPasses();
+}
+
+//list PASSES
+global proc listPasses() {
+    string $Passes[] = `ls -type "renderPass"`;
+    string $selAllLay[] = `textScrollList -q -ai layList`;        
+    if ($Passes[0] == "" || $selAllLay[0] == "" ) {
+    }else{
+        string $selLay[] = `textScrollList -q -si layList`;        
+        string $AssociatePass[] = `listConnections ($selLay[0]+".renderPass")`;    
+        for ($each in $Passes){
+            textScrollList -e -a $each scenePassList;        
+            string $PassesSolo = $each;   
+            for ($i=0; $i<(size($AssociatePass)); ++$i){
+                if ( $PassesSolo == $AssociatePass[$i]){
+                    textScrollList -e -ri $each scenePassList;
+                }   
+            }
+        }
+    }
+}    
+        
+//list Associated PASSES 
+global proc associatePassList() {
+    textScrollList -e -ra passList;    
+    string $selLay[] = `textScrollList -q -si layList`;
+    string $AssociatePass[] = `listConnections ($selLay[0]+".renderPass")`;
+    string $scenePass[] = `textScrollList -q -ai scenePassList`;
+    for ($each in $AssociatePass){
+        textScrollList -e -a $each passList;
+    }
+}
+
+//Associate selected PASSES 
+global proc associatePass() {
+    string $selLay[] = `textScrollList -q -si layList`;
+    string $scenePass[] = `textScrollList -q -si scenePassList`;
+    if ($scenePass[0] == ""){
+        warning "Select a scene pass.";    
+    } else {     
+        for ($each in $scenePass){
+            textScrollList -e -ri $each scenePassList;      
+            connectAttr -nextAvailable ($selLay[0] + ".renderPass") ($each + ".owner");
+        }
+        associatePassList();
+    }
+}
+
+//disassociate selected PASSES 
+global proc removePass() {
+    string $selLay[] = `textScrollList -q -si layList`;
+    string $associatePass[] = `textScrollList -q -si passList`;
+    string $checkAssociatePassContMap[] = `textScrollList -q -ai assoContMapList`;
+    string $ContMapAll[] = `textScrollList -q -ai contMapList`;
+    if ($associatePass[0] == ""){
+        warning "Select a associated pass.";    
+    } else {   
+        for ($each in $associatePass){
+            string $CurrentAssoPass = $each;
+            disconnectAttr -nextAvailable ($selLay[0] + ".renderPass") ($each + ".owner");
+            associatePassList();
+            updateRPass();
+            string $passConnectedMap[] = `listConnections -d on ($each + ".message")`;            
+            if ($passConnectedMap[0] == ""){
+                print "Done.";
+            } else {
+                disconnectAttr -nextAvailable ($each + ".message") ($passConnectedMap[0] + ".renderPass");
+                updateContMapPass();                
+            }
+        }
+    }     
+}
+
+
+//delete selected PASSES 
+global proc deletePass() {
+    string $scenePass[] = `textScrollList -q -si scenePassList`;
+    string $associatePass[] = `textScrollList -q -si passList`;
+    if ($scenePass[0] == "" && $associatePass[0] == "" ){
+        warning "Select pass.";
+    } else {    
+        for ($each in $associatePass){
+            delete $each;
+        }
+        for ($each in $scenePass){
+            delete $each;
+        }
+        
+    updateRPass();
+    associatePassList();
+    updateContMapPass();
+    }
+}
+
+//Update contribution map list
+
+global proc updateContMap() {
+    textScrollList -e -ra contMapList;
+    listContrMap();
+}
+
+//list contr maps
+
+global proc listContrMap() {
+    string $contMap[] = `ls -type "passContributionMap"`;
+    string $selLay[] = `textScrollList -q -si layList`;
+    string $AssociateContMap[] = `listConnections ($selLay[0]+".passContributionMap")`;    
+    for ($each in $AssociateContMap){
+        textScrollList -e -a $each contMapList;        
+    }
+} 
+
+//add Object to the selected contribution map
+
+global proc addObjContrPass() {
+    string $selContMap[] = `textScrollList -q -si contMapList`;    
+    string $sel[] = `ls -sl -type "transform"`;    
+    string $objSel[] = `textScrollList -q -si objList`;
+    if ($selContMap[0] == ""){
+        warning "Select a pass contribution map.";
+    } else if ($sel[0] == "" && $objSel[0] == ""){
+        warning "Select a object.";
+    } else {                
+        string $selLay[] = `textScrollList -q -si layList`;    
+        for ($i=0; $i<(size($sel)); ++$i){
+            string $objContMap[] = `listConnections -d on ($sel[$i] + ".message")`;
+            if ($objContMap[0] == $selContMap[0]){
+                 print "Seleceted object is already connected.";                  
+            } else {
+                editRenderLayerMembers -nr $selLay[0] $sel[$i];
+                textScrollList -e -a $sel[$i] objContMapList;
+                connectAttr -na  ($sel[$i] + ".message") ($selContMap[0] + ".dagObjects");                 
+            }
+        }
+        
+        for ($i=0; $i<(size($objSel)); ++$i){
+            string $objContMap[] = `listConnections -d on ($objSel[$i] + ".message")`;
+            if ($objContMap[0] == $selContMap[0]){
+                print "Seleceted object is already connected.";                 
+            } else {
+                textScrollList -e -a $objSel[$i] objContMapList;
+                connectAttr -na  ($objSel[$i] + ".message") ($selContMap[0] + ".dagObjects");          
+            }
+        }        
+    }
+    refreshObjList();
+}
+
+//remove Object to the selected contribution map
+
+global proc removeObjContrPass() {
+    string $objSel[] = `textScrollList -q -si objContMapList`;
+    if ($objSel[0] == ""){
+        warning "Select object in pass contribution map.";    
+    } else {    
+        string $selContMap[] = `textScrollList -q -si contMapList`;    
+        for ($each in $objSel){
+            textScrollList -e -ri $each objContMapList;
+            disconnectAttr -na  ($each + ".message") ($selContMap[0] + ".dagObjects");
+        }
+    }    
+    refreshObjList();
+}
+
+//list OBJ in contr Map
+
+global proc listContMapObj() {
+    textScrollList -e -ra objContMapList;    
+    string $selContMap[] = `textScrollList -q -si contMapList`;     
+    string $ContMapObj[] = `listConnections ($selContMap[0]+".dagObjects")`;
+    
+    for ($each in $ContMapObj){
+        textScrollList -e -a $each objContMapList;
+    }
+    refreshObjList();
+    updateContMapPass();
+}
+
+//Update OBJ contribution map list
+
+global proc updateContMapObj() {
+    textScrollList -e -ra objContMapList;
+    listContMapObj();
+}
+
+//Update Pass in contribution map list
+
+global proc updateContMapPass() {
+    textScrollList -e -ra assoContMapList;
+    contMapPassList();
+}
+
+//List selected PASSES to contribution map
+global proc contMapPassList() {
+    textScrollList -e -ra assoContMapList;    
+    string $selContMap[] = `textScrollList -q -si contMapList`;
+    if ($selContMap[0] == ""){
+    } else {    
+        string $AssociatePassContMap[] = `listConnections ($selContMap[0]+".renderPass")`;
+        for ($each in $AssociatePassContMap){
+            textScrollList -e -a $each assoContMapList;
+        }
+    }
+}
+
+//Associate selected PASSES to contribution map
+global proc associatePassContMap() {
+    string $selContMap[] = `textScrollList -q -si contMapList`;
+    string $selAssociatePass[] = `textScrollList -q -si passList`;
+    string $checkAssociatePassContMap[] = `textScrollList -q -ai assoContMapList`;
+    if ($selContMap[0] == ""){
+        warning "Select a pass contribution map.";    
+    } else if ($selAssociatePass[0] == ""){
+        warning "Select a associated pass.";
+    } else {
+        int $num = 0;    
+        for ($each in $selAssociatePass){
+            string $selAssociatePassSolo = $each;   
+            for ($i=0; $i<(size($checkAssociatePassContMap)); ++$i){
+                if ( $selAssociatePassSolo == $checkAssociatePassContMap[$i]){
+                    $num += 1;                 
+                } else {
+                //print $num;
+                }
+            }    
+            if ($num >= 1) {
+                print "Render pass is already connected.";
+            } else {                    
+                connectAttr -nextAvailable ($selAssociatePassSolo + ".message") ($selContMap[0] + ".renderPass");
+            }  
+        }
+        updateContMapPass();    
+    }
+}                
+   
+
+//disassociate selected PASSES to contribution map
+global proc disassociatePass() {
+    string $selContMap[] = `textScrollList -q -si contMapList`;
+    string $disassociatePass[] = `textScrollList -q -si assoContMapList`;
+    if ($selContMap[0] == ""){
+        warning "Select a pass contribution map.";    
+    } else if ($disassociatePass[0] == ""){
+        warning "Select a pass used by the pass contribution map.";
+        } else {
+        for ($each in $disassociatePass){
+            disconnectAttr -nextAvailable ($each + ".message") ($selContMap[0] + ".renderPass");
+        }
+        updateContMapPass();
+        associatePassList(); 
+    }
+}
+
+//render pass attributes
+global proc selPass(string $listSel){
+    string $selPass[] = `textScrollList -q -si $listSel`;    
+    select $selPass[0];
+    setAttributeEditorVisible( false );
+    ToggleAttributeEditor;
+}
+
+//Select objs contr map
+
+global proc selectObjListCont() {
+    string $listObjContMap[] = `textScrollList -q -ai objContMapList`;
+    if ($listObjContMap[0] == ""){
+        warning "Pass contribution map is empty.";    
+    } else {
+        string $sel[] = `textScrollList -q -si objContMapList`;
+        string $selContMap[] = `textScrollList -q -si contMapList`;    
+        if ($sel[0] == ""){
+            string $objContMap[] = `listConnections -d off ($selContMap[0] + ".dagObjects")`;
+            select $objContMap;     
+        } else {    
+            select $sel; 
+        }
+    }
+}
+
+//create contr pass and connect to selected layer
+
+global proc createContrMap(){
+    string $newContrMap = `createNode passContributionMap`;
+    string $selLay[] = `textScrollList -q -si layList`; 
+    connectAttr -na ($selLay[0] + ".passContributionMap") ($newContrMap + ".owner");
+    updateContMap();     
+}
+
+//create contr pass and connect to selected layer
+
+global proc deleteContrMap(){
+    string $selContrMap[] = `textScrollList -q -si contMapList`; 
+    if ($selContrMap[0] == ""){
+        warning "Select a pass contribution map.";
+    } else {
+        delete $selContrMap;
+        textScrollList -e -ra objContMapList;
+        textScrollList -e -ra assoContMapList;      
+        updateContMap();
+    }    
+}
+
+//rename selected contribution Map
+
+global proc renameContrMap() {
+    string $selContrMap[] = `textScrollList -q -si contMapList`; 
+    string $contMapName = `textField -q -tx renameContrMap`;    
+    if ($contMapName == ""){
+       warning ("You haven't defined a name.");
+    } else if ($selContrMap[0] == ""){
+        warning ("You haven't select a pass contribution map.");
+    } else {     
+        select $selContrMap;    
+        rename $selContrMap $contMapName;
+        textField -e -tx "" renameContrMap;
+        updateContMap();
+        textScrollList -e -si $contMapName contMapList;
+    }    
+}
+
+//copy selected layer
+
+global proc copySelRLayer(){
+    string $copySLay = `editRenderLayerGlobals -q -currentRenderLayer`; 
+    renderLayerEditorCopyLayer RenderLayerTab $copySLay;
+}
+
+//copy layer render manager
+
+global proc copyRLayer(){
+    string $copySelLay[] = `textScrollList -q -si layList`; 
+    for ($each in $copySelLay){        
+        renderLayerEditorCopyLayer RenderLayerTab $copySelLay[0];
+        updateRLayer();
+    }
+}
+
+
+// export Render Layer procedure
+
+global proc exportRenderLayer(){
+        
+    string $defLay = "defaultRenderLayer";
+    string $fileName = `file -q -shortName -sceneName`;    
+    string $DirName = `workspace -q -fullName`;
+    string $saveFileName[] = `fileDialog2  -caption "Export Render Layers." -fileMode 0 -startingDirectory $DirName -fileFilter "*.mel"`;
+    if ($saveFileName[0] == ""){
+    } else {
+        //updateRLayer();
+        $fileName = substituteAllString($fileName, ".mb", "");
+        $fileName = substituteAllString($fileName, ".ma", "");
+        
+        sysFile -makeDir ($DirName + "/data/piko/");
+        string $filePath = $saveFileName[0];
+        
+        $fileId = `fopen $filePath "w"`;
+        
+        string $queryScenePass[] = `ls -type "renderPass"`;   
+        print "\n";
+        for ($each in $queryScenePass){
+            string $ScenePassPrint = ("string $PassNew = `createNode -name " + ($each + "_new") + " renderPass`;\n");
+            fprint $fileId $ScenePassPrint; 
+            string $pass = $each;
+            string $passAllAttr[] = `listAttr $pass`;
+            string $pass = $each;
+            string $PassTypePreset = `getAttr ($each + ".passID")`;    
+            if (`gmatch $PassTypePreset "MV2E"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/2DMotionVector.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "MV3"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/3DMotionVector.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "AMBIRR"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/ambientIrradiance.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "AMBRAW"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/ambientMaterialColor.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "AO"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/ambientOcclusion.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "AMB"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/ambient.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "BEAUTY"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/beauty.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "CAMZ"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/cameraDepth.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "COV"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/coverage.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "CSTCOL"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/customColor.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "CSTZ"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/customDepth.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "CSTLBL"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/customLabel.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "CSTVCT"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/customVector.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "DIFRAW"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/diffuseMaterialColor.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "DIFF"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/diffuse.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "DIFFNS"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/diffuseWithoutShadows.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "DIRIRR"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/directIrradiance.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "DIRRNS"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/directIrradianceWithoutShadows.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "GLORAW"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/glowSource.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "INC"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/incandescence.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "INCILN"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/incidenceLightNorm.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "INDIRR"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/indirect.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "INCICN"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/incidenceCamNorm.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "INCMCN"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/incidenceCamNormMaterial.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "MATTE"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/matte.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "MV2N"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/normalized2DMotionVector.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "NORMAL"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/normalWorld.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "NORMAM"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/normalWorldMaterial.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "OPACTY"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/opacity.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "VOLLIT"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/lightVolume.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "VOLOBJ"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/objectVolume.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "REFLRA"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/reflectedMaterialColor.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "REFL"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/reflection.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "REFRRA"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/refractionMaterialColor.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "REFR"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/refraction.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "SCAT"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/scatter.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "SHDRAW"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/rawShadow.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "SHD"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/shadow.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "SPECNS"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/specularWithoutShadows.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "SPEC"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/specular.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "TRNSNS"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/translucenceWithoutShadows.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "TRNSLU"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/translucence.mel\" 1;\n");
+            }
+            if (`gmatch $PassTypePreset "VOLSCN"`){
+                fprint $fileId ("applyAttrPreset $PassNew \"C:/Program Files/Autodesk/Maya2012/presets/attrPresets/renderPass/sceneVolume.mel\" 1;\n");
+            }
+            fprint $fileId ("addAttr -ln \"new\"  -at double $PassNew;\n");
+            for ($each in $passAllAttr){
+                if (`gmatch $each "backup*"` || `gmatch $each "brightColorR*"` || `gmatch $each "brightColorG*"` || `gmatch $each "brightColorB*"` || `gmatch $each "darkColorR*"` || `gmatch $each "darkColorG*"` || `gmatch $each "darkColorB*"`){
+                } else {
+                    string $passAttrType = `getAttr -type ($pass + "." + $each)`;             
+                    if ($passAttrType == "message"){
+                    } else if ($passAttrType == "string"){
+                        string $passGetAttr = `getAttr ($pass + "." + $each)`;
+                        fprint $fileId ("setAttr -type \"string\" ($PassNew + \"." + $each + "\") " + $passGetAttr + ";\n");
+                    } else if ($passAttrType == "float3"){
+                        string $conAttribute[] = `listConnections -d 0 -p 1 ($pass + "." + $each)`;
+                        int $conAttributeSize = `size($conAttribute)`;
+                        if ($conAttribute[0] == ""){ 
+                            string $getAttrFloat = (" " + `getAttr ($pass + "." + $each + "R")` + " " + `getAttr ($pass + "." + $each + "G")` + " " + `getAttr ($pass + "." + $each + "B")`);
+                            fprint $fileId ("setAttr ($PassNew + \"." + $each + "\") " + $getAttrFloat + ";\n");
+                        } else {
+                            string $ObjsExistsPrint = ("if ( `objExists " + $conAttribute[0] + "` ) {\n    ");          
+                            fprint $fileId $ObjsExistsPrint;                      
+                            fprint $fileId ("connectAttr -force " + $conAttribute[0] + " ($PassNew + \"." + $each + "\");\n");
+                            fprint $fileId "}\n";
+                        }
+                    } else {
+                        string $passGetAttr = `getAttr ($pass + "." + $each)`;
+                        fprint $fileId ("setAttr ($PassNew + \"." + $each + "\") " + $passGetAttr + ";\n");
+                    }        
+                }
+            }
+            fprint $fileId "\n";
+        } 
+        
+        
+        string $queryAllLay[] = `textScrollList -q -si layList`;
+        for ($i = 0; $i<(size($queryAllLay)); ++$i){
+            string $currentLayer = $queryAllLay[$i];
+            string $layersPrint = "string $currentLayer = `createRenderLayer -name ";
+            editRenderLayerGlobals -currentRenderLayer $currentLayer;
+            fprint $fileId ($layersPrint + $currentLayer + "`;\n");      
+            string $queryObjLay[] = `editRenderLayerMembers -q -fn -nr $currentLayer`; 
+            fprint $fileId "editRenderLayerGlobals -currentRenderLayer $currentLayer;\n\n";         
+            for ($each in $queryObjLay) {
+                string $ObjsExistsPrint = ("if ( `objExists " + $each + "` ) {\n    ");         
+                string $ObjsPrint = "editRenderLayerMembers ";         
+                fprint $fileId $ObjsExistsPrint;           
+                fprint $fileId ($ObjsPrint + "$currentLayer " + $each + ";\n}\n\n");
+            }
+    
+            string $queryOverrideLayer[] = `editRenderLayerAdjustment -q -layer $currentLayer`;
+            for ($each in $queryOverrideLayer){
+                select $each;
+                string $SName[] = `ls -o $each`;
+                string $nodeType = `nodeType $SName[0]`;                
+                string $openObjs[] = `ls -sl -l`;                
+                if (size($openObjs) > 1){
+                    for ($obj in $openObjs){
+                        string $attrType = `getAttr -type $obj`;
+                        select -r $obj;                    
+                        string $objShort[] = `ls -sl -o -l`;
+                        if ($attrType == "TdataCompound"){
+                            string $conAttr[] = `listConnections -d 1 -t "shadingEngine" -p 1 $obj`;
+                            string $conAttrSG[] = `listConnections -d 1 -t "shadingEngine" $obj`;                        
+                            if ($conAttrSG[0] == ""){
+                            } else {                            
+                                fprint $fileId ("if ( `objExists " + $conAttrSG[0] + "` && `objExists " + $obj + "` ) {\n");                     
+                                fprint $fileId ("    select -r " + $objShort[0] + ";\n");                    
+                                fprint $fileId ("    hyperShade -assign " + $conAttrSG[0] + ";\n}\n");  
+                            }
+                        }                    
+                        string $SName[] = `ls -o $obj`;
+                        string $attrType = `getAttr -type $obj`;
+                        if ( $attrType == "float" || $attrType == "bool" || $attrType == "short" || $attrType == "enum" || $attrType == "time" || $attrType == "long"){
+                            string $conAttribute[] = `listConnections -d 0 -p 1 $obj`;
+                            string $conAttributeShort[] = `listConnections -d 0 -p 0 $obj`;
+                            if ($conAttribute[0] == ""){               
+                                editRenderLayerGlobals -currentRenderLayer $currentLayer;
+                                string $getAttrOverride = `getAttr $obj`;
+                                fprint $fileId  ("if ( `objExists " + $SName[0] + "` ) {\n");
+                                fprint $fileId  ("    string $conAttribute[] = `listConnections -d 0 -p 1 " + $obj + "`;\n");
+                                fprint $fileId  ("    editRenderLayerAdjustment " + $obj + ";\n");             
+                                fprint $fileId  ("    if ($conAttribute[0] == \"\"){\n");            
+                                fprint $fileId  ("        setAttr " + $obj + " " + $getAttrOverride + ";\n");
+                                fprint $fileId  ("    } else if (size($conAttribute) >= 1){\n");
+                                fprint $fileId  ("        disconnectAttr $conAttribute[0] " + $obj + ";\n");
+                                fprint $fileId  ("        setAttr " + $obj + " " + $getAttrOverride + ";\n");            
+                                fprint $fileId  ("    }\n");
+                                fprint $fileId  ("}\n");
+                            } else {
+                                fprint $fileId  ("if ( `objExists " + $SName[0] + "` && `objExists " + $conAttributeShort[0] + "` ) {\n");                                
+                                fprint $fileId  ("    editRenderLayerAdjustment " + $obj + ";\n");                           
+                                fprint $fileId  ("    connectAttr -force " + $conAttribute[0] + " " + $obj + ";\n");
+                                fprint $fileId  ("}\n");
+                            }
+                        }
+                        string $SName[] = `ls -o $obj`;
+                        string $attrType = `getAttr -type $obj`;
+                        if ($attrType == "typed"){
+                            string $conAttribute[] = `listConnections -d 0 -p 1 $obj`;
+                            string $conAttributeShort[] = `listConnections -d 0 -p 0 $obj`;
+                            if ($conAttribute[0] == ""){               
+                                editRenderLayerGlobals -currentRenderLayer $currentLayer;
+                                string $getAttrOverride = `getAttr $obj`;
+                                fprint $fileId  ("if ( `objExists " + $SName[0] + "` ) {\n");
+                                fprint $fileId  ("    string $conAttribute[] = `listConnections -d 0 -p 1 " + $obj + "`;\n");
+                                fprint $fileId  ("    editRenderLayerAdjustment " + $obj + ";\n");             
+                                fprint $fileId  ("    if ($conAttribute[0] == \"\"){\n");            
+                                fprint $fileId  ("        setAttr -type \"string\" " + $obj + " \"" + $getAttrOverride + "\";\n");
+                                fprint $fileId  ("    } else if (size($conAttribute) >= 1){\n");
+                                fprint $fileId  ("        disconnectAttr $conAttribute[0] " + $obj + ";\n");
+                                fprint $fileId  ("        setAttr -type \"string\" " + $obj + " \"" + $getAttrOverride + "\";\n");            
+                                fprint $fileId  ("    }\n");
+                                fprint $fileId  ("}\n");
+                            } else {
+                                fprint $fileId  ("if ( `objExists " + $SName[0] + "` && `objExists " + $conAttributeShort[0] + "` ) {\n");                                
+                                fprint $fileId  ("    editRenderLayerAdjustment " + $obj + ";\n");                           
+                                fprint $fileId  ("    connectAttr -force " + $conAttribute[0] + " " + $obj + ";\n");
+                                fprint $fileId  ("}\n");
+                            }
+                        }
+                        string $SName[] = `ls -o $obj`;
+                        string $attrType = `getAttr -type $obj`;
+                        if ( $attrType == "float3"){
+                            string $conAttribute[] = `listConnections -d 0 -p 1 $obj`;
+                            string $conAttributeShort[] = `listConnections -d 0 -p 0 $obj`;
+                            if ($conAttribute[0] == ""){               
+                                editRenderLayerGlobals -currentRenderLayer $currentLayer;
+                                vector $color = `getAttr $each`;
+                                string $getAttrOverride = $color;
+                                fprint $fileId ("if ( `objExists " + $SName[0] + "` ) {\n");
+                                fprint $fileId ("    string $conAttribute[] = `listConnections -d 0 -p 1 " + $obj + "`;\n");
+                                fprint $fileId ("    editRenderLayerAdjustment " + $obj + ";\n");             
+                                fprint $fileId ("    if ($conAttribute[0] == \"\"){\n");            
+                                fprint $fileId ("        setAttr " + $obj + " " + $getAttrOverride + ";\n");
+                                fprint $fileId ("    } else if (size($conAttribute) >= 1){\n");
+                                fprint $fileId ("        disconnectAttr $conAttribute[0] " + $obj + ";\n");
+                                fprint $fileId ("        setAttr " + $obj + " " + $getAttrOverride + ";\n");            
+                                fprint $fileId ("    }\n");
+                                fprint $fileId ("}\n");
+                            } else {
+                                fprint $fileId ("if ( `objExists " + $SName[0] + "` && `objExists " + $conAttributeShort[0] + "` ) {\n");                                
+                                fprint $fileId ("    editRenderLayerAdjustment " + $obj + ";\n");                           
+                                fprint $fileId ("    connectAttr -force " + $conAttribute[0] + " " + $obj + ";\n");
+                                fprint $fileId ("}\n");
+                            }
+                        }
+                        string $SName[] = `ls -o $obj`;
+                        string $attrType = `getAttr -type $obj`;
+                        if ( $attrType == "string"){
+                            string $conAttribute[] = `listConnections -d 0 -p 1 $obj`;
+                            string $conAttributeShort[] = `listConnections -d 0 -p 0 $obj`;
+                            if ($conAttribute[0] == ""){               
+                                editRenderLayerGlobals -currentRenderLayer $currentLayer;
+                                string $getAttrOverride = `getAttr $obj`;
+                                fprint $fileId  ("if ( `objExists " + $SName[0] + "` ) {\n");
+                                fprint $fileId  ("    string $conAttribute[] = `listConnections -d 0 -p 1 " + $obj + "`;\n");
+                                fprint $fileId  ("    editRenderLayerAdjustment " + $obj + ";\n");             
+                                fprint $fileId  ("    if ($conAttribute[0] == \"\"){\n");            
+                                fprint $fileId  ("        setAttr -type \"string\" " + $obj + " \"" + $getAttrOverride + "\";\n");
+                                fprint $fileId  ("    } else if (size($conAttribute) >= 1){\n");
+                                fprint $fileId  ("        disconnectAttr $conAttribute[0] " + $obj + ";\n");
+                                fprint $fileId  ("        setAttr -type \"string\" " + $obj + " \"" + $getAttrOverride + "\";\n");            
+                                fprint $fileId  ("    }\n");
+                                fprint $fileId  ("}\n");
+                            } else {
+                                fprint $fileId  ("if ( `objExists " + $SName[0] + "` && `objExists " + $conAttributeShort[0] + "` ) {\n");                                
+                                fprint $fileId  ("    editRenderLayerAdjustment " + $obj + ";\n");                           
+                                fprint $fileId  ("    connectAttr -force " + $conAttribute[0] + " " + $obj + ";\n");
+                                fprint $fileId  ("}\n");
+                            }
+                        }
+                    }
+                } else {
+                    string $nodeType = `nodeType $each`;
+                    string $attrType = `getAttr -type $each`;
+                    select -r $each;                    
+                    string $eachShort[] = `ls -sl -o -l`;                
+                    if ($attrType == "TdataCompound"){
+                        string $conAttr[] = `listConnections -d 1 -t "shadingEngine" -p 1 $each`;
+                        string $conAttrSG[] = `listConnections -d 1 -t "shadingEngine" $each`;
+                        if ($conAttrSG[0] == ""){
+                        } else {                        
+                            fprint $fileId ("if ( `objExists " + $conAttrSG[0] + "` && `objExists " + $each + "` ) {\n");                     
+                            fprint $fileId ("    select -r " + $eachShort[0] + ";\n");                    
+                            fprint $fileId ("    hyperShade -assign " + $conAttrSG[0] + ";\n}\n");
+                        }   
+                    }
+                    string $SName[] = `ls -o $each`;
+                    string $attrType = `getAttr -type $each`;
+                    if ( $attrType == "float" || $attrType == "bool" || $attrType == "short" || $attrType == "enum" || $attrType == "time" || $attrType == "long"){
+                        string $conAttribute[] = `listConnections -d 0 -p 1 $each`;
+                        string $conAttributeShort[] = `listConnections -d 0 -p 0 $each`;
+                        if ($conAttribute[0] == ""){               
+                            editRenderLayerGlobals -currentRenderLayer $currentLayer;
+                            string $getAttrOverride = `getAttr $each`;
+                            fprint $fileId  ("if ( `objExists " + $SName[0] + "` ) {\n");
+                            fprint $fileId  ("    string $conAttribute[] = `listConnections -d 0 -p 1 " + $each + "`;\n");
+                            fprint $fileId  ("    editRenderLayerAdjustment " + $each + ";\n");             
+                            fprint $fileId  ("    if ($conAttribute[0] == \"\"){\n");            
+                            fprint $fileId  ("        setAttr " + $each + " " + $getAttrOverride + ";\n");
+                            fprint $fileId  ("    } else if (size($conAttribute) >= 1){\n");
+                            fprint $fileId  ("        disconnectAttr $conAttribute[0] " + $each + ";\n");
+                            fprint $fileId  ("        setAttr " + $each + " " + $getAttrOverride + ";\n");            
+                            fprint $fileId  ("    }\n");
+                            fprint $fileId  ("}\n");
+                        } else {
+                            fprint $fileId  ("if ( `objExists " + $SName[0] + "` && `objExists " + $conAttributeShort[0] + "` ) {\n");                                
+                            fprint $fileId  ("    editRenderLayerAdjustment " + $each + ";\n");                           
+                            fprint $fileId  ("    connectAttr -force " + $conAttribute[0] + " " + $each + ";\n");
+                            fprint $fileId  ("}\n");
+                        }
+                    }
+                    string $SName[] = `ls -o $each`;
+                    string $attrType = `getAttr -type $each`;
+                    if ($attrType == "typed"){
+                        string $conAttribute[] = `listConnections -d 0 -p 1 $each`;
+                        string $conAttributeShort[] = `listConnections -d 0 -p 0 $each`;
+                        if ($conAttribute[0] == ""){               
+                            editRenderLayerGlobals -currentRenderLayer $currentLayer;
+                            string $getAttrOverride = `getAttr $each`;
+                            fprint $fileId  ("if ( `objExists " + $SName[0] + "` ) {\n");
+                            fprint $fileId  ("    string $conAttribute[] = `listConnections -d 0 -p 1 " + $each + "`;\n");
+                            fprint $fileId  ("    editRenderLayerAdjustment " + $each + ";\n");             
+                            fprint $fileId  ("    if ($conAttribute[0] == \"\"){\n");            
+                            fprint $fileId  ("        setAttr -type \"string\" " + $each + " \"" + $getAttrOverride + "\";\n");
+                            fprint $fileId  ("    } else if (size($conAttribute) >= 1){\n");
+                            fprint $fileId  ("        disconnectAttr $conAttribute[0] " + $each + ";\n");
+                            fprint $fileId  ("    }\n");
+                            fprint $fileId  ("}\n");
+                        } else {
+                            fprint $fileId  ("if ( `objExists " + $SName[0] + "` && `objExists " + $conAttributeShort[0] + "` ) {\n");                                
+                            fprint $fileId  ("    editRenderLayerAdjustment " + $each + ";\n");                           
+                            fprint $fileId  ("    connectAttr -force " + $conAttribute[0] + " " + $each + ";\n");
+                            fprint $fileId  ("}\n");
+                        }
+                    }
+                    string $SName[] = `ls -o $each`;
+                    string $attrType = `getAttr -type $each`;
+                    if ( $attrType == "float3"){
+                        string $conAttribute[] = `listConnections -d 0 -p 1 $each`;
+                        string $conAttributeShort[] = `listConnections -d 0 -p 0 $each`;
+                        if ($conAttribute[0] == ""){               
+                            editRenderLayerGlobals -currentRenderLayer $currentLayer;
+                            vector $color = `getAttr $each`;
+                            string $getAttrOverride = $color;
+                            fprint $fileId ("if ( `objExists " + $SName[0] + "` ) {\n");
+                            fprint $fileId ("    string $conAttribute[] = `listConnections -d 0 -p 1 " + $each + "`;\n");
+                            fprint $fileId ("    editRenderLayerAdjustment " + $each + ";\n");             
+                            fprint $fileId ("    if ($conAttribute[0] == \"\"){\n");            
+                            fprint $fileId ("        setAttr " + $each + " " + $getAttrOverride + ";\n");
+                            fprint $fileId ("    } else if (size($conAttribute) >= 1){\n");
+                            fprint $fileId ("        disconnectAttr $conAttribute[0] " + $each + ";\n");
+                            fprint $fileId ("        setAttr " + $each + " " + $getAttrOverride + ";\n");                                      
+                            fprint $fileId ("    }\n");
+                            fprint $fileId ("}\n");
+                        } else {
+                            fprint $fileId ("if ( `objExists " + $SName[0] + "` && `objExists " + $conAttributeShort[0] + "` ) {\n");                                
+                            fprint $fileId ("    editRenderLayerAdjustment " + $each + ";\n");                           
+                            fprint $fileId ("    connectAttr -force " + $conAttribute[0] + " " + $each + ";\n");
+                            fprint $fileId ("}\n");
+                        }
+                    }
+                    string $SName[] = `ls -o $each`;
+                    string $attrType = `getAttr -type $each`;
+                    if ( $attrType == "string"){
+                        string $conAttribute[] = `listConnections -d 0 -p 1 $each`;
+                        string $conAttributeShort[] = `listConnections -d 0 -p 0 $each`;
+                        if ($conAttribute[0] == ""){               
+                            editRenderLayerGlobals -currentRenderLayer $currentLayer;
+                            string $getAttrOverride = `getAttr $each`;
+                            fprint $fileId  ("if ( `objExists " + $SName[0] + "` ) {\n");
+                            fprint $fileId  ("    string $conAttribute[] = `listConnections -d 0 -p 1 " + $each + "`;\n");
+                            fprint $fileId  ("    editRenderLayerAdjustment " + $each + ";\n");             
+                            fprint $fileId  ("    if ($conAttribute[0] == \"\"){\n");            
+                            fprint $fileId  ("        setAttr -type \"string\" " + $each + " \"" + $getAttrOverride + "\";\n");
+                            fprint $fileId  ("    } else if (size($conAttribute) >= 1){\n");
+                            fprint $fileId  ("        disconnectAttr $conAttribute[0] " + $each + ";\n");
+                            fprint $fileId  ("        setAttr -type \"string\" " + $each + " \"" + $getAttrOverride + "\";\n");            
+                            fprint $fileId  ("    }\n");
+                            fprint $fileId  ("}\n");
+                        } else {
+                            fprint $fileId  ("if ( `objExists " + $SName[0] + "` && `objExists " + $conAttributeShort[0] + "` ) {\n");                                
+                            fprint $fileId  ("    editRenderLayerAdjustment " + $each + ";\n");                           
+                            fprint $fileId  ("    connectAttr -force " + $conAttribute[0] + " " + $each + ";\n");
+                            fprint $fileId  ("}\n");
+                        }
+                    }
+                    string $SName[] = `ls -o $each`;
+                    string $attrType = `getAttr -type $each`;
+                    if ( $attrType == ""){
+                        string $conAttribute[] = `listConnections -d 0 -p 1 $each`;
+                        string $conAttributeShort[] = `listConnections -d 0 -p 0 $each`;
+                        if ($conAttribute[0] == ""){               
+                            editRenderLayerGlobals -currentRenderLayer $currentLayer;
+                            string $getAttrOverride = `getAttr $each`;
+                            fprint $fileId  ("if ( `objExists " + $SName[0] + "` ) {\n");
+                            fprint $fileId  ("    string $conAttribute[] = `listConnections -d 0 -p 1 " + $each + "`;\n");
+                            fprint $fileId  ("    editRenderLayerAdjustment " + $each + ";\n");             
+                            fprint $fileId  ("    if ($conAttribute[0] == \"\"){\n");            
+                            fprint $fileId  ("        setAttr " + $each + " " + $getAttrOverride + ";\n");
+                            fprint $fileId  ("    } else if (size($conAttribute) >= 1){\n");
+                            fprint $fileId  ("        disconnectAttr $conAttribute[0] " + $each + ";\n");
+                            fprint $fileId  ("        setAttr " + $each + " " + $getAttrOverride + ";\n");            
+                            fprint $fileId  ("    }\n");
+                            fprint $fileId  ("}\n");
+                        } else {
+                            fprint $fileId  ("if ( `objExists " + $SName[0] + "` && `objExists " + $conAttributeShort[0] + "` ) {\n");                                
+                            fprint $fileId  ("    editRenderLayerAdjustment " + $each + ";\n");                           
+                            fprint $fileId  ("    connectAttr -force " + $conAttribute[0] + " " + $each + ";\n");
+                            fprint $fileId  ("}\n");
+                        }
+                    }
+                }
+            }
+    
+            string $queryAssociatePass[] = `listConnections ($currentLayer + ".renderPass")`;
+            int $AssociatePassSize = `size($queryAssociatePass)`;     
+            if ($AssociatePassSize == 0){
+            } else {
+                int $num = 1; 
+                fprint $fileId ("string $PassCon[] = {");      
+                for ($each in $queryAssociatePass){
+                    if ($AssociatePassSize == $num){    
+                        fprint $fileId ("\"" + $each + "_new\"");   
+                    } else {
+                        fprint $fileId ("\"" + $each + "_new\",");
+                    }
+                    $num += 1;
+                }
+                fprint $fileId "};\n";
+                fprint $fileId "for ($each in $PassCon){\n";
+                for ($each in $queryAssociatePass){        
+                    fprint $fileId ("        if (`gmatch $each \"" + $each + "_new\"`){\n");     
+                    fprint $fileId ("            if (`attributeExists \"new\" $each`){\n");
+                    fprint $fileId ("                connectAttr -nextAvailable ($currentLayer + \".renderPass\") ( $each  + \".owner\");\n");
+                    fprint $fileId ("            }\n");
+                    fprint $fileId ("    }\n");
+                }
+                fprint $fileId "}\n";          
+            }           
+        
+            string $currentLayer = $queryAllLay[$i];   
+            string $contMap[] = `ls -type "passContributionMap"`;
+            string $AssociateContMap[] = `listConnections ($currentLayer + ".passContributionMap")`;    
+            if (size($AssociateContMap) == 0){
+                    
+            } else {     
+                for ($each in $AssociateContMap) {
+                    fprint $fileId ("string $newContrMap = `createNode -n " + $each + "_new" + " passContributionMap`;\n");               
+                    fprint $fileId ("connectAttr -na ($currentLayer + \".passContributionMap\") ($newContrMap + \".owner\");\n\n");    
+                    string $contMapObj = $each;           
+                    string $AssociatePassContMap[] = `listConnections  ($each + ".renderPass")`;
+                    int $AssociatePassContMapSize = `size($AssociatePassContMap)`;     
+                    if ($AssociatePassContMapSize == 0){
+                    } else {
+                        int $num = 1; 
+                        fprint $fileId ("string $PassToContr[] = {");      
+                        for ($each in $AssociatePassContMap){
+                            if ($AssociatePassContMapSize == $num){    
+                                fprint $fileId ("\"" + $each + "_new\"");   
+                            } else {
+                                fprint $fileId ("\"" + $each + "_new\",");
+                            }
+                            $num += 1;
+                        }
+                        fprint $fileId "};\n";
+                        fprint $fileId "for ($each in $PassToContr){\n";
+                        fprint $fileId "    if ( `objExists $each` ) {\n";                       
+                        fprint $fileId "        connectAttr -nextAvailable ($each + \".message\") ($newContrMap + \".renderPass\");\n";
+                        fprint $fileId "    }\n\n";                      
+                        fprint $fileId "}\n\n";  
+                    }
+                    string $ContMapObj[] = `listConnections ($contMapObj + ".dagObjects")`;     
+                    select $ContMapObj;
+                    string $ContMapObj[] = `ls -sl -l`;
+                    for ($obj in $ContMapObj){
+                        fprint $fileId ("if ( `objExists "+ $obj +" ` ) {\n");                     
+                        fprint $fileId ("    connectAttr -na " + $obj + ".message ($newContrMap + \".dagObjects\");\n");
+                        fprint $fileId "}\n\n";
+                    }
+                fprint $fileId "\n";
+                }
+            }
+            fprint $fileId "\n";
+            fprint $fileId ("print \"" + $currentLayer + " imported.\";\n"); 
+            fprint $fileId "\/\/-----------------------------------------------------------------------------------------------------\n\n\n";
+            print ($currentLayer + " exported.\n");    
+        }
+        
+        fprint $fileId "string $ConMapCorrectName[] = `ls -type \"passContributionMap\"`;\n";
+        fprint $fileId "for ($each in $ConMapCorrectName){\n";
+        fprint $fileId "    if (`gmatch $each \"*_new\"`){\n";
+        fprint $fileId "        string $conMapRename = substituteAllString($each,\"_new\", \"\");\n";
+        fprint $fileId "        rename $each $conMapRename;\n";
+        fprint $fileId "    }\n";
+        fprint $fileId "}\n";
+        
+        fprint $fileId "string $PassCorrectName[] = `ls -type \"renderPass\"`;\n";
+        fprint $fileId "for ($each in $PassCorrectName){\n";
+        fprint $fileId "    if (`gmatch $each \"*_new\"`){\n";
+        fprint $fileId "        deleteAttr -at new $each;\n";
+        fprint $fileId "        string $passRename = substituteAllString($each,\"_new\", \"\");\n";
+        fprint $fileId "        rename $each $passRename;\n";
+        fprint $fileId "    }\n";
+        fprint $fileId "}\n";
+        fprint $fileId "editRenderLayerGlobals -currentRenderLayer defaultRenderLayer;\n";
+        
+        
+        fprint $fileId "print \"Import Complete.\";";
+        fclose $fileId ;
+        editRenderLayerGlobals -currentRenderLayer defaultRenderLayer;
+        print $saveFileName[0];
+        print "\n";
+        print "Export Done!!!";
+    }
+}
+
+//source script
+
+global proc SourceScript(string $script) {  
+  
+    string $command = "source \""+$script+"\"";  
+    eval $command ;
+      
+   
+}
+
+
+// import Render Layer procedure
+
+global proc importRenderLayer(){
+ 
+    string $DirName = `workspace -q -fullName`;
+    string $openFileName[] = `fileDialog2  -caption "Import Render Layers." -fileMode 1 -startingDirectory $DirName -fileFilter "*.mel"`;
+    SourceScript $openFileName[0];
+    updateRLayer();
+    enableBtn();
+
+}
+
+// about 
+
+global proc aboutHelp(){
+    showHelp -absolute "http://www.marianoantico.blogspot.com/";
+}

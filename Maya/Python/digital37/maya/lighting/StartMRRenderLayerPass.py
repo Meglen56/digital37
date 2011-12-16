@@ -6,11 +6,16 @@ import maya.OpenMayaUI as mui
 # Make MRRenderLayerPassUI by: pyuic4 MRRenderLayerPass.ui>MRRenderLayerPassUI.py
 from digital37.maya.lighting.MRRenderLayerPassUI import Ui_root
 
+import digital37.maya.lighting.MRRenderLayerPass as MRRenderLayerPass
+
 class StartMRRenderLayerPass(QtGui.QMainWindow):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_root()
         self.ui.setupUi(self)
+        
+    def on_pushButton_ao_pressed(self):
+        MRRenderLayerPass.MRRenderLayer().createAmbientOcclusionLayer()
         
 def getMayaWindow():
     ptr = mui.MQtUtil.mainWindow()
