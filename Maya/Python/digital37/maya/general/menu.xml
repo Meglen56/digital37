@@ -11,9 +11,9 @@
 	</node>
 		
 	<node type="subMenu" name="Animation">
-		<node type="command" name="Camera" cmd="import digital37.maya.animation.renderCam;renderCam.CameraOnly();" comment='Camera' mode="python"></node>
-		<node type="command" name="Camera and Aim" cmd="import digital37.maya.animation.renderCam;renderCam.CameraOnly();" comment='Camera' mode="python"></node>
-		<node type="command" name="Camera" cmd="import digital37.maya.animation.renderCam;renderCam.CameraOnly();" comment='Camera' mode="python"></node>
+		<node type="command" name="Camera" cmd="import digital37.maya.animation.renderCam;digital37.maya.animation.renderCam.CameraOnly();" comment='Camera' mode="python"></node>
+		<node type="command" name="Camera and Aim" cmd="import digital37.maya.animation.renderCam;digital37.maya.animation.renderCam.CameraOnly();" comment='Camera' mode="python"></node>
+		<node type="command" name="Camera" cmd="import digital37.maya.animation.renderCam;digital37.maya.animation.renderCam.CameraOnly();" comment='Camera' mode="python"></node>
 		<node type="command" name="Bake Camera" cmd="xxzBakeCamera();" comment='Bake Camera' mode="mel"></node>
 		<node type="command" name="Playblast Show" cmd="playblastShow();" comment='Playblast Show' mode="mel"></node>
 		<node type="command" name="Shot Camera List" cmd="shotCamLister();" comment='Shot Camera' mode="mel"></node>
