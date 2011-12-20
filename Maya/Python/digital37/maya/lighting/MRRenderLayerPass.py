@@ -19,7 +19,7 @@ from pymel.all import mel
 from pymel.core.general import PyNode
 
 LIGHT_TYPES = ['<class \'pymel.core.nodetypes.SpotLight\'>',\
-               '<class \'pymel.core.nodetypes.DirectionLight\'>',\
+               '<class \'pymel.core.nodetypes.DirectionalLight\'>',\
                '<class \'pymel.core.nodetypes.VolumeLight\'>',\
                '<class \'pymel.core.nodetypes.AreaLight\'>',\
                '<class \'pymel.core.nodetypes.AmbientLight\'>',\
@@ -49,7 +49,17 @@ def getGeometrySelection():
     selObjShort = pm.ls(sl=1)
     selObj = pm.ls(sl=1,dag=1,lf=1,type=['mesh','nurbsSurface','subdiv'])
     logging.debug(str(selObjShort))
-    if not selObjShort :
+    if not selObj :
+        logging.warning('select some objects first.')
+        return None
+    else :
+        return selObj
+    
+def getLightSelection():
+    logging.debug('MRREnderLayer getSelection')
+    selObj = pm.ls(sl=1,dag=1,lf=1,type=['spotLight','directionalLight',\
+                                         'volumeLight','areaLight','ambientLight','pointLight'])
+    if not selObj :
         logging.warning('select some objects first.')
         return None
     else :
@@ -67,24 +77,6 @@ def createShader(shaderType,shaderName):
     surfaceShader.outColor.connect(shadingSG.surfaceShader)
     return ( surfaceShader, shadingSG )
 
-#        if selObj :
-#            for each in selObj :
-#                nodeType = type(each)
-#                logging.debug(str(nodeType))
-#                if str(nodeType) in GEOMETRY_TYEPS :
-#                    logging.debug('****'+str(each))
-#                    eachSn = each.getParent()
-#                    conAll = each.connections(d=1)
-#                    logging.debug('conAll: '+str(conAll))
-#                    for con in conAll :
-#                        conType = type(con) 
-#                        logging.debug(str(conType))
-#                        if str(conType) == SHADING_ENGINE_TYPE :
-#                            logging.debug('displacement shader: ')
-#                            dispCon = con.displacementShader.connections(p=1,d=1)
-#                            if len(dispCon) >= 1 :
-#                                logging.debug('displacement shader: '+str(dispCon[0]))
-#                                logging.debug('eachSn[0]: ' + str(eachSn))
 def getDisplacementShader(input):
     displacementShader = None
     connectionAll = input.connections(d=1)
@@ -122,25 +114,37 @@ class MRRenderLayer():
         return newLayer     
     
     def setRenderLayerAttr(self,attr,val):
-        # Unlock if locked
-        isLock = 0
-        if attr.isLocked() == 1:
-            attr.unlock()
-            isLock = 1
-        
-        # Break connections
-        attrInputs = attr.connections(p=1,d=1)
-        if len(attrInputs) >= 1 :
-            attr.disconnect( attrInputs[0] )
-        
-        # Set attr    
-        pm.editRenderLayerAdjustment(attr)
-        attr.set(val)
-        
-        # Re lock again if locked before
-        if isLock == 1 :
-            attr.lock()
-     
+        # Check if attr exists
+        logging.debug('attr: ' + str(attr))
+        if pm.objExists(attr) :
+            logging.debug('attr: ' + str(attr))
+            # Unlock if locked
+            isLock = 0
+            if attr.isLocked() == 1:
+                attr.unlock()
+                isLock = 1
+            
+            # Break connections
+            attrInputs = attr.connections(p=1,d=1)
+            if len(attrInputs) >= 1 :
+                attr.disconnect( attrInputs[0] )
+            
+            # Set attr 
+            try:   
+                pm.editRenderLayerAdjustment(attr)
+            except :
+                logging.warning('editRenderLayerAdjustment error:' + str(attr) + 'skip set attr')
+            try :
+                attr.set(val)
+            except :
+                logging.warning('set attr error:' + str(attr) + str(val))
+                
+            # Re lock again if locked before
+            if isLock == 1 :
+                attr.lock()
+        else :
+            logging.warning(str(attr) + ' does not exists')
+            
     def disConnectCamShader(self):
         '''        string $allCams[] = `ls -ca`;
         for ($each in $allCams){
@@ -236,13 +240,107 @@ class MRRenderLayer():
         
         pm.select(cl=1)
 
+                       
+    def createLightLayer(self,name):
+        selObj = getGeometrySelection()
+        selLight = getLightSelection()
+        if selObj == None :
+            logging.warning('select some lights and some objects first.')
+            return None
+        elif selLight == None :
+            logging.warning('select some lights and some objects first.')
+            return None
+        else :
+            
+#        string $Newlayer = `createRenderLayer -n $name`;
+#        editRenderLayerGlobals -currentRenderLayer $Newlayer;
+#        string $LuzMat = `shadingNode -n ($name + "_MAT") -asShader lambert`;
+#        setAttr ($LuzMat + ".diffuse") 1;
+#        setAttr "miDefaultOptions.rayTracing" 1;
+            newLayer = self.createNewLayer('Light')
+            
+            luzMat = pm.shadingNode('lambert',n=(name+'_MAT'),asShader=True)
+            luzMat.diffuse.set(1)
+            MI_DEFAULT_OPTIONS.rayTracing.set(1)
+        
+            for each in selObj :
+                nodeType = type(each)
+                logging.debug(str(nodeType))
+                
+                # Get dispalcement shader if input is geometry
+                if str(nodeType) in GEOMETRY_TYEPS :
+                    logging.debug('****'+str(each))
+                    eachSn = each.getParent()
+                    displacementShader = getDisplacementShader(each)
+                    if displacementShader :
+#                        string $LuzObjMat = `shadingNode -n ($name + "_" + $eachSn[0] + "_MAT") -asShader lambert`;
+#                            setAttr ($LuzObjMat + ".diffuse") 1;                           
+#                            string $LuzObjSG = `sets -renderable true -noSurfaceShader true -empty -name ($LuzObjMat + "_SG")`;
+#                            connectAttr -f ($LuzObjMat + ".outColor") ($LuzObjSG + ".surfaceShader");
+#                            connectAttr -f $dispCon[0] ($LuzObjSG + ".displacementShader");
+#                            select $eachSn[0];                            
+#                            hyperShade -assign $LuzObjMat;
+                        shader,shaderSG = createShader('lambert',(newLayer+'_'+str(eachSn)+'_MAT'))
+                        shader.diffuse.set(1)
+                        displacementShader.connect(shaderSG.displacementShader)
+
+                        pm.select(each,r=1)
+                        mel.hyperShade(assign=shader)
+                                
+                    else :
+                        pm.select(each,r=1)
+                        mel.hyperShade(assign=luzMat)
+                else :
+                    if str(nodeType) in LIGHT_TYPES :
+#                                        editRenderLayerAdjustment ($each + ".color");
+#                setAttr ($each + ".color") 0 1 0 ;
+#                editRenderLayerAdjustment ($each + ".intensity");
+#                setAttr ($each + ".intensity") 5;
+#                editRenderLayerAdjustment ($each + ".shadowColor");
+#                setAttr ($each + ".lightAngle") 5;
+#                setAttr ($each + ".shadowColor") 0 0 1 ;
+#                setAttr ($each + ".useRayTraceShadows") 1;
+#                setAttr ($each + ".shadowRays") 20;
+                        self.setRenderLayerAttr(each.intensity, 5)
+                        self.setRenderLayerAttr(each.color, [0,1,0])
+                        self.setRenderLayerAttr(each.shadowColor, [0,0,1])
+                        if each.hasAttr( 'lightAngle' ):
+                            self.setRenderLayerAttr(each.lightAngle, 5)
+                        self.setRenderLayerAttr(each.useRayTraceShadows, 1)
+                        self.setRenderLayerAttr(each.shadowRays, 20)
+
+                pm.select(each,r=1)
+                logging.debug('each: '+str(each))
+                eachSn = pm.pickWalk(d='down')
+                logging.debug('eachSn: '+str(eachSn[0]))
+                if eachSn[0] != each :
+                    pm.editRenderLayerMembers(newLayer,eachSn[0],remove=1)
+
+            # Adjust render layer attr
+            self.setRenderLayerAttr(MI_DEFAULT_OPTIONS.finalGather, 0)
+            self.setRenderLayerAttr(MI_DEFAULT_OPTIONS.caustics, 0)
+            self.setRenderLayerAttr(MI_DEFAULT_OPTIONS.globalIllum, 0)
+            self.setRenderLayerAttr(MI_DEFAULT_FRAME_BUFFER.datatype, 2)
+            self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.imageFormat, 7)
+            self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.imfPluginKey, 'iff')
+            self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.multiCamNamingMode, 1)
+            self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.bufferName, '<RenderPass>')
+
+            # Remove cam lens and env shader            
+            self.disConnectCamShader()
+        
+            pm.select(cl=1)
+            
+            return True
+
+
 class MRMaterial():
     def __init__(self):
         logging.debug('Init MRMaterial class')
     
     # Create and assign black shader
-    def createBlackShader(self):
-        shaderName = 'BLACK_mat'
+    # createShader([0,0,0],[1,1,1],'BLACK')
+    def createShader(self,outColor,outAlpha,shaderName):
         selObj = getGeometrySelection()
         if selObj :
             for each in selObj :
@@ -257,18 +355,104 @@ class MRMaterial():
                     else :
                         shader,shaderSG = createShader('surfaceShader', shaderNameWithDisp)
                         displacementShader.connect(shaderSG.displacementShader)
-                        shader.outColor.set([0,0,0])
-                        shader.outMatteOpacity.set([1,1,1])
+                        shader.outColor.set(outColor)
+                        shader.outMatteOpacity.set(outAlpha)
                         pm.select(each,r=1)
                         mel.hyperShade(assign=shader)
                 else :
                     if not pm.objExists(shaderName) :
                         shader,shaderSG = createShader('surfaceShader', shaderName)
-                        shader.outColor.set([0,0,0])
-                        shader.outMatteOpacity.set([1,1,1])
+                        shader.outColor.set(outColor)
+                        shader.outMatteOpacity.set(outAlpha)
                     pm.select(each,r=1)
                     pm.hyperShade(assign=PyNode(shaderName))
-                            
+
+    # Create and assign black shader
+    def createShadowShader(self,shaderName='Shadow_Mask_MAT'):
+        selObj = getGeometrySelection()
+        if selObj :
+            for each in selObj :
+                # Get dispalcement shader if input is geometry
+                eachSn = each.getParent()
+                displacementShader = getDisplacementShader(each)
+                if displacementShader :
+                    shaderNameWithDisp = "SHADOW_" + eachSn + "_MAT"
+                    if pm.objExists(shaderNameWithDisp) :
+                        pm.select(each,r=1)
+                        pm.hyperShade(assign=PyNode(shaderNameWithDisp))
+                    else :
+                        shader,shaderSG = createShader('useBackground', shaderNameWithDisp)
+                        displacementShader.connect(shaderSG.displacementShader)
+                        shader.specularColor.set([0,0,0])
+                        shader.reflectivity.set(0)
+                        shader.reflectionLimit.set(0)
+                        pm.select(each,r=1)
+                        mel.hyperShade(assign=shader)
+                else :
+                    if not pm.objExists(shaderName) :
+                        shader,shaderSG = createShader('useBackground', shaderName)
+                        shader.specularColor.set([0,0,0])
+                        shader.reflectivity.set(0)
+                        shader.reflectionLimit.set(0)
+                    pm.select(each,r=1)
+                    pm.hyperShade(assign=PyNode(shaderName))
+
+    #Z-DEPTH
+    def createZDepthNetwork(self,shaderName):
+        shader,shaderSG = createShader('surfaceShader', shaderName)
+                        
+        zDepthRange = pm.shadingNode('setRange',n='Z_Depth_setRange',asUtility=1)
+        zDepthRange.outValueX.connect(shader.outColorR,f=1)
+        zDepthRange.outValueX.connect(shader.outColorG,f=1)
+        zDepthRange.outValueX.connect(shader.outColorB,f=1)
+        zDepthRange.minX.set(0)
+        zDepthRange.maxX.set(1)
+                        
+        zDepthMultiDiv = pm.shadingNode('multiplyDivide',n='Z_Depth_multiplyDivide',asUtility=1)
+        zDepthMultiDiv.input2X.set(-1)
+        zDepthMultiDiv.outputX.connect(zDepthRange.valueX,f=1)
+        
+        zDepthSampInfo = pm.shadingNode('samplerInfo',n='Z_Depth_samplerInfo',asUtility=1)
+        
+        zDepthSampInfo.addAttr('cameraNearClipPlane1',at='double',dv=0.1)
+        zDepthSampInfo.cameraNearClipPlane1.set(k=1)
+        
+        zDepthSampInfo.addAttr('cameraFarClipPlane1',at='double',dv=100)
+        zDepthSampInfo.cameraFarClipPlane1.set(k=1)
+
+        zDepthSampInfo.pointCameraZ.connect(zDepthMultiDiv.input1X)
+        zDepthSampInfo.cameraNearClipPlane1.connect(zDepthRange.oldMinX)
+        zDepthSampInfo.cameraFarClipPlane1.connect(zDepthRange.oldMaxX)
+        
+        return (shader,shaderSG)
+                        
+    def createZDepthShader(self,shaderName='Z_Depth_MAT'):
+        selObj = getGeometrySelection()
+        if selObj :
+            for each in selObj :
+                # Get dispalcement shader if input is geometry
+                eachSn = each.getParent()
+                displacementShader = getDisplacementShader(each)
+                if displacementShader :
+                    shaderNameWithDisp = "Z_Depth_" + eachSn + "_MAT"
+                    if pm.objExists(shaderNameWithDisp) :
+                        pm.select(each,r=1)
+                        pm.hyperShade(assign=PyNode(shaderNameWithDisp))
+                    else :
+                        shader,shaderSG = self.createZDepthNetwork(shaderNameWithDisp)
+                        displacementShader.connect(shaderSG.displacementShader)
+                        
+                        pm.select(each,r=1)
+                        mel.hyperShade(assign=shader)
+                else :
+                    if not pm.objExists(shaderName) :
+                        shader,shaderSG = self.createZDepthNetwork(shaderName)
+                    pm.select(each,r=1)
+                    pm.hyperShade(assign=PyNode(shaderName))
+                                                            
 #MRRenderLayerPass()
 #MRRenderLayer().createAmbientOcclusionLayer()
-MRMaterial().createBlackShader()
+#MRMaterial().createShadowShader()
+#MRMaterial().createZDepthShader()
+MRRenderLayer().createLightLayer('test')
+
