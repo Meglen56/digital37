@@ -237,13 +237,13 @@ class MRRenderLayer():
     def createPass(self,prefix,layer):
         renderPass = pm.createNode( 'renderPass', n=(prefix+'_'+layer) )
         mel.applyAttrPreset(renderPass, (os.path.join(MAYA_LOCATION,'presets/attrPresets/renderPass/')+'.mel'), 1)
-        layer.renderPass.connect(renderPass.owner)
+        layer.renderPass.connect(renderPass.owner,nextAvailable=1)
         
     def createColorPasses(self,layer):
         for p in ['beauty','depth','diffuse','incandescence','indirect','normalWorld',\
                   'reflection','refraction','shadow','specular'] :
             self.createPass(p, layer)
-
+            
 #//Create color
 #
 #global proc createColor(){
@@ -264,91 +264,34 @@ class MRRenderLayer():
 #        setAttr -type "string" "defaultRenderGlobals.imageFilePrefix" "images/<Scene>/<RenderLayer>/<RenderLayer>";
 #        setAttr "miDefaultFramebuffer.datatype" 5;
 #        editRenderLayerAdjustment "miDefaultFramebuffer.datatype";
-#/*        string $allCams[] = `ls -ca`;
-#        for ($each in $allCams){
-#            string $camRenderAttr = `getAttr ($each + ".renderable")`;
-#            if ($camRenderAttr == 1){
-#                string $renderCam = $each;
-#                string $renderCamLens = `getAttr ($each + ".miLensShader")`;
-#                if ($renderCamLens == ""){
-#                    string $CamNode = `mrCreateCustomNode -asUtility "" mia_exposure_photographic`;
-#                    setAttr ($CamNode + ".cm2_factor") 10000 ;
-#                    setAttr ($CamNode + ".f_number") 5.6 ;
-#                    setAttr ($CamNode + ".gamma") 1 ;
-#                    editRenderLayerAdjustment ($renderCam + ".miLensShader");
-#                    connectAttr -f ($CamNode + ".message") ($renderCam + ".miLensShader");
-#                }
-#                string $renderCamEnv = `getAttr ($each + ".miEnvironmentShader")`;                 
-#            }
-#        }    
-#        for ($each in $selObj){        
-#            select $each;            
-#            string $eachSn[] = `pickWalk -d down`;
-#            if ($each == $eachSn[0]){            
-#            } else {            
-#                editRenderLayerMembers -remove $Newlayer $eachSn[0];   
-#            }
-#        }    
-#*/        select -cl;    
+#  select -cl;    
 #    }
 #}
-                       
     def createColorLayer(self):
         selObj = getSelection()
         if selObj :
-            newLayer = self.createNewLayer('color')    
-            for each in selObj :
-                nodeType = type(each)
-                logging.debug(str(nodeType))
-                
-                # Get dispalcement shader if input is geometry
-                if str(nodeType) in GEOMETRY_TYEPS :
-                    logging.debug('****'+str(each))
-                    eachSn = each.getParent()
-                    displacementShader = getDisplacementShader(each)
-                    if displacementShader :
-                        shader,shaderSG = createShader('lambert',(newLayer+'_'+str(eachSn)+'_MAT'))
-                        shader.color.set([0,0,0])
-                        shader.transparency.set([0,0,0])
-                                
-                        displacementShader.connect(shaderSG.displacementShader)
-                        AONode = pm.createNode('mib_amb_occlusion')
-                        AONode.outValue.connect(shader.incandescence)
-                        AONode.samples.set(64)
-                                
-                        pm.select(eachSn)
-                        mel.hyperShade(assign=shader)
-                                
-                    else :
-                        pm.select(eachSn)
-                        mel.hyperShade(assign=AOMat)
-                else :
-                    if str(nodeType) in LIGHT_TYPES :
-                        lightSn = each.getParent()
-                        pm.editRenderLayerMembers(newLayer,lightSn,remove=1)
-                        pm.editRenderLayerMembers(newLayer,each,remove=1)
-                
-                pm.select(each)
-                logging.debug('each: '+str(each))
-                eachSn = pm.pickWalk(d='down')
-                logging.debug('eachSn: '+str(eachSn[0]))
-                if eachSn[0] != each :
-                    pm.editRenderLayerMembers(newLayer,eachSn[0],remove=1)
+#        string $Newlayer = `createRenderLayer -n "color"`;
+#        editRenderLayerGlobals -currentRenderLayer $Newlayer;
+#        createMyColorRPasses $Newlayer;     
+            newLayer = self.createNewLayer('color')
+            self.createColorPasses(newLayer)  
+#        editRenderLayerAdjustment "defaultRenderGlobals.imageFilePrefix";
+#        editRenderLayerAdjustment "defaultRenderGlobals.imageFormat";
+#        editRenderLayerAdjustment "defaultRenderGlobals.imfPluginKey";
+#        setAttr "defaultRenderGlobals.imageFormat" 51;
+#        setAttr -type "string" "defaultRenderGlobals.imfPluginKey" "exr";
+#        setAttr "defaultRenderGlobals.multiCamNamingMode" 1;
+#        setAttr -type "string" "defaultRenderGlobals.bufferName" "<RenderPass>";
+#        setAttr -type "string" "defaultRenderGlobals.imageFilePrefix" "images/<Scene>/<RenderLayer>/<RenderLayer>";
+#        setAttr "miDefaultFramebuffer.datatype" 5;              
+            self.setRenderLayerAttr(MI_DEFAULT_FRAME_BUFFER.datatype, 5)
+            self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.imageFormat, 51)
+            self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.imfPluginKey, 'exr')
+            self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.multiCamNamingMode, 1)
+            self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.bufferName, '<RenderPass>')
+            self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.imageFilePrefix, 'images/<Scene>/<RenderLayer>/<RenderLayer>')
 
-        # Adjust render layer attr
-        self.setRenderLayerAttr(MI_DEFAULT_OPTIONS.finalGather, 0)
-        self.setRenderLayerAttr(MI_DEFAULT_OPTIONS.caustics, 0)
-        self.setRenderLayerAttr(MI_DEFAULT_OPTIONS.globalIllum, 0)
-        self.setRenderLayerAttr(MI_DEFAULT_FRAME_BUFFER.datatype, 2)
-        self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.imageFormat, 7)
-        self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.imfPluginKey, 'iff')
-        self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.multiCamNamingMode, 1)
-        self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.bufferName, '<RenderPass>')
-
-        # Remove cam lens and env shader            
-        self.disConnectCamShader()
-        
-        pm.select(cl=1)
+            pm.select(cl=1)
 
     def createAmbientOcclusionLayer(self):
         selObj = getSelection()
@@ -622,7 +565,16 @@ class MRMaterial():
                         shader,shaderSG = self.createZDepthNetwork(shaderName)
                     pm.select(each,r=1)
                     pm.hyperShade(assign=PyNode(shaderName))
-                                                            
+
+class MRRenderSubSet():
+    def __init__(self):
+        logging.debug('Init MRRenderSubSet class')     
+        a
+    def createRenderSubSet(self,subSetName):
+        selObj = getGeometrySelection()
+#string $subsetShader=`mrCreateCustomNode -asUtility "" mip_render_subset`;
+        subSetShader = pm.createNode('mip_render_subset',asUtility=1)
+                                                                    
 #MRRenderLayerPass()
 #MRRenderLayer().createAmbientOcclusionLayer()
 #MRMaterial().createShadowShader()
