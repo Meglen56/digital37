@@ -17,7 +17,7 @@ import os.path
 import maya.cmds as cmds
 import pymel.core as pm
 from pymel.all import mel
-from pymel.core.general import PyNode
+from pymel.core.general import PyNode, setAttr
 
 LIGHT_TYPES = ['<class \'pymel.core.nodetypes.SpotLight\'>',\
                '<class \'pymel.core.nodetypes.DirectionalLight\'>',\
@@ -69,12 +69,6 @@ def getLightSelection():
         return selObj
     
 def createShader(shaderType,shaderName):
-    '''string $RGBObjMat = `shadingNode -n ("MATTE_" + $eachSn[0] + "_MAT") -asShader surfaceShader`;
-        string $RGBObjSG = `sets -renderable true -noSurfaceShader true -empty -name ($RGBObjMat + "_SG")`;
-        setAttr ($RGBObjMat + ".outColor") -type double3 0 0 0 ;
-        setAttr ($RGBObjMat + ".outMatteOpacity") -type double3 1 1 1 ; 
-        connectAttr -f ($RGBObjMat + ".outColor") ($RGBObjSG + ".surfaceShader");
-        connectAttr -f $dispCon[0] ($RGBObjSG + ".displacementShader");'''
     surfaceShader = pm.shadingNode(shaderType,n=shaderName,asShader=True)
     shadingSG = pm.sets(renderable=True,noSurfaceShader=True,empty=True,name=(shaderName+'_SG'))
     surfaceShader.outColor.connect(shadingSG.surfaceShader)
@@ -92,7 +86,45 @@ def getDisplacementShader(input):
                 displacementShader = dispConnections[0]
                 logging.debug('displacement shader: '+str(displacementShader))
     return displacementShader
-                                                
+
+    
+    def setAttr(self,attr,val):
+        # Check if attr exists
+        logging.debug('attr: ' + str(attr))
+        if pm.objExists(attr) :
+            logging.debug('attr: ' + str(attr))
+            # Unlock if locked
+            isLock = 0
+            if attr.isLocked() == 1:
+                attr.unlock()
+                isLock = 1
+            
+            # Break connections
+            attrInputs = attr.connections(p=1,d=1)
+            if len(attrInputs) >= 1 :
+                attr.disconnect( attrInputs[0] )
+            
+            # Set attr 
+            try :
+                attr.set(val)
+            except :
+                logging.warning('set attr error:' + str(attr) + str(val))
+                
+            # Re lock again if locked before
+            if isLock == 1 :
+                attr.lock()
+        else :
+            logging.warning(str(attr) + ' does not exists')
+             
+def setRenderStatus(renderStatus):
+    sels = getGeometrySelection()
+    if sels :
+        for sel in sels :
+            for k,v in renderStatus.items() :
+                attr = PyNode(sel.name()+'.'+k)
+                setAttr(attr,v[1])
+
+                                                        
 class MRRenderLayerPass():
     def __init__(self):
         logging.debug('Init MRRenderLayerPass class')
@@ -236,37 +268,23 @@ class MRRenderLayer():
 #}
     def createPass(self,prefix,layer):
         renderPass = pm.createNode( 'renderPass', n=(prefix+'_'+layer) )
-        mel.applyAttrPreset(renderPass, (os.path.join(MAYA_LOCATION,'presets/attrPresets/renderPass/')+'.mel'), 1)
+        #renderPass = pm.ls(sl=1)
+        #logging.debug('MAYA_LOCATION: '+MAYA_LOCATION)
+        if prefix != 'depth' :
+            presetMel = MAYA_LOCATION+'/presets/attrPresets/renderPass/'+prefix+'.mel'
+        else :
+            presetMel = MAYA_LOCATION+'/presets/attrPresets/renderPass/cameraDepth.mel'
+        logging.debug('presetMel: '+presetMel)
+        
+        mel.applyAttrPreset(renderPass, presetMel, 1)
         layer.renderPass.connect(renderPass.owner,nextAvailable=1)
         
     def createColorPasses(self,layer):
-        for p in ['beauty','depth','diffuse','incandescence','indirect','normalWorld',\
+        for p in ['beauty','depth','diffuse','incandescence','indirect','normalWorld',
                   'reflection','refraction','shadow','specular'] :
             self.createPass(p, layer)
             
 #//Create color
-#
-#global proc createColor(){
-#    string $selObj[] = `ls -sl`;
-#    if (size($selObj) == 0 ){
-#        warning "select an object.";    
-#    } else {   
-#        string $Newlayer = `createRenderLayer -n "color"`;
-#        editRenderLayerGlobals -currentRenderLayer $Newlayer;
-#        createMyColorRPasses $Newlayer;        
-#        editRenderLayerAdjustment "defaultRenderGlobals.imageFilePrefix";
-#        editRenderLayerAdjustment "defaultRenderGlobals.imageFormat";
-#        editRenderLayerAdjustment "defaultRenderGlobals.imfPluginKey";
-#        setAttr "defaultRenderGlobals.imageFormat" 51;
-#        setAttr -type "string" "defaultRenderGlobals.imfPluginKey" "exr";
-#        setAttr "defaultRenderGlobals.multiCamNamingMode" 1;
-#        setAttr -type "string" "defaultRenderGlobals.bufferName" "<RenderPass>";
-#        setAttr -type "string" "defaultRenderGlobals.imageFilePrefix" "images/<Scene>/<RenderLayer>/<RenderLayer>";
-#        setAttr "miDefaultFramebuffer.datatype" 5;
-#        editRenderLayerAdjustment "miDefaultFramebuffer.datatype";
-#  select -cl;    
-#    }
-#}
     def createColorLayer(self):
         selObj = getSelection()
         if selObj :
@@ -569,7 +587,7 @@ class MRMaterial():
 class MRRenderSubSet():
     def __init__(self):
         logging.debug('Init MRRenderSubSet class')     
-        a
+        
     def createRenderSubSet(self,subSetName):
         selObj = getGeometrySelection()
 #string $subsetShader=`mrCreateCustomNode -asUtility "" mip_render_subset`;
@@ -579,5 +597,6 @@ class MRRenderSubSet():
 #MRRenderLayer().createAmbientOcclusionLayer()
 #MRMaterial().createShadowShader()
 #MRMaterial().createZDepthShader()
-MRRenderLayer().createLightLayer('test')
+#MRRenderLayer().createLightLayer('test')
+MRRenderLayer().createColorLayer()
 
