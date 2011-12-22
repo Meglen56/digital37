@@ -17,8 +17,59 @@ import os.path
 import maya.cmds as cmds
 import pymel.core as pm
 from pymel.all import mel
-from pymel.core.general import PyNode, setAttr
+from pymel.core.general import PyNode
 
+# Load mental ray plugin first, else can not made some global var      
+def loadMRPlugin():
+    #Check MR plugin load or not
+    if not cmds.pluginInfo( 'Mayatomr', query=True, loaded=True ) :
+        logging.warning('Maya to MentalRay Plugin has not been loaded.Loading Mayatomr now.')
+        cmds.loadPlugin( 'Mayatomr' )
+loadMRPlugin()
+
+def setAttr(self,attr,val):
+    # Check if attr exists
+    logging.debug('attr: ' + str(attr))
+    if pm.objExists(attr) :
+        logging.debug('attr: ' + str(attr))
+        # Unlock if locked
+        isLock = 0
+        if attr.isLocked() == 1:
+            attr.unlock()
+            isLock = 1
+            
+        # Break connections
+        attrInputs = attr.connections(p=1,d=1)
+        if len(attrInputs) >= 1 :
+            attr.disconnect( attrInputs[0] )
+            
+        # Set attr 
+        try :
+            attr.set(val)
+        except :
+            logging.warning('set attr error:' + str(attr) + str(val))
+                
+        # Re lock again if locked before
+        if isLock == 1 :
+            attr.lock()
+        else :
+            logging.warning(str(attr) + ' does not exists')
+
+DEFAULT_RENDER_GLOBALS = PyNode('defaultRenderGlobals')
+
+# Let maya make some mr attr            
+def setRendererToMR(): 
+    renderer = DEFAULT_RENDER_GLOBALS.currentRenderer.get()
+    if renderer != 'mentalRay' :
+        DEFAULT_RENDER_GLOBALS.currentRenderer.set('mentalRay')
+    DEFAULT_RENDER_GLOBALS.currentRenderer.set(renderer)
+setRendererToMR()
+
+# Get some global var
+MAYA_LOCATION = mel.getenv('MAYA_LOCATION')
+MI_DEFAULT_OPTIONS = PyNode('miDefaultOptions')
+MI_DEFAULT_FRAME_BUFFER = PyNode('miDefaultFramebuffer')
+                         
 LIGHT_TYPES = ['<class \'pymel.core.nodetypes.SpotLight\'>',\
                '<class \'pymel.core.nodetypes.DirectionalLight\'>',\
                '<class \'pymel.core.nodetypes.VolumeLight\'>',\
@@ -29,12 +80,6 @@ GEOMETRY_TYEPS = ['<class \'pymel.core.nodetypes.Mesh\'>',\
                   '<class \'pymel.core.nodetypes.NurbsSurface\'>',\
                   '<class \'pymel.core.nodetypes.Subdiv\'>']   
 SHADING_ENGINE_TYPE = '<class \'pymel.core.nodetypes.ShadingEngine\'>'
-
-MAYA_LOCATION = mel.getenv('MAYA_LOCATION')
-
-DEFAULT_RENDER_GLOBALS = PyNode('defaultRenderGlobals')
-MI_DEFAULT_OPTIONS = PyNode('miDefaultOptions')
-MI_DEFAULT_FRAME_BUFFER = PyNode('miDefaultFramebuffer')
             
 def getSelection():
     logging.debug('MRREnderLayer getSelection')
@@ -86,35 +131,6 @@ def getDisplacementShader(input):
                 displacementShader = dispConnections[0]
                 logging.debug('displacement shader: '+str(displacementShader))
     return displacementShader
-
-    
-    def setAttr(self,attr,val):
-        # Check if attr exists
-        logging.debug('attr: ' + str(attr))
-        if pm.objExists(attr) :
-            logging.debug('attr: ' + str(attr))
-            # Unlock if locked
-            isLock = 0
-            if attr.isLocked() == 1:
-                attr.unlock()
-                isLock = 1
-            
-            # Break connections
-            attrInputs = attr.connections(p=1,d=1)
-            if len(attrInputs) >= 1 :
-                attr.disconnect( attrInputs[0] )
-            
-            # Set attr 
-            try :
-                attr.set(val)
-            except :
-                logging.warning('set attr error:' + str(attr) + str(val))
-                
-            # Re lock again if locked before
-            if isLock == 1 :
-                attr.lock()
-        else :
-            logging.warning(str(attr) + ' does not exists')
              
 def setRenderStatus(renderStatus):
     sels = getGeometrySelection()
@@ -129,12 +145,6 @@ class MRRenderLayerPass():
     def __init__(self):
         logging.debug('Init MRRenderLayerPass class')
         self.loadMRPlugin()
-    
-    def loadMRPlugin(self):
-        #Check MR plugin load or not
-        if not cmds.pluginInfo( 'Mayatomr', query=True, loaded=True ) :
-            logging.warning('Maya to MentalRay Plugin has not been loaded.Loading Mayatomr now.')
-            cmds.loadPlugin( 'Mayatomr' )
 
 class MRRenderLayer():
     def __init__(self):
@@ -598,5 +608,5 @@ class MRRenderSubSet():
 #MRMaterial().createShadowShader()
 #MRMaterial().createZDepthShader()
 #MRRenderLayer().createLightLayer('test')
-MRRenderLayer().createColorLayer()
+#MRRenderLayer().createColorLayer()
 

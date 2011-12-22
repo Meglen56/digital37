@@ -5,9 +5,11 @@ import maya.OpenMayaUI
 
 # Make MRRenderLayerPassUI by: pyuic4 MRRenderLayerPassManager.ui>MRRenderLayerPassManagerUI.py
 import digital37.maya.lighting.MRRenderLayerPassManagerUI
+# reload only for tests
 reload(digital37.maya.lighting.MRRenderLayerPassManagerUI)
 
 import digital37.maya.lighting.MRRenderLayerPass
+# reload only for tests
 reload(digital37.maya.lighting.MRRenderLayerPass)
 
 class StartMRRenderLayerPassManager(QtGui.QMainWindow):
@@ -18,7 +20,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
         
     def on_pushButton_RL_refresh_pressed(self):
         # Get render layers
-        
+        pass
                 
 def getMayaWindow():
     ptr = maya.OpenMayaUI.MQtUtil.mainWindow()

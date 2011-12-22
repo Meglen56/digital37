@@ -5,9 +5,11 @@ import maya.OpenMayaUI
 
 # Make MRRenderLayerPassUI by: pyuic4 MRRenderLayerPass.ui>MRRenderLayerPassUI.py
 import digital37.maya.lighting.MRRenderLayerPassUI 
+# reload only for tests
 reload(digital37.maya.lighting.MRRenderLayerPassUI)
 
-import digital37.maya.lighting.MRRenderLayerPass 
+import digital37.maya.lighting.MRRenderLayerPass
+# reload only for tests 
 reload(digital37.maya.lighting.MRRenderLayerPass)
 
 class StartMRRenderLayerPass(QtGui.QMainWindow):
