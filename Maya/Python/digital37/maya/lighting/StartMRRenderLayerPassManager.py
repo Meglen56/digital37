@@ -17,10 +17,12 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
         QtGui.QWidget.__init__(self, parent)
         self.ui = digital37.maya.lighting.MRRenderLayerPassManagerUI.Ui_root()
         self.ui.setupUi(self)
+        self.RLP = digital37.maya.lighting.MRRenderLayerPass()
         
     def on_pushButton_RL_refresh_pressed(self):
         # Get render layers
-        pass
+        self.renderLayers = self.RLP.getRenderLayers()
+        if self.renderLayers
                 
 def getMayaWindow():
     ptr = maya.OpenMayaUI.MQtUtil.mainWindow()

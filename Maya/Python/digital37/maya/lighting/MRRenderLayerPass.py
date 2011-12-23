@@ -82,7 +82,7 @@ GEOMETRY_TYEPS = ['<class \'pymel.core.nodetypes.Mesh\'>',\
 SHADING_ENGINE_TYPE = '<class \'pymel.core.nodetypes.ShadingEngine\'>'
             
 def getSelection():
-    logging.debug('MRREnderLayer getSelection')
+    logging.debug('MRRenderLayerPass getSelection')
     selObjShort = pm.ls(sl=1)
     selObj = pm.ls(sl=1,dag=1)
     logging.debug(str(selObjShort))
@@ -93,7 +93,7 @@ def getSelection():
         return selObj
 
 def getGeometrySelection():
-    logging.debug('MRREnderLayer getSelection')
+    logging.debug('MRRenderLayerPass getSelection')
     selObjShort = pm.ls(sl=1)
     selObj = pm.ls(sl=1,dag=1,lf=1,type=['mesh','nurbsSurface','subdiv'])
     logging.debug(str(selObjShort))
@@ -104,7 +104,7 @@ def getGeometrySelection():
         return selObj
     
 def getLightSelection():
-    logging.debug('MRREnderLayer getSelection')
+    logging.debug('MRRenderLayerPass getSelection')
     selObj = pm.ls(sl=1,dag=1,lf=1,type=['spotLight','directionalLight',\
                                          'volumeLight','areaLight','ambientLight','pointLight'])
     if not selObj :
@@ -144,12 +144,16 @@ def setRenderStatus(renderStatus):
 class MRRenderLayerPass():
     def __init__(self):
         logging.debug('Init MRRenderLayerPass class')
-        self.loadMRPlugin()
 
-class MRRenderLayer():
-    def __init__(self):
-        logging.debug('Init MRRenderLayer class')
-
+    def getRenderLayers(self):
+        selObj = pm.ls(sl=1,type='renderLayer')
+        if not selObj :
+            logging.warning('select some objects first.')
+            return None
+        else :
+            selObj.remove(PyNode('defaultRenderLayer'))
+            return selObj
+            
     def createNewLayer(self,layerName):
         newLayer = pm.createRenderLayer(n=layerName)
         pm.editRenderLayerGlobals(currentRenderLayer=newLayer)
@@ -604,9 +608,9 @@ class MRRenderSubSet():
         subSetShader = pm.createNode('mip_render_subset',asUtility=1)
                                                                     
 #MRRenderLayerPass()
-#MRRenderLayer().createAmbientOcclusionLayer()
+#MRRenderLayerPass().createAmbientOcclusionLayer()
 #MRMaterial().createShadowShader()
 #MRMaterial().createZDepthShader()
-#MRRenderLayer().createLightLayer('test')
-#MRRenderLayer().createColorLayer()
+#MRRenderLayerPass().createLightLayer('test')
+#MRRenderLayerPass().createColorLayer()
 
