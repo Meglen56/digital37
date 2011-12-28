@@ -22,7 +22,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
     def on_pushButton_RL_refresh_pressed(self):
         # Get render layers
         self.renderLayers = self.RLP.getRenderLayers()
-        if self.renderLayers
+        #if self.renderLayers
                 
 def getMayaWindow():
     ptr = maya.OpenMayaUI.MQtUtil.mainWindow()

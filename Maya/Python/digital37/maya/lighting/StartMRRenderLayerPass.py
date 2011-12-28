@@ -17,10 +17,26 @@ class StartMRRenderLayerPass(QtGui.QMainWindow):
         QtGui.QWidget.__init__(self, parent)
         self.ui = digital37.maya.lighting.MRRenderLayerPassUI.Ui_root()
         self.ui.setupUi(self)
+        self.renderLayer =  digital37.maya.lighting.MRRenderLayerPass.MRRenderLayerPass()
         
     def on_pushButton_CRL_ao_pressed(self):
-        MRRenderLayerPass.MRRenderLayer().createAmbientOcclusionLayer()
+       self.renderLayer.createAmbientOcclusionLayer()
         
+    def on_pushButton_CRL_color_pressed(self):
+        self.renderLayer.createColorLayer()
+        
+    def on_pushButton_CRL_keyLight_pressed(self):
+        self.renderLayer.createLightLayer('key',[0,1,0])        
+
+    def on_pushButton_CRL_fillLight_pressed(self):
+        self.renderLayer.createLightLayer('fill',[1,0,0])
+        
+    def on_pushButton_CRL_backLight_pressed(self):
+        self.renderLayer.createLightLayer('back',[0,0,1])
+        
+    def on_pushButton_CRL_shadow_pressed(self):
+        self.renderLayer.createShadowLayer('back')
+                        
     def on_pushButton_RS_apply_pressed(self):
         #Get widget status
         #Define a dict
