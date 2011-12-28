@@ -451,6 +451,21 @@ class MRRenderLayerPass():
 class MRMaterial():
     def __init__(self):
         logging.debug('Init MRMaterial class')
+        
+    # Get shadingSG by shader name
+    # Return type is string
+    def getShadingSG(self,shaderName):
+        try :
+            shaderNoDisSG = PyNode(shaderName).outColor.connections(d=1,p=0,sh=1)
+            shaderNoDisSG = shaderNoDisSG.name()
+            logging.debug('get shadingSG:' + str(shaderNoDisSG))
+        except :
+            logging.debug('can not get shadingSG')
+            shaderNoDisSG = pm.sets(renderable=True,noSurfaceShader=True,\
+                                    empty=True,name=(shaderName+'_SG'))
+            PyNode(shaderName).outColor.connect(shaderNoDisSG.surfaceShader)
+            
+        return shaderNoDisSG
     
     # Create and assign black shader
     # createShader([0,0,0],[1,1,1],'BLACK')
@@ -508,10 +523,11 @@ class MRMaterial():
                     shaderNoDis.reflectivity.set(0)
                     shaderNoDis.reflectionLimit.set(0)
                 else :
-                    # Get shader sg
+                    # Get shaderSG by shader name
                     if not shaderNoDisSG :
-                        shaderNoDisSG = PyNode(shaderName).outColor.connections(d=1,p=0,sh=1)
-                        logging.debug('shaderNoDisSG: ' + str(shaderNoDisSG))
+                        shaderNoDisSG = self.getShadingSG(shaderName)
+                        
+                logging.debug('shaderNoDisSG: ' + str(shaderNoDisSG))
                     
                 # First assign no displacement shader to all
                 logging.debug('First assign no displacement shader to all' )
@@ -524,17 +540,17 @@ class MRMaterial():
                     for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
                         shaderNameWithDisp = "SHADOW_" + eachSn + "_MAT"
                         if pm.objExists(shaderNameWithDisp) :
-                            pm.select(each,r=1)
-                            #pm.hyperShade(assign=PyNode(shaderNameWithDisp))
-                            pm.sets(shaderSG,e=1,forceElement=1)
+                            # Get shadingSG
+                            shaderSG = self.getShadingSG(shaderNameWithDisp)
                         else :
                             shader,shaderSG = createShader('useBackground', shaderNameWithDisp)
-                            displacementShader.connect(shaderSG.displacementShader)
                             shader.specularColor.set([0,0,0])
                             shader.reflectivity.set(0)
                             shader.reflectionLimit.set(0)
-                            pm.select(each,r=1)
-                            pm.sets(shaderSG,e=1,forceElement=1)
+                        
+                        displacementShader.connect(shaderSG.displacementShader)
+                        pm.select(shapeFace,r=1)
+                        pm.sets(shaderSG,e=1,forceElement=1)
 
     #Z-DEPTH
     def createZDepthNetwork(self,shaderName):
