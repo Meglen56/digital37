@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*- 
 #Description:
-#Author:honglou(hongloull@gmail.com) #Create:2011.12.06 #Update: 
+#Author:honglou(hongloull@gmail.com)
+#Create:2011.12.06
+#Update: 
 #Howto use : 
 import logging 
 LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
@@ -23,7 +25,7 @@ def loadMRPlugin():
         cmds.loadPlugin( 'Mayatomr' )
 loadMRPlugin()
 
-def setAttr(self,attr,val):
+def setAttr(attr,val):
     # Check if attr exists
     logging.debug('attr: ' + str(attr))
     if pm.objExists(attr) :
@@ -60,7 +62,7 @@ def setRendererToMR():
     if renderer != 'mentalRay' :
         DEFAULT_RENDER_GLOBALS.currentRenderer.set('mentalRay')
         # Display render settings window to fix some menetal ray attr do not exists
-        mel.eval('unifiedRenderGlobalsWindow')
+    mel.eval('unifiedRenderGlobalsWindow')
     #DEFAULT_RENDER_GLOBALS.currentRenderer.set(renderer)
 setRendererToMR()
 
@@ -282,10 +284,10 @@ class MRRenderLayerPass():
                   'reflection','refraction','shadow','specular'] :
             self.createPass(p, layer)
             
-    def createColorLayer(self):
+    def createColorLayer(self,layerName):
         selObj = getSelection()
         if selObj :
-            newLayer = self.createNewLayer('color')
+            newLayer = self.createNewLayer(layerName)
             self.createColorPasses(newLayer)  
             self.setRenderLayerAttr(MI_DEFAULT_FRAME_BUFFER.datatype, 5)
             self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.imageFormat, 51)
@@ -296,11 +298,11 @@ class MRRenderLayerPass():
 
             pm.select(cl=1)
             
-    def createShadowLayer(self,layerName='Shadow_Mask_Layer',shaderName='Shadow_Mask_MAT'):
+    def createShadowLayer(self,layerName='Shadow_Mask_Layer',shaderName='Shadow_Mask_MAT',outAlpha=1):
         sel = getGeometrySelection()
         newLayer = self.createNewLayer(layerName)
         # Create material
-        MRMaterial().createShadowShader(shaderName,sel)
+        MRMaterial().createShadowShader(shaderName,sel,outAlpha)
         pm.select(cl=1)
 
     def createAmbientOcclusionLayer(self,name='AO'):
@@ -471,33 +473,55 @@ class MRMaterial():
     # createShader([0,0,0],[1,1,1],'BLACK')
     def createShader(self,outColor,outAlpha,shaderName):
         selObj = getGeometrySelection()
+        shaderNoDis= None
+        shaderNoDisSG = None
+        shader = None
+        shaderSG = None
         if selObj :
             for each in selObj :
                 # Get dispalcement shader if input is geometry
                 eachSn = each.getParent()
-                displacementShader = getDisplacementShader(each)
-                if displacementShader :
-                    shaderNameWithDisp = "MATTE_" + eachSn + "_MAT"
-                    if pm.objExists(shaderNameWithDisp) :
-                        pm.select(each,r=1)
-                        pm.hyperShade(assign=PyNode(shaderNameWithDisp))
-                    else :
-                        shader,shaderSG = createShader('surfaceShader', shaderNameWithDisp)
-                        displacementShader.connect(shaderSG.displacementShader)
-                        shader.outColor.set(outColor)
-                        shader.outMatteOpacity.set(outAlpha)
-                        pm.select(each,r=1)
-                        mel.hyperShade(assign=shader)
+                
+                # Check shape has displacement shader or not
+                displacementShaders, shapeFaces = getDisplacementShader2(each)
+                
+                if not pm.objExists(shaderName) :
+                    shaderNoDis,shaderNoDisSG = createShader('surfaceShader', shaderName)
+                    shaderNoDis.outColor.set(outColor)
+                    shaderNoDis.outMatteOpacity.set(outAlpha)
                 else :
-                    if not pm.objExists(shaderName) :
-                        shader,shaderSG = createShader('surfaceShader', shaderName)
-                        shader.outColor.set(outColor)
-                        shader.outMatteOpacity.set(outAlpha)
-                    pm.select(each,r=1)
-                    pm.hyperShade(assign=PyNode(shaderName))
-
+                    # Get shaderSG by shader name
+                    if not shaderNoDisSG :
+                        shaderNoDisSG = self.getShadingSG(shaderName)
+                        
+                logging.debug('shaderNoDisSG: ' + str(shaderNoDisSG))
+                    
+                # First assign no displacement shader to all
+                logging.debug('First assign no displacement shader to all' )
+                pm.select(each,r=1)
+                pm.sets(shaderNoDisSG,e=1,forceElement=1)
+                    
+                # If shape has displacement shader,then assign displacement shader again    
+                if displacementShaders != [] :
+                    shaderNameWithDisp = shaderName + "_" + eachSn 
+                    for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
+                        if pm.objExists(shaderNameWithDisp) :
+                            # Get shadingSG
+                            shaderSG = self.getShadingSG(shaderNameWithDisp)
+                            logging.debug('shaderSG exists with shaderNameWithDisp: ' + str(shaderSG))
+                        else :
+                            shader,shaderSG = createShader('surfaceShader', shaderNameWithDisp)
+                            shader.outColor.set(outColor)
+                            shader.outMatteOpacity.set(outAlpha)
+                            logging.debug('shaderSG exists with no shaderNameWithDisp: ' + str(shaderSG))
+                        
+                        displacementShader.connect(shaderSG.displacementShader)
+                        pm.select(shapeFace,r=1)
+                        pm.sets(shaderSG,e=1,forceElement=1)    
+        pm.select(cl=1)
+        
     # Create and assign black shader
-    def createShadowShader(self,shaderName='Shadow_Mask_MAT',sel=None):
+    def createShadowShader(self,shaderName='Shadow_Mask_MAT',sel=None,outAlpha=1):
         selObj = sel
         if not selObj:
             selObj = getGeometrySelection()
@@ -512,16 +536,15 @@ class MRMaterial():
                 # Get dispalcement shader if input is geometry
                 eachSn = each.getParent()
                 
-                #displacementShader = getDisplacementShader(each)
                 # Check shape has displacement shader or not
                 displacementShaders, shapeFaces = getDisplacementShader2(each)
                 
-                shaderName = 'SHADOW_No_Displacement_MAT'
                 if not pm.objExists(shaderName) :
                     shaderNoDis,shaderNoDisSG = createShader('useBackground', shaderName)
                     shaderNoDis.specularColor.set([0,0,0])
                     shaderNoDis.reflectivity.set(0)
                     shaderNoDis.reflectionLimit.set(0)
+                    shaderNoDis.matteOpacity.set(outAlpha)
                 else :
                     # Get shaderSG by shader name
                     if not shaderNoDisSG :
@@ -537,8 +560,8 @@ class MRMaterial():
                 # If shape has displacement shader,then assign displacement shader again    
                 if displacementShaders != [] :
                     logging.debug('each: ' + str(each))
+                    shaderNameWithDisp = shaderName + "_" + eachSn
                     for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
-                        shaderNameWithDisp = "SHADOW_" + eachSn + "_MAT"
                         if pm.objExists(shaderNameWithDisp) :
                             # Get shadingSG
                             shaderSG = self.getShadingSG(shaderNameWithDisp)
@@ -547,10 +570,12 @@ class MRMaterial():
                             shader.specularColor.set([0,0,0])
                             shader.reflectivity.set(0)
                             shader.reflectionLimit.set(0)
+                            shader.matteOpacity.set(outAlpha)
                         
                         displacementShader.connect(shaderSG.displacementShader)
                         pm.select(shapeFace,r=1)
                         pm.sets(shaderSG,e=1,forceElement=1)
+        pm.select(cl=1)
 
     #Z-DEPTH
     def createZDepthNetwork(self,shaderName):
@@ -583,27 +608,46 @@ class MRMaterial():
                         
     def createZDepthShader(self,shaderName='Z_Depth_MAT'):
         selObj = getGeometrySelection()
+        shaderNoDis= None
+        shaderNoDisSG = None
+        shader = None
+        shaderSG = None
         if selObj :
             for each in selObj :
                 # Get dispalcement shader if input is geometry
                 eachSn = each.getParent()
-                displacementShader = getDisplacementShader(each)
-                if displacementShader :
-                    shaderNameWithDisp = "Z_Depth_" + eachSn + "_MAT"
-                    if pm.objExists(shaderNameWithDisp) :
-                        pm.select(each,r=1)
-                        pm.hyperShade(assign=PyNode(shaderNameWithDisp))
-                    else :
-                        shader,shaderSG = self.createZDepthNetwork(shaderNameWithDisp)
-                        displacementShader.connect(shaderSG.displacementShader)
-                        
-                        pm.select(each,r=1)
-                        mel.hyperShade(assign=shader)
+                               
+                # Check shape has displacement shader or not
+                displacementShaders, shapeFaces = getDisplacementShader2(each)
+                
+                if not pm.objExists(shaderName) :
+                    shaderNoDis,shaderNoDisSG = self.createZDepthNetwork(shaderName)
                 else :
-                    if not pm.objExists(shaderName) :
-                        shader,shaderSG = self.createZDepthNetwork(shaderName)
-                    pm.select(each,r=1)
-                    pm.hyperShade(assign=PyNode(shaderName))
+                    # Get shaderSG by shader name
+                    if not shaderNoDisSG :
+                        shaderNoDisSG = self.getShadingSG(shaderName)
+                        
+                logging.debug('shaderNoDisSG: ' + str(shaderNoDisSG))
+                    
+                # First assign no displacement shader to all
+                logging.debug('First assign no displacement shader to all' )
+                pm.select(each,r=1)
+                pm.sets(shaderNoDisSG,e=1,forceElement=1)
+                    
+                # If shape has displacement shader,then assign displacement shader again    
+                if displacementShaders != [] :
+                    for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
+                        shaderNameWithDisp = shaderName + "_" + eachSn 
+                        if pm.objExists(shaderNameWithDisp) :
+                            # Get shadingSG
+                            shaderSG = self.getShadingSG(shaderNameWithDisp)
+                        else :
+                            shader,shaderSG = self.createZDepthNetwork(shaderNameWithDisp)
+                        
+                        displacementShader.connect(shaderSG.displacementShader)
+                        pm.select(shapeFace,r=1)
+                        pm.sets(shaderSG,e=1,forceElement=1)
+        pm.select(cl=1)
 
 class MRRenderSubSet():
     def __init__(self):
@@ -616,7 +660,8 @@ class MRRenderSubSet():
                                                                     
 #MRRenderLayerPass()
 #MRRenderLayerPass().createAmbientOcclusionLayer()
-MRRenderLayerPass().createShadowLayer()
+#MRRenderLayerPass().createShadowLayer()
+#MRRenderLayerPass().createColorLayer('color')
 #MRMaterial().createShadowShader()
 #MRMaterial().createZDepthShader()
 #MRRenderLayerPass().createLightLayer('test',[0,1,0])

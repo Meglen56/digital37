@@ -18,12 +18,13 @@ class StartMRRenderLayerPass(QtGui.QMainWindow):
         self.ui = digital37.maya.lighting.MRRenderLayerPassUI.Ui_root()
         self.ui.setupUi(self)
         self.renderLayer =  digital37.maya.lighting.MRRenderLayerPass.MRRenderLayerPass()
+        self.material =  digital37.maya.lighting.MRRenderLayerPass.MRMaterial()
         
-    def on_pushButton_CRL_ao_pressed(self):
+    def on_pushButton_CRL_aO_pressed(self):
        self.renderLayer.createAmbientOcclusionLayer()
         
     def on_pushButton_CRL_color_pressed(self):
-        self.renderLayer.createColorLayer()
+        self.renderLayer.createColorLayer('color')
         
     def on_pushButton_CRL_keyLight_pressed(self):
         self.renderLayer.createLightLayer('key',[0,1,0])        
@@ -35,8 +36,29 @@ class StartMRRenderLayerPass(QtGui.QMainWindow):
         self.renderLayer.createLightLayer('back',[0,0,1])
         
     def on_pushButton_CRL_shadow_pressed(self):
-        self.renderLayer.createShadowLayer('back')
-                        
+        self.renderLayer.createShadowLayer('black')
+        
+    def on_pushButton_CM_black_pressed(self):
+        self.material.createShader([0,0,0],[1,1,1],'BLACK_MATTE')
+        
+    def on_pushButton_CM_blackNoAlpha_pressed(self):
+        self.material.createShader([0,0,0],[0,0,0],'BLACK_NO_ALPHA_MATTE')
+                                        
+    def on_pushButton_CM_red_pressed(self):
+        self.material.createShader([1,0,0],[1,1,1],'RED_MATTE')
+                                        
+    def on_pushButton_CM_green_pressed(self):
+        self.material.createShader([0,1,0],[1,1,1],'GREEN_MATTE')
+                                        
+    def on_pushButton_CM_blue_pressed(self):
+        self.material.createShader([0,0,1],[1,1,1],'BLUE_MATTE')
+                                        
+    def on_pushButton_CM_useBackground_pressed(self):
+        self.material.createShadowShader('userBackGround',None,1)
+                                        
+    def on_pushButton_CM_zDepth_pressed(self):
+        self.material.createZDepthShader('Z_Depth_MAT')
+                                                                                
     def on_pushButton_RS_apply_pressed(self):
         #Get widget status
         #Define a dict
@@ -52,7 +74,7 @@ class StartMRRenderLayerPass(QtGui.QMainWindow):
                         }
         for k,v in renderStatus.items() :
             v[1] = v[0].isChecked()
-        MRRenderLayerPass.setRenderStatus( renderStatus )
+        digital37.maya.lighting.MRRenderLayerPass.setRenderStatus( renderStatus )
                 
 def getMayaWindow():
     ptr = maya.OpenMayaUI.MQtUtil.mainWindow()
