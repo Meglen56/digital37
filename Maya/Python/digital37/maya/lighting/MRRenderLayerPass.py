@@ -17,6 +17,16 @@ import pymel.core as pm
 from pymel.all import mel
 from pymel.core.general import PyNode
 
+MRCMD = '''unifiedRenderGlobalsWindow;
+updateRendererUI;
+addOneTabToGlobalsWindow("mentalRay", "Common", "createMayaSoftwareCommonGlobalsTab");
+addOneTabToGlobalsWindow("mentalRay", "Passes", "createMayaRenderPassTab");
+addOneTabToGlobalsWindow("mentalRay", "Features", "createMentalRayFeaturesTab");
+addOneTabToGlobalsWindow("mentalRay", "Quality", "createMentalRayQualityTab");
+addOneTabToGlobalsWindow("mentalRay", "Indirect Lighting", "createMentalRayIndirectLightingTab");
+addOneTabToGlobalsWindow("mentalRay", "Options", "createMentalRayOptionsTab");
+'''
+
 # Load mental ray plugin first, else can not made some global var      
 def loadMRPlugin():
     #Check MR plugin load or not
@@ -24,6 +34,7 @@ def loadMRPlugin():
         logging.warning('Maya to MentalRay Plugin has not been loaded.Loading Mayatomr now.')
         cmds.loadPlugin( 'Mayatomr' )
 loadMRPlugin()
+mel.eval(MRCMD)
 
 def setAttr(attr,val):
     # Check if attr exists
@@ -61,9 +72,10 @@ def setRendererToMR():
     logging.debug('current renderer: ' + str(renderer))
     if renderer != 'mentalRay' :
         DEFAULT_RENDER_GLOBALS.currentRenderer.set('mentalRay')
-        # Display render settings window to fix some menetal ray attr do not exists
-    mel.eval('unifiedRenderGlobalsWindow')
-    #DEFAULT_RENDER_GLOBALS.currentRenderer.set(renderer)
+       
+    # Display render settings window to fix some menetal ray attr do not exists
+    mel.eval('mentalrayAddTabs;')
+
 setRendererToMR()
 
 # Get some global var
@@ -202,6 +214,8 @@ def setRenderStatus(renderStatus):
 class MRRenderLayerPass():
     def __init__(self):
         logging.debug('Init MRRenderLayerPass class')
+        self.PASSES = ['beauty','depth','diffuse','incandescence','indirect','normalWorld',
+                       'reflection','refraction','shadow','specular']
 
     def getRenderLayers(self):
         selObj = pm.ls(sl=1,type='renderLayer')
@@ -280,8 +294,7 @@ class MRRenderLayerPass():
         layer.renderPass.connect(renderPass.owner,nextAvailable=1)
         
     def createColorPasses(self,layer):
-        for p in ['beauty','depth','diffuse','incandescence','indirect','normalWorld',
-                  'reflection','refraction','shadow','specular'] :
+        for p in self.PASSES :
             self.createPass(p, layer)
             
     def createColorLayer(self,layerName):
@@ -666,3 +679,7 @@ class MRRenderSubSet():
 #MRMaterial().createZDepthShader()
 #MRRenderLayerPass().createLightLayer('test',[0,1,0])
 #MRRenderLayerPass().createColorLayer()
+
+#if __name__ == "__main__":
+#    loadMRPlugin()
+#    setRendererToMR()

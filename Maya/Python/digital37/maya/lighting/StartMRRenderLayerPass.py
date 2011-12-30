@@ -19,9 +19,23 @@ class StartMRRenderLayerPass(QtGui.QMainWindow):
         self.ui.setupUi(self)
         self.renderLayer =  digital37.maya.lighting.MRRenderLayerPass.MRRenderLayerPass()
         self.material =  digital37.maya.lighting.MRRenderLayerPass.MRMaterial()
+        self.initColorLayer()
+        
+    def initColorLayer(self):
+        #self.renderLayer.PASSES
+        lv = self.ui.listWidget_assignedPasses
+
+        item = ['OaK','Banana','Apple',' Orange','Grapes','Jayesh']
+        listItem = []
+        for lst in item:
+            listItem.append(QtGui.QListWidgetItem(lst))
+        for i in range(len(listItem)):
+            lv.insertItem(i+1,listItem[i])
+        
+        # Get default pass
         
     def on_pushButton_CRL_aO_pressed(self):
-       self.renderLayer.createAmbientOcclusionLayer()
+        self.renderLayer.createAmbientOcclusionLayer()
         
     def on_pushButton_CRL_color_pressed(self):
         self.renderLayer.createColorLayer('color')
@@ -86,7 +100,7 @@ def main():
     MRRenderLayerPass_app = QtGui.qApp
     MRRenderLayerPass_myapp = StartMRRenderLayerPass(getMayaWindow())
     MRRenderLayerPass_myapp.show()
-
+        
 if __name__ == "__main__":
     main()
 
