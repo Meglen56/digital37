@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'MRRenderLayerPass.ui'
 #
-# Created: Fri Dec 30 19:59:37 2011
+# Created: Fri Dec 30 23:28:42 2011
 #      by: PyQt4 UI code generator 4.8.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -55,6 +55,11 @@ class Ui_root(object):
         self.label_assignedPasses.setObjectName(_fromUtf8("label_assignedPasses"))
         self.verticalLayout_5.addWidget(self.label_assignedPasses)
         self.listWidget_assignedPasses = QtGui.QListWidget(self.layoutWidget1)
+        self.listWidget_assignedPasses.setDragEnabled(True)
+        self.listWidget_assignedPasses.setDragDropOverwriteMode(True)
+        self.listWidget_assignedPasses.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
+        self.listWidget_assignedPasses.setDefaultDropAction(QtCore.Qt.MoveAction)
+        self.listWidget_assignedPasses.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.listWidget_assignedPasses.setObjectName(_fromUtf8("listWidget_assignedPasses"))
         self.verticalLayout_5.addWidget(self.listWidget_assignedPasses)
         self.verticalLayout_7.addLayout(self.verticalLayout_5)
@@ -76,6 +81,11 @@ class Ui_root(object):
         self.label_availablePasses.setObjectName(_fromUtf8("label_availablePasses"))
         self.verticalLayout_6.addWidget(self.label_availablePasses)
         self.listWidget_availablePasses = QtGui.QListWidget(self.layoutWidget1)
+        self.listWidget_availablePasses.setDragEnabled(True)
+        self.listWidget_availablePasses.setDragDropOverwriteMode(True)
+        self.listWidget_availablePasses.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
+        self.listWidget_availablePasses.setDefaultDropAction(QtCore.Qt.MoveAction)
+        self.listWidget_availablePasses.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.listWidget_availablePasses.setObjectName(_fromUtf8("listWidget_availablePasses"))
         self.verticalLayout_6.addWidget(self.listWidget_availablePasses)
         self.verticalLayout_7.addLayout(self.verticalLayout_6)
@@ -304,6 +314,8 @@ class Ui_root(object):
         QtCore.QMetaObject.connectSlotsByName(root)
 
     def retranslateUi(self, root):
+        self.listWidget_assignedPasses.setSortingEnabled(True)
+        self.listWidget_availablePasses.setSortingEnabled(True)
         self.tabWidget_layer.setTabText(self.tabWidget_layer.indexOf(self.tab_color), QtGui.QApplication.translate("root", "Color", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget_layer.setTabText(self.tabWidget_layer.indexOf(self.tab_aO), QtGui.QApplication.translate("root", "AO", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Tab_layer), QtGui.QApplication.translate("root", "Render Layer", None, QtGui.QApplication.UnicodeUTF8))

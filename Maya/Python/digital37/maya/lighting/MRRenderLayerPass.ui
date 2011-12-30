@@ -79,7 +79,26 @@
               </widget>
              </item>
              <item>
-              <widget class="QListWidget" name="listWidget_assignedPasses"/>
+              <widget class="QListWidget" name="listWidget_assignedPasses">
+               <property name="dragEnabled">
+                <bool>true</bool>
+               </property>
+               <property name="dragDropOverwriteMode">
+                <bool>true</bool>
+               </property>
+               <property name="dragDropMode">
+                <enum>QAbstractItemView::DragDrop</enum>
+               </property>
+               <property name="defaultDropAction">
+                <enum>Qt::MoveAction</enum>
+               </property>
+               <property name="selectionMode">
+                <enum>QAbstractItemView::ExtendedSelection</enum>
+               </property>
+               <property name="sortingEnabled">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -111,7 +130,26 @@
               </widget>
              </item>
              <item>
-              <widget class="QListWidget" name="listWidget_availablePasses"/>
+              <widget class="QListWidget" name="listWidget_availablePasses">
+               <property name="dragEnabled">
+                <bool>true</bool>
+               </property>
+               <property name="dragDropOverwriteMode">
+                <bool>true</bool>
+               </property>
+               <property name="dragDropMode">
+                <enum>QAbstractItemView::DragDrop</enum>
+               </property>
+               <property name="defaultDropAction">
+                <enum>Qt::MoveAction</enum>
+               </property>
+               <property name="selectionMode">
+                <enum>QAbstractItemView::ExtendedSelection</enum>
+               </property>
+               <property name="sortingEnabled">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>

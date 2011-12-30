@@ -18,13 +18,13 @@ from pymel.all import mel
 from pymel.core.general import PyNode
 
 MRCMD = '''unifiedRenderGlobalsWindow;
-updateRendererUI;
-addOneTabToGlobalsWindow("mentalRay", "Common", "createMayaSoftwareCommonGlobalsTab");
-addOneTabToGlobalsWindow("mentalRay", "Passes", "createMayaRenderPassTab");
-addOneTabToGlobalsWindow("mentalRay", "Features", "createMentalRayFeaturesTab");
-addOneTabToGlobalsWindow("mentalRay", "Quality", "createMentalRayQualityTab");
-addOneTabToGlobalsWindow("mentalRay", "Indirect Lighting", "createMentalRayIndirectLightingTab");
-addOneTabToGlobalsWindow("mentalRay", "Options", "createMentalRayOptionsTab");
+//updateRendererUI;
+//addOneTabToGlobalsWindow("mentalRay", "Common", "createMayaSoftwareCommonGlobalsTab");
+//addOneTabToGlobalsWindow("mentalRay", "Passes", "createMayaRenderPassTab");
+//addOneTabToGlobalsWindow("mentalRay", "Features", "createMentalRayFeaturesTab");
+//addOneTabToGlobalsWindow("mentalRay", "Quality", "createMentalRayQualityTab");
+//addOneTabToGlobalsWindow("mentalRay", "Indirect Lighting", "createMentalRayIndirectLightingTab");
+//addOneTabToGlobalsWindow("mentalRay", "Options", "createMentalRayOptionsTab");
 '''
 
 # Load mental ray plugin first, else can not made some global var      
@@ -34,7 +34,7 @@ def loadMRPlugin():
         logging.warning('Maya to MentalRay Plugin has not been loaded.Loading Mayatomr now.')
         cmds.loadPlugin( 'Mayatomr' )
 loadMRPlugin()
-mel.eval(MRCMD)
+#mel.eval(MRCMD)
 
 def setAttr(attr,val):
     # Check if attr exists
@@ -74,7 +74,7 @@ def setRendererToMR():
         DEFAULT_RENDER_GLOBALS.currentRenderer.set('mentalRay')
        
     # Display render settings window to fix some menetal ray attr do not exists
-    mel.eval('mentalrayAddTabs;')
+    #mel.eval('mentalrayAddTabs;')
 
 setRendererToMR()
 
@@ -212,10 +212,20 @@ def setRenderStatus(renderStatus):
                 setAttr(attr,v[1])
                                                         
 class MRRenderLayerPass():
+    PASSES_ALL = ['AO','UVPass','ambient','ambientIrradiance','ambientRaw','beauty','beautyNoReflectRefract',\
+                  'coverage','customColor','customDepth','customLabel','customVector','depth',\
+                  'depthRemapped','diffuse','diffuseMaterialColor','diffuseNoShadow','directIrradiance',\
+                  'directIrradianceNoShadow','glowSource','incandescence','incidenceCN','incidenceCNMat',\
+                  'incidenceLN','indirect','matte','mv2DNormRemap','mv2DToxik','mv3D','normalCam',\
+                  'normalCamMaterial','normalObj','normalObjMaterial','normalWorld','normalWorldMaterial',\
+                  'opacity','reflectedMaterialColor','reflection','refraction','refractionMaterialColor',\
+                  'scatter','shadow','shadowRaw','specular','specularNoShadow','translucence',\
+                  'translucenceNoShadow','volumeLight','volumeObject','volumeScene','worldPosition'] 
     def __init__(self):
         logging.debug('Init MRRenderLayerPass class')
-        self.PASSES = ['beauty','depth','diffuse','incandescence','indirect','normalWorld',
-                       'reflection','refraction','shadow','specular']
+        self.PASSES_SCENE = ['beauty','depth','diffuse','incandescence','indirect','normalWorld',
+                             'reflection','refraction','shadow','specular']
+        self.PASSES_AVAILABLE = [ x for x in MRRenderLayerPass.PASSES_ALL if x not in self.PASSES_SCENE ]
 
     def getRenderLayers(self):
         selObj = pm.ls(sl=1,type='renderLayer')
@@ -294,7 +304,7 @@ class MRRenderLayerPass():
         layer.renderPass.connect(renderPass.owner,nextAvailable=1)
         
     def createColorPasses(self,layer):
-        for p in self.PASSES :
+        for p in self.COLOR_PASSES :
             self.createPass(p, layer)
             
     def createColorLayer(self,layerName):

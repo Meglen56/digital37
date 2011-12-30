@@ -23,17 +23,18 @@ class StartMRRenderLayerPass(QtGui.QMainWindow):
         
     def initColorLayer(self):
         #self.renderLayer.PASSES
-        lv = self.ui.listWidget_assignedPasses
+        listItem1 = []
+        for lst in self.renderLayer.PASSES_SCENE:
+            listItem1.append(QtGui.QListWidgetItem(lst))
+        for i in range(len(listItem1)):
+            self.ui.listWidget_assignedPasses.insertItem(i+1,listItem1[i])
 
-        item = ['OaK','Banana','Apple',' Orange','Grapes','Jayesh']
-        listItem = []
-        for lst in item:
-            listItem.append(QtGui.QListWidgetItem(lst))
-        for i in range(len(listItem)):
-            lv.insertItem(i+1,listItem[i])
-        
-        # Get default pass
-        
+        listItem2 = []
+        for lst in self.renderLayer.PASSES_AVAILABLE:
+            listItem2.append(QtGui.QListWidgetItem(lst))
+        for i in range(len(listItem2)):
+            self.ui.listWidget_availablePasses.insertItem(i+1,listItem2[i])
+                    
     def on_pushButton_CRL_aO_pressed(self):
         self.renderLayer.createAmbientOcclusionLayer()
         
