@@ -20,6 +20,19 @@ class StartMRRenderLayerPass(QtGui.QMainWindow):
         self.renderLayer =  digital37.maya.lighting.MRRenderLayerPass.MRRenderLayerPass()
         self.material =  digital37.maya.lighting.MRRenderLayerPass.MRMaterial()
         self.initColorLayer()
+        #
+       
+    def on_listWidget_assignedPasses_dragEnterEvent(self,event):
+        print 'dragEnter'
+        event.acceptProposedAction()
+#            
+#    def on_listWidget_assignedPasses_dragMoveEvent(self,event):
+#        print 'dragMove'
+#        event.acceptProposedAction()
+#        
+#    def on_listWidget_assignedPasses_dropEvent(self,event):
+#        print 'dropEvent'
+#        event.accept()
         
     def initColorLayer(self):
         #self.renderLayer.PASSES
@@ -28,18 +41,26 @@ class StartMRRenderLayerPass(QtGui.QMainWindow):
             listItem1.append(QtGui.QListWidgetItem(lst))
         for i in range(len(listItem1)):
             self.ui.listWidget_assignedPasses.insertItem(i+1,listItem1[i])
-
         listItem2 = []
         for lst in self.renderLayer.PASSES_AVAILABLE:
             listItem2.append(QtGui.QListWidgetItem(lst))
         for i in range(len(listItem2)):
             self.ui.listWidget_availablePasses.insertItem(i+1,listItem2[i])
-                    
+            
+    def getColorLayerValue(self):
+        self.renderLayer.PASSES_SCENE = []
+        for i in range(self.ui.listWidget_assignedPasses.count()) :
+            self.renderLayer.PASSES_SCENE.append( str( self.ui.listWidget_assignedPasses.item(i).text() ) )
+        self.renderLayer.LAYER_NAME = str( self.ui.lineEdit_color_layerName.text() )
+        self.renderLayer.PREFIX = str( self.ui.lineEdit_color_passPrefix.text() )
+        self.renderLayer.SUFFIX = str( self.ui.lineEdit_color_passSuffix.text() )
+        
     def on_pushButton_CRL_aO_pressed(self):
         self.renderLayer.createAmbientOcclusionLayer()
         
-    def on_pushButton_CRL_color_pressed(self):
-        self.renderLayer.createColorLayer('color')
+    def on_pushButton_color_apply_pressed(self):
+        self.getColorLayerValue()
+        self.renderLayer.createColorLayer()
         
     def on_pushButton_CRL_keyLight_pressed(self):
         self.renderLayer.createLightLayer('key',[0,1,0])        

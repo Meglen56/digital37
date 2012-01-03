@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'MRRenderLayerPass.ui'
 #
-# Created: Fri Dec 30 23:28:42 2011
+# Created: Tue Jan 03 19:52:06 2012
 #      by: PyQt4 UI code generator 4.8.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -55,8 +55,9 @@ class Ui_root(object):
         self.label_assignedPasses.setObjectName(_fromUtf8("label_assignedPasses"))
         self.verticalLayout_5.addWidget(self.label_assignedPasses)
         self.listWidget_assignedPasses = QtGui.QListWidget(self.layoutWidget1)
+        self.listWidget_assignedPasses.setProperty("showDropIndicator", False)
         self.listWidget_assignedPasses.setDragEnabled(True)
-        self.listWidget_assignedPasses.setDragDropOverwriteMode(True)
+        self.listWidget_assignedPasses.setDragDropOverwriteMode(False)
         self.listWidget_assignedPasses.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
         self.listWidget_assignedPasses.setDefaultDropAction(QtCore.Qt.MoveAction)
         self.listWidget_assignedPasses.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
@@ -81,8 +82,9 @@ class Ui_root(object):
         self.label_availablePasses.setObjectName(_fromUtf8("label_availablePasses"))
         self.verticalLayout_6.addWidget(self.label_availablePasses)
         self.listWidget_availablePasses = QtGui.QListWidget(self.layoutWidget1)
+        self.listWidget_availablePasses.setProperty("showDropIndicator", False)
         self.listWidget_availablePasses.setDragEnabled(True)
-        self.listWidget_availablePasses.setDragDropOverwriteMode(True)
+        self.listWidget_availablePasses.setDragDropOverwriteMode(False)
         self.listWidget_availablePasses.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
         self.listWidget_availablePasses.setDefaultDropAction(QtCore.Qt.MoveAction)
         self.listWidget_availablePasses.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)

@@ -226,7 +226,11 @@ class MRRenderLayerPass():
         self.PASSES_SCENE = ['beauty','depth','diffuse','incandescence','indirect','normalWorld',
                              'reflection','refraction','shadow','specular']
         self.PASSES_AVAILABLE = [ x for x in MRRenderLayerPass.PASSES_ALL if x not in self.PASSES_SCENE ]
-
+        self.LAYER_NAME = 'color'
+        self.PREFIX_PASS = ''
+        self.SUFFIX_PASS = ''
+        self.CURREENT_LAYER = None
+        
     def getRenderLayers(self):
         selObj = pm.ls(sl=1,type='renderLayer')
         if not selObj :
@@ -236,8 +240,8 @@ class MRRenderLayerPass():
             selObj.remove(PyNode('defaultRenderLayer'))
             return selObj
             
-    def createNewLayer(self,layerName):
-        newLayer = pm.createRenderLayer(n=layerName)
+    def createNewLayer(self):
+        newLayer = pm.createRenderLayer(n=self.LAYER_NAME)
         pm.editRenderLayerGlobals(currentRenderLayer=newLayer)
         #editRenderLayerAdjustment "defaultRenderGlobals.currentRenderer"
         pm.editRenderLayerAdjustment(DEFAULT_RENDER_GLOBALS.currentRenderer)
@@ -290,28 +294,31 @@ class MRRenderLayerPass():
                     pm.editRenderLayerAdjustment(cam.miEnvironmentShader)
                     renderCamEnv[0].message.disconnect(cam.miEnvironmentShader)
     
-    def createPass(self,prefix,layer):
-        renderPass = pm.createNode( 'renderPass', n=(prefix+'_'+layer) )
+    def createPass(self,passName):
+        logging.debug('self.PREFIX_PASS:' + self.PREFIX_PASS)
+        logging.debug('self.SUFFIX_PASS:' + self.SUFFIX_PASS)
+        renderPass = pm.createNode( 'renderPass', n=self.PREFIX_PASS \
+                                    + '_' + passName + '_' + self.SUFFIX_PASS )
         #renderPass = pm.ls(sl=1)
         #logging.debug('MAYA_LOCATION: '+MAYA_LOCATION)
-        if prefix != 'depth' :
-            presetMel = MAYA_LOCATION+'/presets/attrPresets/renderPass/'+prefix+'.mel'
+        if passName != 'depth' :
+            presetMel = MAYA_LOCATION+'/presets/attrPresets/renderPass/'+passName+'.mel'
         else :
             presetMel = MAYA_LOCATION+'/presets/attrPresets/renderPass/cameraDepth.mel'
         logging.debug('presetMel: '+presetMel)
         
         mel.applyAttrPreset(renderPass, presetMel, 1)
-        layer.renderPass.connect(renderPass.owner,nextAvailable=1)
+        self.CURRENT_LAYER.renderPass.connect(renderPass.owner,nextAvailable=1)
         
-    def createColorPasses(self,layer):
-        for p in self.COLOR_PASSES :
-            self.createPass(p, layer)
+    def createColorPasses(self):
+        for p in self.PASSES_SCENE :
+            self.createPass(p)
             
-    def createColorLayer(self,layerName):
+    def createColorLayer(self):
         selObj = getSelection()
         if selObj :
-            newLayer = self.createNewLayer(layerName)
-            self.createColorPasses(newLayer)  
+            self.CURRENT_LAYER = self.createNewLayer()
+            self.createColorPasses()  
             self.setRenderLayerAttr(MI_DEFAULT_FRAME_BUFFER.datatype, 5)
             self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.imageFormat, 51)
             self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.imfPluginKey, 'exr')
@@ -323,7 +330,7 @@ class MRRenderLayerPass():
             
     def createShadowLayer(self,layerName='Shadow_Mask_Layer',shaderName='Shadow_Mask_MAT',outAlpha=1):
         sel = getGeometrySelection()
-        newLayer = self.createNewLayer(layerName)
+        newLayer = self.createNewLayer()
         # Create material
         MRMaterial().createShadowShader(shaderName,sel,outAlpha)
         pm.select(cl=1)
