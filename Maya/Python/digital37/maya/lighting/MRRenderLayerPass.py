@@ -202,6 +202,61 @@ def getDisplacementShader2(input):
         logging.debug('shapeFace: ' + str(shapeFace))
     logging.debug('---------getDisplacementShader Finish------------\n')
     return (displacementShaders, shapeFaces)
+
+def getTransparencyShader(input):
+    shapeFaces = []
+    
+    connectionAll = flattenList( input.connections(d=1) )
+    logging.debug('input: '+str(input))
+    logging.debug('connectionAll: '+str(connectionAll))
+    for connection in connectionAll :
+        if str( type(connection) ) == SHADING_ENGINE_TYPE :
+            transparency = None
+            displacement = None
+            dispConnections = connection.displacementShader.connections(p=1,d=1)
+            # Get transparency's input connection
+            transparencyConnections = connection.transparencyShader.connections(p=1,d=1)
+
+            #Get ShadingSG's set member
+            members = pm.sets(connection, q=1 )
+            #Get shape's faces in shadingSG'set
+            shape = None
+            shapeFace = ''
+            returnList = {}
+            for m in members :
+                logging.debug('members: ' + str(m))
+                # For pCubeShape1.f[0:1]
+                m = str(m)
+                if '.' in m :
+                    shape,face = m.split('.')
+                    logging.debug('shape: ' + str(shape))
+                    logging.debug('input: ' + str(input))
+                    if shape == str(input) :
+                        shapeFace.append( m )
+                # For pCubeShape1
+                else :
+                    if m == str(input) :
+                        shapeFace.append( m )
+                    
+            # Have displacement shader
+            if len(dispConnections) >= 1 :                
+                displacement = dispConnections[0] 
+
+            if len(transparencyConnections) >= 1 :
+                transparency = transparencyConnections[0]                
+                
+            if shapeFace != [] :
+                shapeFaces.append({shapeFace:[displacement,transparency]})
+
+    logging.debug('---------getTransparencyShader Start------------')
+    logging.debug('input: ' + str(input))
+    for shapeFace in shapeFaces :
+        for k,v in shapeFace.items() :
+            logging.debug('shapeFace: ' + str(k))
+            logging.debug('displacementShader: ' + str(v[0]))
+            logging.debug('transparency: ' + str(v[1]))
+    logging.debug('---------getTransparencyShader Finish------------\n')
+    return shapeFaces
              
 def setRenderStatus(renderStatus):
     sels = getGeometrySelection()
@@ -335,15 +390,19 @@ class MRRenderLayerPass():
         MRMaterial().createShadowShader(shaderName,sel,outAlpha)
         pm.select(cl=1)
 
-    def createAmbientOcclusionLayer(self,name='AO'):
+    def createAOLayer(self,isTransparency,isAddPass):
         selObj = getGeometrySelection()
         
-        newLayer = self.createNewLayer(name)
+        newLayer = self.createNewLayer()
         
-        #AOMat = pm.shadingNode('surfaceShader',n='AO_mat',asShader=True)
-        shaderNoDis,shaderNoDisSG = createShader('surfaceShader',(name+'_MAT'))
+        shaderNoDis,shaderNoDisSG = createShader('surfaceShader',(self.LAYER_NAME+'_MAT'))
         
-        AONode = pm.createNode('mib_amb_occlusion')
+        AONode = None
+        if isTransparency == 0 :
+            AONode = pm.createNode('mib_amb_occlusion')
+        else :
+            AONode = pm.createNode('mib_fg_occlusion')
+            
         AONode.outValue.connect(shaderNoDis.outColor)
         AONode.samples.set(64)
         
@@ -357,12 +416,31 @@ class MRRenderLayerPass():
                 eachSn = each.getParent()
                 
                 # Check shape has displacement shader or not
-                displacementShaders, shapeFaces = getDisplacementShader2(each)
+                shapeFaces = self.getTransparencyShader(each)
+                for shapeFace in shapeFaces :
+                    for k,v in shapeFace.items() :
+                        # Have displacement shader
+                        if v[0] :
+                            shader,shaderSG = createShader('surfaceShader',(self.LAYER_NAME+'_MAT'))
+                            v[0].connect(shaderSG.displacementShader)
+                        
+  
+                        
+                        # Have transparency texture
+                        if v[1] :
+                            tranNode = pm.createNode('mib_transparency')
+                            transparencys[0].outColor.connect( tranNode.transp )    
+                            transparencys[0].outAlpha.connect( tranNode.transpA )
+                            tranNode.outValue.connect( shaderNoDisWithTransSG.miMaterialShader, f=1 )
+                            
+                    pm.select(k,r=1)
+                    pm.sets(shaderSG,e=1,forceElement=1)  
                 
                 # First assign no displacement shader to all
                 logging.debug('First assign no displacement shader to all' )
                 pm.select(each,r=1)
-                pm.sets(shaderNoDisSG,e=1,forceElement=1)
+                pm.sets(shaderNoDisSG,e=1,forceElement=1)                
+                            
                     
                 # If shape has displacement shader,then assign displacement shader again    
                 if displacementShaders != [] :
@@ -370,7 +448,12 @@ class MRRenderLayerPass():
                     for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
                         shader,shaderSG = createShader('surfaceShader',(name+'_'+str(eachSn)+'_MAT'))
                         displacementShader.connect(shaderSG.displacementShader)
-                        AONode = pm.createNode('mib_amb_occlusion')
+                        
+                        if isTransparency == 0 :
+                            AONode = pm.createNode('mib_amb_occlusion')
+                        else :
+                            AONode = pm.createNode('mib_fg_occlusion')
+
                         AONode.outValue.connect(shader.outColor)
                         AONode.samples.set(64)
                                 
@@ -397,6 +480,10 @@ class MRRenderLayerPass():
         # Remove cam lens and env shader            
         self.disConnectCamShader()
         
+        if isAddPass == 1 :
+            # Add ao pass
+            self.createPass('AO')
+            
         pm.select(cl=1)
 
     def createLightLayer(self,name,color):
@@ -689,7 +776,7 @@ class MRRenderSubSet():
         subSetShader = pm.createNode('mip_render_subset',asUtility=1)
                                                                     
 #MRRenderLayerPass()
-#MRRenderLayerPass().createAmbientOcclusionLayer()
+#MRRenderLayerPass().createAOLayer()
 #MRRenderLayerPass().createShadowLayer()
 #MRRenderLayerPass().createColorLayer('color')
 #MRMaterial().createShadowShader()

@@ -48,15 +48,26 @@ class StartMRRenderLayerPass(QtGui.QMainWindow):
             self.ui.listWidget_availablePasses.insertItem(i+1,listItem2[i])
             
     def getColorLayerValue(self):
+        self.renderLayer.LAYER_NAME = str( self.ui.lineEdit_color_layerName.text() )
+        self.renderLayer.PREFIX_PASS = str( self.ui.lineEdit_color_passPrefix.text() )
+        self.renderLayer.SUFFIX_PASS = str( self.ui.lineEdit_color_passSuffix.text() )        
         self.renderLayer.PASSES_SCENE = []
         for i in range(self.ui.listWidget_assignedPasses.count()) :
             self.renderLayer.PASSES_SCENE.append( str( self.ui.listWidget_assignedPasses.item(i).text() ) )
-        self.renderLayer.LAYER_NAME = str( self.ui.lineEdit_color_layerName.text() )
-        self.renderLayer.PREFIX = str( self.ui.lineEdit_color_passPrefix.text() )
-        self.renderLayer.SUFFIX = str( self.ui.lineEdit_color_passSuffix.text() )
+
+    def getAOLayerValue(self):
+        self.renderLayer.LAYER_NAME = str( self.ui.lineEdit_ao_layerName.text() )
+        self.renderLayer.PREFIX_PASS = str( self.ui.lineEdit_ao_passPrefix.text() )
+        self.renderLayer.SUFFIX_PASS = str( self.ui.lineEdit_ao_passSuffix.text() )
         
+    def on_pushButton_ao_apply_pressed(self):
+        self.getAOLayerValue()
+        isTransparency = self.ui.radioButton_ao_transparency.clicked()
+        isAddPass = self.ui.checkBox_addAoPass.clicked()
+        self.renderLayer.createAOLayer( isTransparency, isAddPass )
+                        
     def on_pushButton_CRL_aO_pressed(self):
-        self.renderLayer.createAmbientOcclusionLayer()
+        self.renderLayer.createAOLayer()
         
     def on_pushButton_color_apply_pressed(self):
         self.getColorLayerValue()
