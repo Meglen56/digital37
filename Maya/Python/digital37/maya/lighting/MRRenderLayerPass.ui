@@ -59,7 +59,7 @@
          <attribute name="title">
           <string>Color</string>
          </attribute>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <property name="geometry">
            <rect>
             <x>0</x>
@@ -276,7 +276,7 @@
           <property name="checkable">
            <bool>false</bool>
           </property>
-          <widget class="QWidget" name="">
+          <widget class="QWidget" name="layoutWidget">
            <property name="geometry">
             <rect>
              <x>10</x>
@@ -291,10 +291,13 @@
               <property name="text">
                <string>AO ( Render Layer by Material )</string>
               </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
              </widget>
             </item>
             <item>
-             <widget class="QRadioButton" name="radioButton_ao_transpancy">
+             <widget class="QRadioButton" name="radioButton_ao_transparency">
               <property name="text">
                <string>AO Transpancy ( Render Layer by Material )</string>
               </property>
@@ -303,15 +306,74 @@
             <item>
              <widget class="QCheckBox" name="checkBox_addAoPass">
               <property name="text">
-               <string>Add  AO  Pass</string>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
+               <string>Add AO Pass</string>
               </property>
              </widget>
             </item>
            </layout>
           </widget>
+         </widget>
+        </widget>
+        <widget class="QWidget" name="tab">
+         <attribute name="title">
+          <string>Light</string>
+         </attribute>
+         <widget class="QWidget" name="layoutWidget_5">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>240</y>
+            <width>309</width>
+            <height>85</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_12">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_8">
+             <item>
+              <widget class="QLabel" name="label_color_passFrefix_3">
+               <property name="text">
+                <string>Pass Prefix:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="lineEdit_ao_passPrefix_2"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_color_passSuffix_3">
+               <property name="text">
+                <string>Pass Suffix:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="lineEdit_ao_passSuffix_2"/>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_9">
+             <item>
+              <widget class="QLabel" name="label_layerName_3">
+               <property name="text">
+                <string>Layer Name:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="lineEdit_ao_layerName_2"/>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_ao_apply_2">
+             <property name="text">
+              <string>Apply</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </widget>
        </widget>
@@ -643,11 +705,6 @@
    </layout>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionOpen">
-   <property name="text">
-    <string>Open</string>
-   </property>
-  </action>
  </widget>
  <resources/>
  <connections/>

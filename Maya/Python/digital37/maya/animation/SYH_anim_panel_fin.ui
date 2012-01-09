@@ -3233,44 +3233,9 @@
       <string>&quot;&quot;</string>
      </property>
     </widget>
-    <widget class="QLabel" name="labelLetter">
-     <property name="geometry">
-      <rect>
-       <x>100</x>
-       <y>20</y>
-       <width>81</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Arial</family>
-      </font>
-     </property>
-     <property name="text">
-      <string>b</string>
-     </property>
-    </widget>
    </widget>
   </widget>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>ATD_head</sender>
-   <signal>pressed()</signal>
-   <receiver>tabWidget</receiver>
-   <slot>setFocus()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>241</x>
-     <y>103</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>244</x>
-     <y>253</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

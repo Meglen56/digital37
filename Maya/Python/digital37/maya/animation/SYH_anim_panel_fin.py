@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'SYH_anim_panel_fin.ui'
 #
-# Created: Thu Jan 05 20:50:06 2012
+# Created: Mon Jan 09 20:18:01 2012
 #      by: PyQt4 UI code generator 4.8.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -988,18 +988,10 @@ class Ui_Form(object):
         self.ATD_flyctrl.setText(_fromUtf8(""))
         self.ATD_flyctrl.setProperty("+command", QtGui.QApplication.translate("Form", "\"\"", None, QtGui.QApplication.UnicodeUTF8))
         self.ATD_flyctrl.setObjectName(_fromUtf8("ATD_flyctrl"))
-        self.labelLetter = QtGui.QLabel(self.tab)
-        self.labelLetter.setGeometry(QtCore.QRect(100, 20, 81, 16))
-        font = QtGui.QFont()
-        font.setFamily(_fromUtf8("Arial"))
-        self.labelLetter.setFont(font)
-        self.labelLetter.setText(QtGui.QApplication.translate("Form", "b", None, QtGui.QApplication.UnicodeUTF8))
-        self.labelLetter.setObjectName(_fromUtf8("labelLetter"))
         self.tabWidget.addTab(self.tab, _fromUtf8(""))
 
         self.retranslateUi(Form)
         self.tabWidget.setCurrentIndex(0)
-        QtCore.QObject.connect(self.ATD_head, QtCore.SIGNAL(_fromUtf8("pressed()")), self.tabWidget.setFocus)
         QtCore.QMetaObject.connectSlotsByName(Form)
 
     def retranslateUi(self, Form):

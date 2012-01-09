@@ -62,9 +62,14 @@ class StartMRRenderLayerPass(QtGui.QMainWindow):
         
     def on_pushButton_ao_apply_pressed(self):
         self.getAOLayerValue()
-        isTransparency = self.ui.radioButton_ao_transparency.clicked()
-        isAddPass = self.ui.checkBox_addAoPass.clicked()
-        self.renderLayer.createAOLayer( isTransparency, isAddPass )
+        #isTransparency = self.ui.radioButton_ao_transparency.clicked()
+        isTransparency = False
+        #isAddPass = self.ui.checkBox_addAoPass.checkState()
+        isAddPass = False
+        if isTransparency :
+            self.renderLayer.createAOLayer( isAddPass )
+        else :
+            self.renderLayer.createAOTransparencyLayer( isTransparency, isAddPass )
                         
     def on_pushButton_CRL_aO_pressed(self):
         self.renderLayer.createAOLayer()
@@ -86,7 +91,8 @@ class StartMRRenderLayerPass(QtGui.QMainWindow):
         self.renderLayer.createShadowLayer('black')
         
     def on_pushButton_CM_black_pressed(self):
-        self.material.createShader([0,0,0],[1,1,1],'BLACK_MATTE')
+        #self.material.createShader([0,0,0],[1,1,1],'BLACK_MATTE')
+        print 'black'
         
     def on_pushButton_CM_blackNoAlpha_pressed(self):
         self.material.createShader([0,0,0],[0,0,0],'BLACK_NO_ALPHA_MATTE')

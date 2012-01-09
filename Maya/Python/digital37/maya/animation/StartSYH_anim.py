@@ -19,7 +19,7 @@ class StartSYH_animPanel(QtGui.QMainWindow):
         QtGui.QWidget.__init__(self, parent)
         self.ui = digital37.maya.animation.SYH_anim_panel_fin.Ui_Form()
         self.ui.setupUi(self)
-        self.SHIFT_CLICKED = False
+        self.SHIFT_PRESSED = ' -r '
         #
         self.getChar()
 
@@ -40,46 +40,20 @@ class StartSYH_animPanel(QtGui.QMainWindow):
                 
 #    def changeVis(self):
 #        cmds.control(self.ui + "|tabWidget", edit=True, visible=True)
-
-#    def keyPressEvent(self, event):
-#        if (event.modifiers() & QtCore.Qt.ShiftModifier):
-#        #if (event.key == QtCore.Qt.Key_Shift) :
-#            self.SHIFT_CLICKED = True
-#            print str(self.SHIFT_CLICKED)
             
     def keyPressEvent(self, event):
         if type(event) == QtGui.QKeyEvent:
             if (event.modifiers() & QtCore.Qt.ShiftModifier):
                 #here accept the event and do something
-                print event.key()   # Key Code gets printed to the console
                 event.accept()
-                self.ui.labelLetter.setText('true')
-                self.SHIFT_CLICKED = True
- 
-#            if (event.modifiers() & QtCore.Qt.CtrlModifier):
-#                #here accept the event and do something
-#                print event.key()   # Key Code gets printed to the console
-#                event.accept()
-#                self.ui.labelLetter.setText('false')
-#                self.SHIFT_CLICKED = False            
-            
+                self.SHIFT_PRESSED = ' -tgl '
+         
     def keyReleaseEvent(self, event):
-#        print 'release'
-#        self.ui.labelLetter.setText('false')
-#        self.SHIFT_CLICKED = False
         if type(event) == QtGui.QKeyEvent:
             if QtCore.Qt.ShiftModifier :
                 if event.key() != QtCore.Qt.Key_Tab :
-                    print 'release'   # Key Code gets printed to the console
                     event.accept()
-                    self.ui.labelLetter.setText('false')
-                    self.SHIFT_CLICKED = False
-
-#    def keyReleaseEvent(self, event):
-#        if (event.modifiers() & QtCore.Qt.ShiftModifier):
-#        #if (event.key == QtCore.Qt.Key_Shift) :
-#            self.SHIFT_CLICKED = ' -r '
-#            print self.SHIFT_CLICKED
+                    self.SHIFT_PRESSED = ' -r '
 
     def getCurrentChar(self):
         returnName = ""
@@ -124,175 +98,205 @@ class StartSYH_animPanel(QtGui.QMainWindow):
             if("ATD" in t and "Ctrl" in t and not "Shape" in t and not "biaoqing" in t):
                 cmds.select(t, add = True)
     
-    
+    def on_ATD_head_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_C_000_Head_000_Ctrl"
+        mel.eval( cmd )
+
+    def on_ATD_spline_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_000_C_Spine_002_Ctrl"
+        mel.eval( cmd )
         
-    def on_ATD_head_clicked(self):
-        cmd ='select -tgl ATD_C_000_Head_000_Ctrl;print \"a\";'
-        #cmd += 'select' +  self.SHIFT_CLICKED + self.getCurrentChar() + "_C_000_Head_000_Ctrl"
-        print ('cmd: ' + cmd )
-        #mel.eval('select -tgl ATD_C_000_Head_000_Ctrl;print \"a\"')
-        t = str( self.ui.labelLetter.text() )
-        print ('t:' + t)
-        if t == 'true' :
-            i = self.getCurrentChar() + "_C_000_Head_000_Ctrl"
-            cmds.select(i,add = True)
-            print ('i:' + i)
-        else :
-            cmds.select(self.getCurrentChar() + "_C_000_Head_000_Ctrl",r = True)
+    def on_ATD_root_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_000_C_Root_000_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_spline_clicked(self):
-        cmds.select(self.getCurrentChar() + "_000_C_Spine_002_Ctrl", r = True)
+    def on_ATD_bigcircle01_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_Global_All_Walk_Unique_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_root_clicked(self):
-        cmds.select(self.getCurrentChar() + "_000_C_Root_000_Ctrl", r = True)
+    def on_ATD_bigcircle02_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_Global_All_Bottom_Unique_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_bigcircle01_clicked(self):
-        cmds.select(self.getCurrentChar() + "_Global_All_Walk_Unique_Ctrl", r = True)
+    def on_ATD_flyctrl_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_Global_All_Fly_Unique_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_bigcircle02_clicked(self):
-        cmds.select(self.getCurrentChar() + "_Global_All_Bottom_Unique_Ctrl", r = True)
-        
-    def on_ATD_flyctrl_clicked(self):
-        cmds.select(self.getCurrentChar() + "_Global_All_Fly_Unique_Ctrl", r = True)
-        
-    def on_ATD_selectall_clicked(self):
+    def on_ATD_selectall_pressed(self):
         self.selAll()
 
 
-    def on_ATD_R_shoulder_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Scapuler_000_Ctrl", r = True)
+    def on_ATD_R_shoulder_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Scapuler_000_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_R_arm_sec01_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_MidArmBend_000_Ctrl", r = True)
+    def on_ATD_R_arm_sec01_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_MidArmBend_000_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_R_arm_sec02_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_MidElbowBend_000_Ctrl", r = True)  
-        
+    def on_ATD_R_arm_sec02_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_MidElbowBend_000_Ctrl"
+        mel.eval( cmd )        
 
-    def on_ATD_R_arm_pole_clicked(self):
-        cmds.select(self.getCurrentChar() + "_000_R_ArmPole_000_Ctrl", r = True)
+    def on_ATD_R_arm_pole_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_000_R_ArmPole_000_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_R_twist_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Wrist_000_Ctrl", r = True)
+    def on_ATD_R_twist_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Wrist_000_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_R_fkik_clicked(self):
-        cmds.select(self.getCurrentChar() + "_000_R_ArmIKFKSwitch_000_Ctrl", r = True)  
+    def on_ATD_R_fkik_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_000_R_ArmIKFKSwitch_000_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_selectall_clicked(self):
+    def on_ATD_selectall_pressed(self):
         self.selAllRFiger()    
         
         
-    def on_ATD_R_fb_01_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Thumb_000_Ctrl", r = True)  
+    def on_ATD_R_fb_01_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Thumb_000_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_R_fb_02_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Thumb_001_Ctrl", r = True)  
+    def on_ATD_R_fb_02_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Thumb_001_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_R_fb_03_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Thumb_002_Ctrl", r = True)  
+    def on_ATD_R_fb_03_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Thumb_002_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_R_ff_01_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Index_000_Ctrl", r = True)  
+    def on_ATD_R_ff_01_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Index_000_Ctrl"
+        mel.eval( cmd )        
                             
-    def on_ATD_R_ff_02_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Index_001_Ctrl", r = True)  
+    def on_ATD_R_ff_02_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Index_001_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_R_ff_03_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Index_002_Ctrl", r = True)     
+    def on_ATD_R_ff_03_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Index_002_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_R_fm_01_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Middle_000_Ctrl", r = True) 
+    def on_ATD_R_fm_01_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Middle_000_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_R_fm_02_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Middle_001_Ctrl", r = True) 
+    def on_ATD_R_fm_02_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Middle_001_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_R_fm_03_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Middle_002_Ctrl", r = True)                 
+    def on_ATD_R_fm_03_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Middle_002_Ctrl"
+        mel.eval( cmd )        
                                                                              
-    def on_ATD_R_fr_01_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Pinky_000_Ctrl", r = True) 
+    def on_ATD_R_fr_01_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Pinky_000_Ctrl"
+        mel.eval( cmd )        
                                                                                          
-    def on_ATD_R_fr_02_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Pinky_001_Ctrl", r = True) 
+    def on_ATD_R_fr_02_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Pinky_001_Ctrl"
+        mel.eval( cmd )        
                                                                                          
-    def on_ATD_R_fr_03_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Pinky_002_Ctrl", r = True) 
+    def on_ATD_R_fr_03_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Pinky_002_Ctrl"
+        mel.eval( cmd )        
                                                                                            
-    def on_ATD_R_figer_sec_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Finger_Unique_Ctrl", r = True) 
+    def on_ATD_R_figer_sec_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Finger_Unique_Ctrl"
+        mel.eval( cmd )        
               
-    def on_ATD_R_leg_sec_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_MidLegBend_000_Ctrl", r = True) 
+    def on_ATD_R_leg_sec_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_MidLegBend_000_Ctrl"
+        mel.eval( cmd )        
                                                                                            
-    def on_ATD_R_leg_clicked(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Foot_000_Ctrl", r = True) 
-        
-      
+    def on_ATD_R_leg_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Foot_000_Ctrl"
+        mel.eval( cmd )        
 
+    def on_ATD_L_shoulder_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Scapuler_000_Ctrl"
+        mel.eval( cmd )        
+        
+    def on_ATD_L_arm_sec01_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_MidArmBend_000_Ctrl"
+        mel.eval( cmd )        
+        
+    def on_ATD_L_arm_sec02_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_MidElbowBend_000_Ctr"
+        mel.eval( cmd )        
 
-    def on_ATD_L_shoulder_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Scapuler_000_Ctrl", r = True)
+    def on_ATD_L_arm_pole_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_000_L_ArmPole_000_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_L_arm_sec01_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_MidArmBend_000_Ctrl", r = True)
+    def on_ATD_L_twist_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Wrist_000_Ctrll"
+        mel.eval( cmd )        
         
-    def on_ATD_L_arm_sec02_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_MidElbowBend_000_Ctrl", r = True)  
-        
-
-    def on_ATD_L_arm_pole_clicked(self):
-        cmds.select(self.getCurrentChar() + "_000_L_ArmPole_000_Ctrl", r = True)
-        
-    def on_ATD_L_twist_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Wrist_000_Ctrl", r = True)
-        
-    def on_ATD_L_fkik_clicked(self):
-        cmds.select(self.getCurrentChar() + "_000_L_ArmIKFKSwitch_000_Ctrl", r = True)  
+    def on_ATD_L_fkik_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_000_L_ArmIKFKSwitch_000_Ctrl"
+        mel.eval( cmd )        
                 
-    def on_ATD_L_fb_01_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Thumb_000_Ctrl", r = True)  
+    def on_ATD_L_fb_01_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Thumb_000_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_L_fb_02_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Thumb_001_Ctrl", r = True)  
+    def on_ATD_L_fb_02_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Thumb_001_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_L_fb_03_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Thumb_002_Ctrl", r = True)  
+    def on_ATD_L_fb_03_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Thumb_002_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_L_ff_01_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Index_000_Ctrl", r = True)  
+    def on_ATD_L_ff_01_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Index_000_Ctrl"
+        mel.eval( cmd )        
                             
-    def on_ATD_L_ff_02_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Index_001_Ctrl", r = True)  
+    def on_ATD_L_ff_02_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Index_001_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_L_ff_03_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Index_002_Ctrl", r = True)     
+    def on_ATD_L_ff_03_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Index_002_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_L_fm_01_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Middle_000_Ctrl", r = True) 
+    def on_ATD_L_fm_01_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Middle_000_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_L_fm_02_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Middle_001_Ctrl", r = True) 
+    def on_ATD_L_fm_02_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Middle_001_Ctrl"
+        mel.eval( cmd )        
         
-    def on_ATD_L_fm_03_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Middle_002_Ctrl", r = True)                 
+    def on_ATD_L_fm_03_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Middle_002_Ctrl"
+        mel.eval( cmd )        
                                                                              
-    def on_ATD_L_fr_01_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Pinky_000_Ctrl", r = True) 
+    def on_ATD_L_fr_01_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_000_C_Spine_002_Ctrl"
+        mel.eval( cmd )        
                                                                                          
-    def on_ATD_L_fr_02_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Pinky_001_Ctrl", r = True) 
+    def on_ATD_L_fr_02_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Pinky_001_Ctrl"
+        mel.eval( cmd )         
                                                                                          
-    def on_ATD_L_fr_03_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Pinky_002_Ctrl", r = True) 
+    def on_ATD_L_fr_03_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Pinky_002_Ctrl"
+        mel.eval( cmd )        
                                                                                            
-    def on_ATD_L_figer_sec_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Finger_Unique_Ctrl", r = True) 
+    def on_ATD_L_figer_sec_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Finger_Unique_Ctrl"
+        mel.eval( cmd )        
               
-    def on_ATD_L_leg_sec_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_MidLegBend_000_Ctrl", r = True) 
+    def on_ATD_L_leg_sec_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_MidLegBend_000_Ctrl"
+        mel.eval( cmd )        
                                                                                            
-    def on_ATD_L_leg_clicked(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Foot_000_Ctrl", r = True) 
+    def on_ATD_L_leg_pressed(self):
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Foot_000_Ctrl"
+        mel.eval( cmd )        
         
                                                 
 #    def connBut(self):
