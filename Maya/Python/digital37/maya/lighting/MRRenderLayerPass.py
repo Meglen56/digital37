@@ -404,10 +404,10 @@ class MRRenderLayerPass():
 
 
 
-    def createAOTransparencyLayer(self,isTransparency,isAddPass):
+    def createAOTransparencyLayer(self,isAddPass):
         selObj = getGeometrySelection()
         
-        newLayer = self.createNewLayer()
+        self.CURRENT_LAYER = self.createNewLayer()
         
         shaderNoDis,shaderNoDisSG = createShader('surfaceShader',(self.LAYER_NAME+'_MAT'))
         
@@ -451,10 +451,12 @@ class MRRenderLayerPass():
                                 AONode.outValue.connect(shader.outColor)
                                 
                                 tranNode = pm.createNode('mib_transparency')
-                                transparencys[0].outColor.connect( tranNode.transp )    
-                                transparencys[0].outAlpha.connect( tranNode.transpA )
+                                v[1].outColor.connect( tranNode.transp )    
+                                v[1].outAlpha.connect( tranNode.transpA )
                                 tranNode.outValue.connect( shaderSG.miMaterialShader, f=1 )
-                            
+                                AONode.outValue.connect( tranNode.input )    
+                                AONode.outValueA.connect( tranNode.inputA )
+                                
                                 pm.select(k,r=1)
                                 pm.sets(shaderSG,e=1,forceElement=1)                                
                         
@@ -470,6 +472,8 @@ class MRRenderLayerPass():
                                 tranNode = pm.createNode('mib_transparency')
                                 v[1].outColor.connect( tranNode.transp )    
                                 v[1].outAlpha.connect( tranNode.transpA )
+                                AONode.outValue.connect( tranNode.input )    
+                                AONode.outValueA.connect( tranNode.inputA )
                                 tranNode.outValue.connect( shaderSG.miMaterialShader, f=1 )
                                 
                                 pm.select(k,r=1)
@@ -480,7 +484,7 @@ class MRRenderLayerPass():
                 eachSn = pm.pickWalk(d='down')
                 logging.debug('eachSn: '+str(eachSn[0]))
                 if eachSn[0] != each :
-                    pm.editRenderLayerMembers(newLayer,eachSn[0],remove=1)
+                    pm.editRenderLayerMembers(self.CURRENT_LAYER,eachSn[0],remove=1)
 
         # Adjust render layer attr
         self.setRenderLayerAttr(MI_DEFAULT_OPTIONS.finalGather, 1)
@@ -495,9 +499,9 @@ class MRRenderLayerPass():
         # Remove cam lens and env shader            
         self.disConnectCamShader()
         
-        if isAddPass == 1 :
+        if isAddPass == True :
             # Add ao pass
-            self.createPass('AO')
+            self.createPass('ambientOcclusion')
             
         pm.select(cl=1)
 
@@ -506,7 +510,7 @@ class MRRenderLayerPass():
     def createAOLayer(self,isAddPass):
         selObj = getGeometrySelection()
         
-        newLayer = self.createNewLayer()
+        self.CURRENT_LAYER = self.createNewLayer()
         
         #AOMat = pm.shadingNode('surfaceShader',n='AO_mat',asShader=True)
         shaderNoDis,shaderNoDisSG = createShader('surfaceShader',(self.LAYER_NAME+'_MAT'))
@@ -550,7 +554,7 @@ class MRRenderLayerPass():
                 eachSn = pm.pickWalk(d='down')
                 logging.debug('eachSn: '+str(eachSn[0]))
                 if eachSn[0] != each :
-                    pm.editRenderLayerMembers(newLayer,eachSn[0],remove=1)
+                    pm.editRenderLayerMembers(self.CURRENT_LAYER,eachSn[0],remove=1)
 
         # Adjust render layer attr
         self.setRenderLayerAttr(MI_DEFAULT_OPTIONS.finalGather, 0)
@@ -564,10 +568,10 @@ class MRRenderLayerPass():
 
         # Remove cam lens and env shader            
         self.disConnectCamShader()
-        
-        if isAddPass == 1 :
+        logging.debug('isAddPass:'+str(isAddPass))
+        if isAddPass == True :
             # Add ao pass
-            self.createPass('AO')
+            self.createPass('ambientOcclusion')
                     
         pm.select(cl=1)
         
