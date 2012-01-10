@@ -321,22 +321,45 @@ class MRRenderLayerPass():
         self.LAYER_NAME = 'color'
         self.PREFIX_PASS = ''
         self.SUFFIX_PASS = ''
-        self.CURREENT_LAYER = None
-        self.RENDER_LAYERS = []
+        self.LAYER_CURRENT = None
+        self.LAYERS_SELECTED = []
+        self.LAYERS = []
+        self.LAYER_ACTIVE = {}
         self.getRenderLayers()
         
     def getRenderLayers(self):
-        self.RENDER_LAYERS = []
+        self.LAYERS = []
         selObj = pm.ls(type='renderLayer')
         if selObj :
             selObj.remove(PyNode('defaultRenderLayer'))
             printList(selObj)
-            for r in selObj :
-                self.RENDER_LAYERS.append({r.name():r})
+            for l in selObj :
+                self.LAYERS.append({l.name():l})
             
-    def getRenderLayersName(self,renderLayer):
-        return PyNode(renderLayer).name()
+    def getLayerByName(self,layerName):
+        layer = None
+        selObj = pm.ls(type='renderLayer')
+        if selObj :
+            for l in selObj :
+                if l.name() == layerName :
+                    layer = l
+        if not layer :
+            logging.warning(str(layerName) + ' is not a render layer name')
+        return layer
+                
+    def getLayerName(self,layer):
+        layerName = None
+        try: 
+            layerName = PyNode(layer).name()
+        except : 
+            logging.warning('can not get layer by name')
+        return layerName
     
+    def getObjInLayer(self,layer):
+        objs = pm.editRenderLayerMembers(layer,q=1,fullNames=1)
+        printList(objs)
+        return objs
+        
     def createNewLayer(self):
         newLayer = pm.createRenderLayer(n=self.LAYER_NAME)
         pm.editRenderLayerGlobals(currentRenderLayer=newLayer)

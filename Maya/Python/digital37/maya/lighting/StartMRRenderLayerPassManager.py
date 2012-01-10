@@ -1,3 +1,10 @@
+import logging 
+LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
+              'warning': logging.WARNING, 'error': logging.ERROR,\
+              'critical': logging.CRITICAL}
+LOG_LEVEL = LOG_LEVELS.get('debug')
+logging.basicConfig(level=LOG_LEVEL)
+
 import sys
 import sip
 from PyQt4 import QtCore, QtGui
@@ -19,35 +26,50 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
         self.ui.setupUi(self)
         self.RLP = digital37.maya.lighting.MRRenderLayerPass.MRRenderLayerPass()
         # init lists
-        self.updateRenderLayerList()
+        self.updateLayerList()
         self.ui.listWidget_RL.currentRowChanged.connect( self.updateAll )
                    
-    def updateRenderLayerList(self):
-        print self.RLP.RENDER_LAYERS
-        if self.RLP.RENDER_LAYERS :
-            listItem1 = []
-            # self.RLP.RENDER_LAYERS is a dict
-            for lst in self.RLP.RENDER_LAYERS:
-                for k,v in lst.items() :
-                    listItem1.append(QtGui.QListWidgetItem(k))
-            for i in range(len(listItem1)):
-                self.ui.listWidget_RL.insertItem(i+1,listItem1[i])
+    def insertListWidgetItem(self,listWidget,inputStringList):
+        if inputStringList :
+            listItem = []
+            for s in inputStringList :
+                logging.debug( 's: ' + str(type(s)) )
+                if type(s) != type({}) :
+                    listItem.append( QtGui.QListWidgetItem(s) )
+                else :
+                    listItem.append( QtGui.QListWidgetItem(s.keys()[0]) )
+            for i in range(len(listItem)):
+                listWidget.insertItem(i+1,listItem[i])
         
-    def getSelectedRenderLayers(self):
-        #self.RLP.LAYER_SELECTED = 
+    def updateLayerList(self):
+        self.insertListWidgetItem(self.ui.listWidget_RL, self.RLP.LAYERS)
+        
+    def getSelectedLayers(self):
+        self.RLP.LAYERS_SELECTED = []
+        #self.RLP.LAYERS_SELECTED = 
         for selItem in self.ui.listWidget_RL.selectedItems() :
-            self.RLP.LAYER_SELECTED.append( selItem.text() )
-        print self.ui.listWidget_RL.currentItem().text()
+            layerName = selItem.text()
+            layer = self.RLP.getLayerByName( layerName )
+            self.RLP.LAYERS_SELECTED.append( {layerName:layer} )
         
-        
+    def getActiveLayer(self):
+        self.RLP.LAYER_ACTIVE = {}
+        layerName = self.ui.listWidget_RL.currentItem().text()
+        if layerName :
+            layer = self.RLP.getLayerByName( layerName )
+            self.RLP.LAYER_ACTIVE = {layerName:layer}
+    
     def updateAll(self):
         # Get current render layer
-        self.getSelectedRenderLayers()
+        self.getSelectedLayers()
         self.updateObjectList()
         
     def updateObjectList(self):
-        print 'test'
-        
+        logging.debug('updateObjectList')
+        self.getActiveLayer()
+        if self.RLP.LAYER_ACTIVE :
+            objs = self.RLP.getObjInLayer( self.RLP.LAYER_ACTIVE.values()[0] )
+            self.insertListWidgetItem(self.ui.listWidget_OBJ, objs)
         
     def on_pushButton_RL_refresh_pressed(self):
         pass
