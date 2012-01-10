@@ -322,16 +322,21 @@ class MRRenderLayerPass():
         self.PREFIX_PASS = ''
         self.SUFFIX_PASS = ''
         self.CURREENT_LAYER = None
+        self.RENDER_LAYERS = []
+        self.getRenderLayers()
         
     def getRenderLayers(self):
-        selObj = pm.ls(sl=1,type='renderLayer')
-        if not selObj :
-            logging.warning('select some objects first.')
-            return None
-        else :
+        self.RENDER_LAYERS = []
+        selObj = pm.ls(type='renderLayer')
+        if selObj :
             selObj.remove(PyNode('defaultRenderLayer'))
-            return selObj
+            printList(selObj)
+            for r in selObj :
+                self.RENDER_LAYERS.append({r.name():r})
             
+    def getRenderLayersName(self,renderLayer):
+        return PyNode(renderLayer).name()
+    
     def createNewLayer(self):
         newLayer = pm.createRenderLayer(n=self.LAYER_NAME)
         pm.editRenderLayerGlobals(currentRenderLayer=newLayer)
