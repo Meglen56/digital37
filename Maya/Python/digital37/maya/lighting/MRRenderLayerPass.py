@@ -364,7 +364,20 @@ class MRRenderLayerPass():
         if passes :
             for p in passes :
                 self.PASSES_SCENE.append( {self.getPassName(p):p})
-        
+
+    def getAvailablePasses(self):
+        self.PASSES_AVAILABLE = []
+        passNameList = []
+        self.getScenePasses()
+        for p in self.PASSES_SCENE :
+            for k,v in p.items() :
+                passNameList.append(k)
+                
+        if self.PASSES_SCENE :
+            pNames = [ k for k in self.PASSES_ALL if k not in passNameList ]
+            for pn in pNames :
+                self.PASSES_AVAILABLE.append( {pn:self.getPassByName(pn)})
+                        
     def getObjInLayer(self,layer):
         objs = pm.editRenderLayerMembers(layer,q=1,fullNames=1)
         printList(objs)
@@ -383,16 +396,19 @@ class MRRenderLayerPass():
                     passDict.append({self.getPassName(p):p})
         return passDict
             
-    def getPassByName(self,layerName):
-        layer = None
-        selObj = pm.ls(type='renderLayer')
-        if selObj :
-            for l in selObj :
-                if l.name() == layerName :
-                    layer = l
-        if not layer :
-            logging.warning(str(layerName) + ' is not a render layer name')
-        return layer
+    def getPassByName(self,passName):
+        passObj = None
+        passes = pm.ls(type='renderPass')
+        if passName :
+            for p in passes :
+                if p.name() == passName :
+                    passObj = p
+        if not passObj :
+            try:
+                logging.warning(str(passName) + ' is not a render pass name')
+            except:
+                logging.error('can not getPassByName')
+        return passObj
             
     def getPassName(self,p):
         passName = None
