@@ -37,12 +37,12 @@ class StartMRRenderLayerPass(QtGui.QMainWindow):
     def initColorLayer(self):
         #self.renderLayer.PASSES
         listItem1 = []
-        for lst in self.renderLayer.PASSES_SCENE:
+        for lst in self.renderLayer.PASSES_COLOR:
             listItem1.append(QtGui.QListWidgetItem(lst))
         for i in range(len(listItem1)):
             self.ui.listWidget_assignedPasses.insertItem(i+1,listItem1[i])
         listItem2 = []
-        for lst in self.renderLayer.PASSES_AVAILABLE:
+        for lst in self.renderLayer.PASSES_COLOR_AVAILABLE:
             listItem2.append(QtGui.QListWidgetItem(lst))
         for i in range(len(listItem2)):
             self.ui.listWidget_availablePasses.insertItem(i+1,listItem2[i])
@@ -51,9 +51,9 @@ class StartMRRenderLayerPass(QtGui.QMainWindow):
         self.renderLayer.LAYER_NAME = str( self.ui.lineEdit_color_layerName.text() )
         self.renderLayer.PREFIX_PASS = str( self.ui.lineEdit_color_passPrefix.text() )
         self.renderLayer.SUFFIX_PASS = str( self.ui.lineEdit_color_passSuffix.text() )        
-        self.renderLayer.PASSES_SCENE = []
+        self.renderLayer.PASSES_COLOR = []
         for i in range(self.ui.listWidget_assignedPasses.count()) :
-            self.renderLayer.PASSES_SCENE.append( str( self.ui.listWidget_assignedPasses.item(i).text() ) )
+            self.renderLayer.PASSES_COLOR.append( str( self.ui.listWidget_assignedPasses.item(i).text() ) )
 
     def getAOLayerValue(self):
         self.renderLayer.LAYER_NAME = str( self.ui.lineEdit_ao_layerName.text() )

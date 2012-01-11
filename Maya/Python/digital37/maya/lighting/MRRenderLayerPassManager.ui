@@ -22,7 +22,7 @@
    <locale language="English" country="UnitedStates"/>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -57,6 +57,13 @@
           <widget class="QPushButton" name="pushButton_RL_new">
            <property name="text">
             <string>New Layer</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_RL_refresh">
+           <property name="text">
+            <string>Refresh</string>
            </property>
           </widget>
          </item>

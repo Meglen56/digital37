@@ -291,8 +291,9 @@ def getTransparencyShader(input):
     return shapeFaces
     
 def printList(inputList):
-    for i in inputList :
-        logging.debug( str(i) )
+    if inputList :
+        for i in inputList :
+            logging.debug( str(i) )
     logging.debug('\n')
             
 def setRenderStatus(renderStatus):
@@ -315,9 +316,11 @@ class MRRenderLayerPass():
                   'translucenceNoShadow','volumeLight','volumeObject','volumeScene','worldPosition'] 
     def __init__(self):
         logging.debug('Init MRRenderLayerPass class')
-        self.PASSES_SCENE = ['beauty','depth','diffuse','incandescence','indirect','normalWorld',
+        self.PASSES_COLOR = ['beauty','depth','diffuse','incandescence','indirect','normalWorld',
                              'reflection','refraction','shadow','specular']
-        self.PASSES_AVAILABLE = [ x for x in MRRenderLayerPass.PASSES_ALL if x not in self.PASSES_SCENE ]
+        self.PASSES_COLOR_AVAILABLE = [ x for x in MRRenderLayerPass.PASSES_ALL if x not in self.PASSES_COLOR ]
+        self.PASSES_SCENE = []
+        self.PASSES_AVAILABLE = []
         self.LAYER_NAME = 'color'
         self.PREFIX_PASS = ''
         self.SUFFIX_PASS = ''
@@ -325,9 +328,9 @@ class MRRenderLayerPass():
         self.LAYERS_SELECTED = []
         self.LAYERS = []
         self.LAYER_ACTIVE = {}
-        self.getRenderLayers()
+        self.getLayers()
         
-    def getRenderLayers(self):
+    def getLayers(self):
         self.LAYERS = []
         selObj = pm.ls(type='renderLayer')
         if selObj :
@@ -355,10 +358,49 @@ class MRRenderLayerPass():
             logging.warning('can not get layer by name')
         return layerName
     
+    def getScenePasses(self):
+        self.PASSES_SCENE = []
+        passes = pm.ls(type='renderPass')
+        if passes :
+            for p in passes :
+                self.PASSES_SCENE.append( {self.getPassName(p):p})
+        
     def getObjInLayer(self,layer):
         objs = pm.editRenderLayerMembers(layer,q=1,fullNames=1)
         printList(objs)
         return objs
+    
+    def getPassByLayer(self,layer):
+        passes = None
+        passDict = []
+        if layer :
+            try :
+                passes = layer.renderPass.connections(p=0,d=1)
+            except :
+                logging.warning('can not get passes in input layer')
+            else :
+                for p in passes :
+                    passDict.append({self.getPassName(p):p})
+        return passDict
+            
+    def getPassByName(self,layerName):
+        layer = None
+        selObj = pm.ls(type='renderLayer')
+        if selObj :
+            for l in selObj :
+                if l.name() == layerName :
+                    layer = l
+        if not layer :
+            logging.warning(str(layerName) + ' is not a render layer name')
+        return layer
+            
+    def getPassName(self,p):
+        passName = None
+        try: 
+            passName = PyNode(p).name()
+        except : 
+            logging.warning('can not get layer by name')
+        return passName        
         
     def createNewLayer(self):
         newLayer = pm.createRenderLayer(n=self.LAYER_NAME)
@@ -604,7 +646,7 @@ class MRRenderLayerPass():
         pm.select(cl=1)
         
     def createColorPasses(self):
-        for p in self.PASSES_SCENE :
+        for p in self.PASSES_COLOR :
             self.createPass(p)
             
     def createColorLayer(self):

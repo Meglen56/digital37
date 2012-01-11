@@ -24,12 +24,15 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
         QtGui.QWidget.__init__(self, parent)
         self.ui = digital37.maya.lighting.MRRenderLayerPassManagerUI.Ui_root()
         self.ui.setupUi(self)
+        self.ui.listWidget_RL.currentRowChanged.connect( self.updateAll )
         self.RLP = digital37.maya.lighting.MRRenderLayerPass.MRRenderLayerPass()
         # init lists
         self.updateLayerList()
-        self.ui.listWidget_RL.currentRowChanged.connect( self.updateAll )
+        
                    
     def insertListWidgetItem(self,listWidget,inputStringList):
+        # Clear listWidget first
+        listWidget.clear()
         if inputStringList :
             listItem = []
             for s in inputStringList :
@@ -38,11 +41,26 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
                     listItem.append( QtGui.QListWidgetItem(s) )
                 else :
                     listItem.append( QtGui.QListWidgetItem(s.keys()[0]) )
-            for i in range(len(listItem)):
+            for i in range(len(listItem)) :
                 listWidget.insertItem(i+1,listItem[i])
         
     def updateLayerList(self):
+        # Get render layers first
+        self.RLP.getLayers()
         self.insertListWidgetItem(self.ui.listWidget_RL, self.RLP.LAYERS)
+        
+    def updateAssociatedPassList(self):
+        # Get active layer first
+        self.getActiveLayer()
+        if self.RLP.LAYER_ACTIVE :
+            passes = self.RLP.getPassByLayer(self.RLP.LAYER_ACTIVE.values()[0])
+            self.insertListWidgetItem(self.ui.listWidget_AP, passes)
+        
+    def updateScenePassList(self):
+        # Get active layer first
+        self.RLP.getScenePasses()
+        if self.RLP.PASSES_SCENE :
+            self.insertListWidgetItem(self.ui.listWidget_SP, self.RLP.PASSES_SCENE)                
         
     def getSelectedLayers(self):
         self.RLP.LAYERS_SELECTED = []
@@ -53,16 +71,25 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
             self.RLP.LAYERS_SELECTED.append( {layerName:layer} )
         
     def getActiveLayer(self):
+        layerName = ''
         self.RLP.LAYER_ACTIVE = {}
-        layerName = self.ui.listWidget_RL.currentItem().text()
-        if layerName :
-            layer = self.RLP.getLayerByName( layerName )
-            self.RLP.LAYER_ACTIVE = {layerName:layer}
+        currentItem = self.ui.listWidget_RL.currentItem()
+        #print type(currentItem)
+        if currentItem :
+            try:
+                layerName = currentItem.text()
+            except:
+                logging.debug('can not find text()')
+            else:
+                layer = self.RLP.getLayerByName( layerName )
+                self.RLP.LAYER_ACTIVE = {layerName:layer}
     
     def updateAll(self):
         # Get current render layer
         self.getSelectedLayers()
         self.updateObjectList()
+        self.updateAssociatedPassList()
+        self.updateScenePassList()
         
     def updateObjectList(self):
         logging.debug('updateObjectList')
@@ -72,10 +99,11 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
             self.insertListWidgetItem(self.ui.listWidget_OBJ, objs)
         
     def on_pushButton_RL_refresh_pressed(self):
-        pass
-        # Get render layers
-        #self.renderLayers = self.RLP.getRenderLayers()
-        #if self.renderLayers
+        self.updateLayerList()
+        
+        self.getSelectedLayers()
+        self.updateObjectList()
+        self.updateScenePassList()
                 
 def getMayaWindow():
     ptr = maya.OpenMayaUI.MQtUtil.mainWindow()

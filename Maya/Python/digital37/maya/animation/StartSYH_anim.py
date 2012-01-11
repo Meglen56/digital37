@@ -8,6 +8,7 @@ import digital37.maya.animation.SYH_anim_panel_fin
 # reload only for tests
 reload(digital37.maya.animation.SYH_anim_panel_fin)
 
+import maya.cmds as cmds
 import maya.mel as mel
 
 #import digital37.maya.animation.SYH_animPanel
@@ -22,7 +23,6 @@ class StartSYH_animPanel(QtGui.QMainWindow):
         self.SHIFT_PRESSED = ' -r '
         #
         self.getChar()
-
         
     def getChar(self):
         topTran = cmds.ls(assemblies = True)
@@ -55,6 +55,10 @@ class StartSYH_animPanel(QtGui.QMainWindow):
                     event.accept()
                     self.SHIFT_PRESSED = ' -r '
 
+#    def mousePressEvent(self,event):
+#        self.mousePressEvent(self,event)
+#        self.ui.tabWidget.setFocus()
+#        
     def getCurrentChar(self):
         returnName = ""
         #name = cmds.optionMenu(self.ui + "|widget|comboBox", q = True, v = True)
@@ -65,7 +69,10 @@ class StartSYH_animPanel(QtGui.QMainWindow):
         return returnName
     
     def selAllRFiger(self):
-        cmds.select(self.getCurrentChar() + "_R_000_Pinky_002_Ctrl", r = True)
+        if self.SHIFT_PRESSED == ' -r ' :
+            cmds.select(self.getCurrentChar() + "_R_000_Pinky_002_Ctrl", r = True)
+        else :
+            cmds.select(self.getCurrentChar() + "_R_000_Pinky_002_Ctrl", tgl = True)
         cmds.select(self.getCurrentChar() + "_R_000_Pinky_001_Ctrl", tgl = True)
         cmds.select(self.getCurrentChar() + "_R_000_Pinky_000_Ctrl", tgl = True)
         cmds.select(self.getCurrentChar() + "_R_000_Middle_002_Ctrl", tgl = True)
@@ -79,7 +86,10 @@ class StartSYH_animPanel(QtGui.QMainWindow):
         cmds.select(self.getCurrentChar() + "_R_000_Thumb_000_Ctrl", tgl = True)
         
     def selAllLFiger(self):
-        cmds.select(self.getCurrentChar() + "_L_000_Pinky_002_Ctrl", r = True)
+        if self.SHIFT_PRESSED == ' -r ' :
+            cmds.select(self.getCurrentChar() + "_L_000_Pinky_002_Ctrl", r = True)
+        else :
+            cmds.select(self.getCurrentChar() + "_L_000_Pinky_002_Ctrl", tgl = True)
         cmds.select(self.getCurrentChar() + "_L_000_Pinky_001_Ctrl", tgl = True)
         cmds.select(self.getCurrentChar() + "_L_000_Pinky_000_Ctrl", tgl = True)
         cmds.select(self.getCurrentChar() + "_L_000_Middle_002_Ctrl", tgl = True)
@@ -99,206 +109,258 @@ class StartSYH_animPanel(QtGui.QMainWindow):
                 cmds.select(t, add = True)
     
     def on_ATD_head_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_C_000_Head_000_Ctrl"
         mel.eval( cmd )
 
     def on_ATD_spline_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_000_C_Spine_002_Ctrl"
         mel.eval( cmd )
         
     def on_ATD_root_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_000_C_Root_000_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_bigcircle01_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_Global_All_Walk_Unique_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_bigcircle02_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_Global_All_Bottom_Unique_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_flyctrl_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_Global_All_Fly_Unique_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_selectall_pressed(self):
+        self.ui.tabWidget.setFocus()
         self.selAll()
 
 
     def on_ATD_R_shoulder_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Scapuler_000_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_R_arm_sec01_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_MidArmBend_000_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_R_arm_sec02_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_MidElbowBend_000_Ctrl"
         mel.eval( cmd )        
 
     def on_ATD_R_arm_pole_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_000_R_ArmPole_000_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_R_twist_pressed(self):
+        self.ui.tabWidget.setFocus()        
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Wrist_000_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_R_fkik_pressed(self):
+        self.ui.tabWidget.setFocus()        
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_000_R_ArmIKFKSwitch_000_Ctrl"
         mel.eval( cmd )        
-        
-    def on_ATD_selectall_pressed(self):
-        self.selAllRFiger()    
-        
-        
+
     def on_ATD_R_fb_01_pressed(self):
+        self.ui.tabWidget.setFocus()        
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Thumb_000_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_R_fb_02_pressed(self):
+        self.ui.tabWidget.setFocus()        
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Thumb_001_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_R_fb_03_pressed(self):
+        self.ui.tabWidget.setFocus()        
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Thumb_002_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_R_ff_01_pressed(self):
+        self.ui.tabWidget.setFocus()        
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Index_000_Ctrl"
         mel.eval( cmd )        
                             
     def on_ATD_R_ff_02_pressed(self):
+        self.ui.tabWidget.setFocus()        
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Index_001_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_R_ff_03_pressed(self):
+        self.ui.tabWidget.setFocus()        
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Index_002_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_R_fm_01_pressed(self):
+        self.ui.tabWidget.setFocus()        
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Middle_000_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_R_fm_02_pressed(self):
+        self.ui.tabWidget.setFocus()        
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Middle_001_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_R_fm_03_pressed(self):
+        self.ui.tabWidget.setFocus()        
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Middle_002_Ctrl"
         mel.eval( cmd )        
                                                                              
     def on_ATD_R_fr_01_pressed(self):
+        self.ui.tabWidget.setFocus()        
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Pinky_000_Ctrl"
         mel.eval( cmd )        
                                                                                          
     def on_ATD_R_fr_02_pressed(self):
+        self.ui.tabWidget.setFocus()        
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Pinky_001_Ctrl"
         mel.eval( cmd )        
                                                                                          
     def on_ATD_R_fr_03_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Pinky_002_Ctrl"
         mel.eval( cmd )        
                                                                                            
     def on_ATD_R_figer_sec_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Finger_Unique_Ctrl"
         mel.eval( cmd )        
               
     def on_ATD_R_leg_sec_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_MidLegBend_000_Ctrl"
         mel.eval( cmd )        
                                                                                            
     def on_ATD_R_leg_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_R_000_Foot_000_Ctrl"
         mel.eval( cmd )        
 
     def on_ATD_L_shoulder_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Scapuler_000_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_L_arm_sec01_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_MidArmBend_000_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_L_arm_sec02_pressed(self):
-        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_MidElbowBend_000_Ctr"
+        self.ui.tabWidget.setFocus()
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_MidElbowBend_000_Ctrl"
         mel.eval( cmd )        
 
     def on_ATD_L_arm_pole_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_000_L_ArmPole_000_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_L_twist_pressed(self):
-        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Wrist_000_Ctrll"
+        self.ui.tabWidget.setFocus()
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Wrist_000_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_L_fkik_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_000_L_ArmIKFKSwitch_000_Ctrl"
         mel.eval( cmd )        
                 
     def on_ATD_L_fb_01_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Thumb_000_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_L_fb_02_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Thumb_001_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_L_fb_03_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Thumb_002_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_L_ff_01_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Index_000_Ctrl"
         mel.eval( cmd )        
                             
     def on_ATD_L_ff_02_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Index_001_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_L_ff_03_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Index_002_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_L_fm_01_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Middle_000_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_L_fm_02_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Middle_001_Ctrl"
         mel.eval( cmd )        
         
     def on_ATD_L_fm_03_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Middle_002_Ctrl"
         mel.eval( cmd )        
                                                                              
     def on_ATD_L_fr_01_pressed(self):
-        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_000_C_Spine_002_Ctrl"
+        self.ui.tabWidget.setFocus()
+        cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Pinky_000_Ctrl"
         mel.eval( cmd )        
                                                                                          
     def on_ATD_L_fr_02_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Pinky_001_Ctrl"
         mel.eval( cmd )         
                                                                                          
     def on_ATD_L_fr_03_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Pinky_002_Ctrl"
         mel.eval( cmd )        
                                                                                            
     def on_ATD_L_figer_sec_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Finger_Unique_Ctrl"
         mel.eval( cmd )        
               
     def on_ATD_L_leg_sec_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_MidLegBend_000_Ctrl"
         mel.eval( cmd )        
                                                                                            
     def on_ATD_L_leg_pressed(self):
+        self.ui.tabWidget.setFocus()
         cmd = 'select' +  self.SHIFT_PRESSED + self.getCurrentChar() + "_L_000_Foot_000_Ctrl"
         mel.eval( cmd )        
         
-                                                
+    def on_ATD_L_allfiger_pressed(self):
+        self.ui.tabWidget.setFocus()
+        self.selAllLFiger()
+        
+    def on_ATD_R_allfiger_pressed(self):
+        self.ui.tabWidget.setFocus()
+        self.selAllRFiger()
+
 #    def connBut(self):
     
 #        cmds.button(self.ui + "|tabWidget|tab|ATD_head", e = True, c = "cmds.select(getCurrentChar() + \"_C_000_Head_000_Ctrl\", r = True)")
