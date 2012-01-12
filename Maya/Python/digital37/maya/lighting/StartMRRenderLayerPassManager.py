@@ -5,27 +5,26 @@ LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
 LOG_LEVEL = LOG_LEVELS.get('debug')
 logging.basicConfig(level=LOG_LEVEL)
 
-import sys
 import sip
 from PyQt4 import QtCore, QtGui
 import maya.OpenMayaUI
 
 # Make MRRenderLayerPassUI by: pyuic4 MRRenderLayerPassManager.ui>MRRenderLayerPassManagerUI.py
-import digital37.maya.lighting.MRRenderLayerPassManagerUI
+import digital37.maya.lighting.MRRenderLayerPassManagerUI as MRRenderLayerPassManagerUI
 # reload only for tests
-reload(digital37.maya.lighting.MRRenderLayerPassManagerUI)
+reload(MRRenderLayerPassManagerUI)
 
-import digital37.maya.lighting.MRRenderLayerPass
+import digital37.maya.lighting.MRRenderLayerPass as RLP
 # reload only for tests
-reload(digital37.maya.lighting.MRRenderLayerPass)
+reload(RLP)
 
 class StartMRRenderLayerPassManager(QtGui.QMainWindow):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
-        self.ui = digital37.maya.lighting.MRRenderLayerPassManagerUI.Ui_root()
+        self.ui = MRRenderLayerPassManagerUI.Ui_root()
         self.ui.setupUi(self)
-        self.ui.listWidget_L.currentRowChanged.connect( self.updateAll )
-        self.RLP = digital37.maya.lighting.MRRenderLayerPass.MRRenderLayerPass()
+        self.ui.listWidget_L.itemSelectionChanged.connect( self.updateAll )
+        self.RLP = RLP.MRRenderLayerPass()
         # init lists
         self.updateLayerList()
         self.updateAssociatedObjectList()
@@ -36,23 +35,35 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
     def insertListWidgetItem(self,listWidget,inputStringList):
         # Clear listWidget first
         listWidget.clear()
+        self.appendListWidgetItem(listWidget, inputStringList)
+
+    def appendListWidgetItem(self,listWidget,inputStringList):
+        # Clear listWidget first
         if inputStringList :
             listItem = []
             for s in inputStringList :
-                logging.debug( 's: ' + str(type(s)) )
+                #logging.debug( 's: ' + str(type(s)) )
                 if type(s) != type({}) :
                     listItem.append( QtGui.QListWidgetItem(s) )
                 else :
                     listItem.append( QtGui.QListWidgetItem(s.keys()[0]) )
             for i in range(len(listItem)) :
-                listWidget.insertItem(i+1,listItem[i])
-        
+                listWidget.insertItem(i,listItem[i])
+                        
     def updateLayerList(self):
         # Get render layers first
         self.RLP.getLayers()
         self.insertListWidgetItem(self.ui.listWidget_L, self.RLP.LAYERS)
         
+    def updateAssociatedObjectList(self):
+        logging.debug('updateAssociatedObjectList')
+        self.getActiveLayer()
+        if self.RLP.LAYER_ACTIVE :
+            objs = self.RLP.getObjInLayer( self.RLP.LAYER_ACTIVE.values()[0] )
+            self.insertListWidgetItem(self.ui.listWidget_AO, objs)
+        
     def updateAssociatedPassList(self):
+        logging.debug('updateAssociatedPassList')
         # Get active layer first
         self.getActiveLayer()
         if self.RLP.LAYER_ACTIVE :
@@ -60,12 +71,14 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
             self.insertListWidgetItem(self.ui.listWidget_ASP, passes)
         
     def updateScenePassList(self):
+        logging.debug('updateScenePassList')
         # Get active layer first
         self.RLP.getScenePasses()
         if self.RLP.PASSES_SCENE :
             self.insertListWidgetItem(self.ui.listWidget_SP, self.RLP.PASSES_SCENE)                
         
     def updateAvailablePassList(self):
+        logging.debug('updateAvailablePassList')
         # Get active layer first
         self.RLP.getAvailablePasses()
         if self.RLP.PASSES_AVAILABLE :
@@ -82,17 +95,26 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
     def getActiveLayer(self):
         layerName = ''
         self.RLP.LAYER_ACTIVE = {}
-        currentItem = self.ui.listWidget_L.currentItem()
-        #print type(currentItem)
-        if currentItem :
+        #currentItem = self.ui.listWidget_L.currentItem()
+        try:
+            currentItem = self.ui.listWidget_L.selectedItems()[-1]
+        except :
+            logging.debug('can not get active layer')
+        else :
             try:
-                layerName = currentItem.text()
+                layerName = str( currentItem.text() )
             except:
                 logging.debug('can not find text()')
             else:
+                logging.debug('currentItem: ' + layerName )
                 layer = self.RLP.getLayerByName( layerName )
                 self.RLP.LAYER_ACTIVE = {layerName:layer}
+        # logging debug
+        RLP.log_dict(self.RLP.LAYER_ACTIVE)
     
+#    def setActiveLayer(self):
+#        self.ui.listWidget_L.setCurrentItem(  )
+        
     def updateAll(self):
         # Get current render layer
         self.getSelectedLayers()
@@ -101,20 +123,34 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
         self.updateScenePassList()
         self.updateAvailablePassList()
         
-    def updateAssociatedObjectList(self):
-        logging.debug('updateAssociatedObjectList')
-        self.getActiveLayer()
-        if self.RLP.LAYER_ACTIVE :
-            objs = self.RLP.getObjInLayer( self.RLP.LAYER_ACTIVE.values()[0] )
-            self.insertListWidgetItem(self.ui.listWidget_AO, objs)
-        
     def on_pushButton_L_refresh_pressed(self):
-        self.updateLayerList()
+        # Get selection layer first
+        #self.getActiveLayer()
         
-        self.getSelectedLayers()
-        self.updateAssociatedObjectList()
-        self.updateScenePassList()
-                
+        
+        self.updateAll()
+        
+        # Reselect active layer
+        #self.setActiveLayer( self.RLP.LAYER_ACTIVE )
+
+    def on_pushButton_AO_add_pressed(self):
+        # Get selection obj
+        sels_dict = RLP.getSelection_dict()
+        # Get layer active
+        self.getActiveLayer()
+        if self.RLP.LAYER_ACTIVE and sels_dict:
+            # Get current obj in list
+            objs = self.RLP.getObjInLayer( self.RLP.LAYER_ACTIVE.values()[0] )
+            logging.debug('objs:')
+            RLP.log_list( objs )
+            # Remove objs
+            sels_dict = RLP.dict_remove_by_value( sels_dict, objs )
+            logging.debug('sels_dict:')
+            RLP.log_list( sels_dict )
+            self.appendListWidgetItem(self.ui.listWidget_AO, sels_dict)
+            # Add objs to layer
+            self.RLP.addObj2Layer( self.RLP.LAYER_ACTIVE.values()[0], sels_dict )
+    
 def getMayaWindow():
     ptr = maya.OpenMayaUI.MQtUtil.mainWindow()
     return sip.wrapinstance(long(ptr), QtCore.QObject)

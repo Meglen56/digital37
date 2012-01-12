@@ -101,9 +101,68 @@ GEOMETRY_TYEPS = ['<class \'pymel.core.nodetypes.Mesh\'>',\
                   '<class \'pymel.core.nodetypes.NurbsSurface\'>',\
                   '<class \'pymel.core.nodetypes.Subdiv\'>']   
 SHADING_ENGINE_TYPE = '<class \'pymel.core.nodetypes.ShadingEngine\'>'
+  
+#source_list is a dict, remove_value_list is a list  
+def dict_remove_by_value(source_list,remove_value_list):    
+    for l in source_list :
+        if l.values()[0] in remove_value_list :
+            source_list.remove(l)
+    return source_list
+
+def get_dict_list_values(source_list):
+    return_list = []
+    for l in source_list :
+        return_list.append( l.values()[0] )    
+    return return_list
+
+def log_dict(inputDict):
+    s = ''
+    try :
+        s += str(inputDict)
+    except :
+        logging.warning('can not convert inputDict to string')        
+    for k,v in inputDict.items() :
+        s += '\t\t'
+        s += 'key:'+str(k) + '\t'
+        s += 'value:'+str(v)
+    logging.debug(s)
+
+def log_list(inputList):
+    s = ''
+    if inputList :
+        try :
+            s += str(inputList)
+        except :
+            logging.warning('can not convert inputList to string')
+        for i in inputList :
+            s += '\t' + str(i)
+    logging.debug(s)
             
 def getSelection():
     logging.debug('MRRenderLayerPass getSelection')
+    selObjShort = pm.ls(sl=1,l=1)
+    logging.debug(str(selObjShort))
+    if not selObjShort :
+        logging.warning('select some objects first.')
+        return None
+    else :
+        return selObjShort
+
+def getSelection_dict():
+    logging.debug('MRRenderLayerPass getSelection_dict')
+    sels = pm.ls(sl=1,l=1)
+    logging.debug(str(sels))
+    if not sels :
+        logging.warning('select some objects first.')
+        return None
+    else :
+        sels_dict = []
+        for sel in sels :
+            sels_dict.append( {PyNode(sel).name():sel} )
+        return sels_dict
+        
+def getDAGSelection():
+    logging.debug('MRRenderLayerPass getDAGSelection')
     selObjShort = pm.ls(sl=1)
     selObj = pm.ls(sl=1,dag=1)
     logging.debug(str(selObjShort))
@@ -114,7 +173,7 @@ def getSelection():
         return selObj
 
 def getGeometrySelection():
-    logging.debug('MRRenderLayerPass getSelection')
+    logging.debug('MRRenderLayerPass getDAGSelection')
     selObj = pm.ls(sl=1,dag=1,lf=1,type=['mesh','nurbsSurface','subdiv'])
     if not selObj :
         logging.warning('select some objects first.')
@@ -123,7 +182,7 @@ def getGeometrySelection():
         return selObj
     
 def getLightSelection():
-    logging.debug('MRRenderLayerPass getSelection')
+    logging.debug('MRRenderLayerPass getDAGSelection')
     selObj = pm.ls(sl=1,dag=1,lf=1,type=['spotLight','directionalLight',\
                                          'volumeLight','areaLight','ambientLight','pointLight'])
     if not selObj :
@@ -266,7 +325,7 @@ def getTransparencyShader(input):
                         
                     if shapeFace != [] :
                         logging.debug( 'shapeFace:')
-                        printList(shapeFace)
+                        log_list(shapeFace)
                         if displacement :
                             #logging.debug( 'displacement:', PyNode(displacement) )
                             pass
@@ -289,12 +348,6 @@ def getTransparencyShader(input):
             logging.debug('transparency: ' + str(v[1]))
     logging.debug('---------getTransparencyShader Finish------------\n')
     return shapeFaces
-    
-def printList(inputList):
-    if inputList :
-        for i in inputList :
-            logging.debug( str(i) )
-    logging.debug('\n')
             
 def setRenderStatus(renderStatus):
     sels = getGeometrySelection()
@@ -335,7 +388,7 @@ class MRRenderLayerPass():
         selObj = pm.ls(type='renderLayer')
         if selObj :
             selObj.remove(PyNode('defaultRenderLayer'))
-            printList(selObj)
+            log_list(selObj)
             for l in selObj :
                 self.LAYERS.append({l.name():l})
             
@@ -364,6 +417,7 @@ class MRRenderLayerPass():
         if passes :
             for p in passes :
                 self.PASSES_SCENE.append( {self.getPassName(p):p})
+        log_list(self.PASSES_SCENE)
 
     def getAvailablePasses(self):
         self.PASSES_AVAILABLE = []
@@ -377,11 +431,27 @@ class MRRenderLayerPass():
             pNames = [ k for k in self.PASSES_ALL if k not in passNameList ]
             for pn in pNames :
                 self.PASSES_AVAILABLE.append( {pn:self.getPassByName(pn)})
+        # If scene has no pass
+        else :
+            for pn in self.PASSES_ALL :
+                self.PASSES_AVAILABLE.append( {pn:self.getPassByName(pn)})
                         
     def getObjInLayer(self,layer):
         objs = pm.editRenderLayerMembers(layer,q=1,fullNames=1)
-        printList(objs)
+        log_list(objs)
         return objs
+
+    def addObj2Layer(self,layer,obj_list):
+        l = get_dict_list_values(obj_list)
+        log_list(l)
+        #editRenderLayerMembers -noRecurse layer2 nurbsSphere2
+        if layer and l :
+            pm.editRenderLayerMembers(layer,l,noRecurse=1)
+        else :
+            if not layer :
+                logging.warning('addObj2Layer: layer is None')
+            if not l :
+                logging.warning('addObj2Layer: selection is None')
     
     def getPassByLayer(self,layer):
         passes = None
@@ -417,6 +487,15 @@ class MRRenderLayerPass():
         except : 
             logging.warning('can not get layer by name')
         return passName        
+        
+    def getLayerOverrides(self,layer):
+        overrides = None
+        try :
+            overrides = pm.editRenderLayerAdjustment(layer=layer,q=1,attributeLog=1)
+        except :
+            logging.warning('can not get layer overrrides')
+        log_dict( overrides )
+        return overrides
         
     def createNewLayer(self):
         newLayer = pm.createRenderLayer(n=self.LAYER_NAME)
@@ -666,7 +745,7 @@ class MRRenderLayerPass():
             self.createPass(p)
             
     def createColorLayer(self):
-        selObj = getSelection()
+        selObj = getDAGSelection()
         if selObj :
             self.CURRENT_LAYER = self.createNewLayer()
             self.createColorPasses()  
