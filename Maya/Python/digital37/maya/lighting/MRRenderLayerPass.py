@@ -116,28 +116,30 @@ def get_dict_list_values(source_list):
     return return_list
 
 def log_dict(inputDict):
-    s = ''
-    try :
-        s += str(inputDict)
-    except :
-        logging.warning('can not convert inputDict to string')        
-    for k,v in inputDict.items() :
-        s += '\t\t'
-        s += 'key:'+str(k) + '\t'
-        s += 'value:'+str(v)
-    logging.debug(s)
+    if inputDict :
+        s = ''
+        try :
+            s += str(inputDict)
+        except :
+            logging.warning('can not convert inputDict to string')        
+        for k,v in inputDict.items() :
+            s += '\t\t'
+            s += 'key:'+str(k) + '\t'
+            s += 'value:'+str(v)
+        logging.debug(s)
 
 def log_list(inputList):
-    s = ''
     if inputList :
-        try :
-            s += str(inputList)
-        except :
-            logging.warning('can not convert inputList to string')
-        for i in inputList :
-            s += '\t' + str(i)
-    logging.debug(s)
-            
+        s = ''
+        if inputList :
+            try :
+                s += str(inputList)
+            except :
+                logging.warning('can not convert inputList to string')
+            for i in inputList :
+                s += '\t' + str(i)
+        logging.debug(s)
+                
 def getSelection():
     logging.debug('MRRenderLayerPass getSelection')
     selObjShort = pm.ls(sl=1,l=1)
@@ -158,7 +160,7 @@ def getSelection_dict():
     else :
         sels_dict = []
         for sel in sels :
-            sels_dict.append( {PyNode(sel).name():sel} )
+            sels_dict.append( {PyNode(sel).longName():sel} )
         return sels_dict
         
 def getDAGSelection():
@@ -282,7 +284,7 @@ def getTransparencyShader(input):
                 try :
                     surfaceShader = connection.surfaceShader.connections(p=0,d=1)
                 except :
-                    logging.error(str(input) + ' ' + str(PyNode(connection.surfaceShader).name()) \
+                    logging.error(str(input) + ' ' + str(PyNode(connection.surfaceShader).longName()) \
                                    + ' has no surface shader\'s connection')
                 else :
                     #logging.debug( 'surfaceShader:', str( surfaceShader[0] ) )
@@ -354,7 +356,7 @@ def setRenderStatus(renderStatus):
     if sels :
         for sel in sels :
             for k,v in renderStatus.items() :
-                attr = PyNode(sel.name()+'.'+k)
+                attr = PyNode(sel.longName()+'.'+k)
                 setAttr(attr,v[1])
                                                         
 class MRRenderLayerPass():
@@ -390,14 +392,14 @@ class MRRenderLayerPass():
             selObj.remove(PyNode('defaultRenderLayer'))
             log_list(selObj)
             for l in selObj :
-                self.LAYERS.append({l.name():l})
+                self.LAYERS.append({l.longName():l})
             
     def getLayerByName(self,layerName):
         layer = None
         selObj = pm.ls(type='renderLayer')
         if selObj :
             for l in selObj :
-                if l.name() == layerName :
+                if l.longName() == layerName :
                     layer = l
         if not layer :
             logging.warning(str(layerName) + ' is not a render layer name')
@@ -406,7 +408,7 @@ class MRRenderLayerPass():
     def getLayerName(self,layer):
         layerName = None
         try: 
-            layerName = PyNode(layer).name()
+            layerName = PyNode(layer).longName()
         except : 
             logging.warning('can not get layer by name')
         return layerName
@@ -452,7 +454,43 @@ class MRRenderLayerPass():
                 logging.warning('addObj2Layer: layer is None')
             if not l :
                 logging.warning('addObj2Layer: selection is None')
-    
+                
+    def removeObj2Layer(self,layer,obj_list):
+        l = get_dict_list_values(obj_list)
+        log_list(l)
+        #editRenderLayerMembers -noRecurse layer2 nurbsSphere2
+        if layer and l :
+            pm.editRenderLayerMembers(layer,l,noRecurse=1,remove=1)
+        else :
+            if not layer :
+                logging.warning('addObj2Layer: layer is None')
+            if not l :
+                logging.warning('addObj2Layer: selection is None')
+                
+    def removeOverrides2Layer(self,layer,obj_list):
+        l = get_dict_list_values(obj_list)
+        log_list(l)
+        #editRenderLayerMembers -noRecurse layer2 nurbsSphere2
+        if layer and l :
+            pm.editRenderLayerAdjustment(layer,noRecurse=1,remove=l)
+        else :
+            if not layer :
+                logging.warning('removeOverrides2Layer: layer is None')
+            if not l :
+                logging.warning('removeOverrides2Layer: selection is None')
+            
+    def getObjsFromSelsInListWidget(self,listWidget):
+        nodes_dict = []
+        items = listWidget.selectedItems()
+        if items:
+            for item in items :
+                # Get item's node
+                try :
+                    nodes_dict.append( {item.text():PyNode(item.text())} )
+                except :
+                    logging.warning('can not get pynode from listwidgetItem')
+        return nodes_dict
+
     def getPassByLayer(self,layer):
         passes = None
         passDict = []
@@ -471,7 +509,7 @@ class MRRenderLayerPass():
         passes = pm.ls(type='renderPass')
         if passName :
             for p in passes :
-                if p.name() == passName :
+                if p.longName() == passName :
                     passObj = p
         if not passObj :
             try:
@@ -483,18 +521,20 @@ class MRRenderLayerPass():
     def getPassName(self,p):
         passName = None
         try: 
-            passName = PyNode(p).name()
+            passName = PyNode(p).longName()
         except : 
             logging.warning('can not get layer by name')
         return passName        
         
-    def getLayerOverrides(self,layer):
+    def getOverridesInLayer(self,layer):
         overrides = None
         try :
-            overrides = pm.editRenderLayerAdjustment(layer=layer,q=1,attributeLog=1)
+            overrides = pm.editRenderLayerAdjustment(layer,layer=1,q=1)
+            #print overrides
         except :
             logging.warning('can not get layer overrrides')
-        log_dict( overrides )
+
+        #log_dict( overrides )
         return overrides
         
     def createNewLayer(self):
@@ -855,7 +895,7 @@ class MRMaterial():
     def getShadingSG(self,shaderName):
         try :
             shaderNoDisSG = PyNode(shaderName).outColor.connections(d=1,p=0,sh=1)
-            shaderNoDisSG = shaderNoDisSG.name()
+            shaderNoDisSG = shaderNoDisSG.longName()
             logging.debug('get shadingSG:' + str(shaderNoDisSG))
         except :
             logging.debug('can not get shadingSG')

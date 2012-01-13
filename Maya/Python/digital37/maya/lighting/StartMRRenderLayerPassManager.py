@@ -48,8 +48,45 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
                 else :
                     listItem.append( QtGui.QListWidgetItem(s.keys()[0]) )
             for i in range(len(listItem)) :
-                listWidget.insertItem(i,listItem[i])
-                        
+                listWidget.insertItem(i+1,listItem[i])
+
+
+    def removeListWidgetItem(self,listWidget,inputStringList):
+        # Clear listWidget first
+        if inputStringList :
+            listWidgetItems_dict = self.getItemsInListWidget(listWidget)
+            listItem = []
+            for s in inputStringList :
+                #logging.debug( 's: ' + str(type(s)) )
+                if type(s) != type({}) :
+                    if s in listWidgetItems_dict.keys():
+                        listItem.append( listWidgetItems_dict[s] )
+                else :
+                    items = listWidget.findItems(s.keys()[0],QtCore.Qt.MatchFixedString)
+                    if items :
+                        listItem.append( items[0] )   
+
+            for l in listItem :
+                i = listWidget.row(l)
+                logging.debug('list widget\' row: ' + str(i))
+                listWidget.takeItem(i)
+                logging.warning('can not remove itemWidget')
+            
+    def getItemsInListWidget(self,listWidget):
+        items = listWidget.findItems('',QtCore.Qt.MatchRegExp)
+        items_dict = []
+        for item in items :
+            items_dict.append({item.text():item})
+        return items_dict
+                    
+    def getMemberInListByName(self,inputList,inputStr):
+        matchMember = None
+        #logging.debug( 'inputStr:',str(inputStr) )
+        for l in inputList:
+            if inputStr == l.keys() :
+                matchMember = l
+        return matchMember
+                
     def updateLayerList(self):
         # Get render layers first
         self.RLP.getLayers()
@@ -61,6 +98,13 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
         if self.RLP.LAYER_ACTIVE :
             objs = self.RLP.getObjInLayer( self.RLP.LAYER_ACTIVE.values()[0] )
             self.insertListWidgetItem(self.ui.listWidget_AO, objs)
+        
+    def updateOverridesList(self):
+        logging.debug('updateOverridesList')
+        self.getActiveLayer()
+        if self.RLP.LAYER_ACTIVE :
+            objs = self.RLP.getOverridesInLayer( self.RLP.LAYER_ACTIVE.values()[0] )
+            self.insertListWidgetItem(self.ui.listWidget_O, objs)    
         
     def updateAssociatedPassList(self):
         logging.debug('updateAssociatedPassList')
@@ -83,6 +127,15 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
         self.RLP.getAvailablePasses()
         if self.RLP.PASSES_AVAILABLE :
             self.insertListWidgetItem(self.ui.listWidget_AVP, self.RLP.PASSES_AVAILABLE)  
+        
+    def updateAll(self):
+        # Get current render layer
+        self.getSelectedLayers()
+        self.updateAssociatedObjectList()
+        self.updateAssociatedPassList()
+        self.updateScenePassList()
+        self.updateAvailablePassList()
+        self.updateOverridesList()      
                     
     def getSelectedLayers(self):
         self.RLP.LAYERS_SELECTED = []
@@ -114,14 +167,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
     
 #    def setActiveLayer(self):
 #        self.ui.listWidget_L.setCurrentItem(  )
-        
-    def updateAll(self):
-        # Get current render layer
-        self.getSelectedLayers()
-        self.updateAssociatedObjectList()
-        self.updateAssociatedPassList()
-        self.updateScenePassList()
-        self.updateAvailablePassList()
+
         
     def on_pushButton_L_refresh_pressed(self):
         # Get selection layer first
@@ -150,7 +196,61 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow):
             self.appendListWidgetItem(self.ui.listWidget_AO, sels_dict)
             # Add objs to layer
             self.RLP.addObj2Layer( self.RLP.LAYER_ACTIVE.values()[0], sels_dict )
-    
+
+    def on_pushButton_O_remove_pressed(self):
+        # Get layer active
+        self.getActiveLayer()
+        if self.RLP.LAYER_ACTIVE :
+            sels_dict = []
+            # For user select some widgetItems in listWidget
+            sels_dict_listWidget = self.RLP.getObjsFromSelsInListWidget(self.ui.listWidget_O)
+            
+            if sels_dict_listWidget :
+                sels_dict.extend( sels_dict_listWidget )
+            
+            if sels_dict:
+                logging.debug('sels_dict:')
+                RLP.log_list( sels_dict )
+                self.removeListWidgetItem(self.ui.listWidget_O, sels_dict)
+                # Remove objs to layer
+                self.RLP.removeObj2Layer( self.RLP.LAYER_ACTIVE.values()[0], sels_dict )
+            
+            
+            
+    def on_pushButton_AO_remove_pressed(self):
+        # Get layer active
+        self.getActiveLayer()
+        
+        if self.RLP.LAYER_ACTIVE:
+            # Get selection obj # For user select some objs in model view
+            sels_dict = RLP.getSelection_dict()
+            
+            # For user select some widgetItems in listWidget
+            sels_dict_listWidget = self.RLP.getObjsFromSelsInListWidget(self.ui.listWidget_AO)
+            
+            if sels_dict_listWidget :
+                sels_dict.extend( sels_dict_listWidget )
+                
+            # Remove duplicate
+            RLP.flattenList( sels_dict )
+            
+            if sels_dict:
+                logging.debug('sels_dict:')
+                RLP.log_list( sels_dict )
+                self.removeListWidgetItem(self.ui.listWidget_AO, sels_dict)
+                # Remove objs to layer
+                self.RLP.removeObj2Layer( self.RLP.LAYER_ACTIVE.values()[0], sels_dict )
+        
+    def delSelItemsInListWidget(self,listWidget):
+        items = listWidget.selectedItems()
+        if items:
+            for item in items :
+                row = listWidget.row( item ) 
+                try:
+                    listWidget.takeItem( row )
+                except:
+                    logging.warning('delSelItemInListWidget error')
+                                
 def getMayaWindow():
     ptr = maya.OpenMayaUI.MQtUtil.mainWindow()
     return sip.wrapinstance(long(ptr), QtCore.QObject)
