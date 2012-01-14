@@ -221,6 +221,9 @@
                <property name="dragEnabled">
                 <bool>true</bool>
                </property>
+               <property name="dragDropOverwriteMode">
+                <bool>false</bool>
+               </property>
                <property name="dragDropMode">
                 <enum>QAbstractItemView::DragDrop</enum>
                </property>
@@ -298,13 +301,6 @@
              </property>
              <property name="selectionMode">
               <enum>QAbstractItemView::ExtendedSelection</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_ASP_add">
-             <property name="text">
-              <string>Add</string>
              </property>
             </widget>
            </item>

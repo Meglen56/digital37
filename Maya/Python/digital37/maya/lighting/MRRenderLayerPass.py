@@ -11,7 +11,6 @@ LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
 LOG_LEVEL = LOG_LEVELS.get('debug')
 logging.basicConfig(level=LOG_LEVEL)
 
-import os.path                                     
 import maya.cmds as cmds
 import pymel.core as pm
 from pymel.all import mel
@@ -385,6 +384,14 @@ class MRRenderLayerPass():
         self.LAYER_ACTIVE = {}
         self.getLayers()
         
+    # Get current active layer
+    def getLayerCurrent(self):
+        layer_current = pm.editRenderLayerGlobals(q=1,crl=1)
+        if layer_current :
+            return PyNode(layer_current)
+        else :
+            return None
+        
     def getLayers(self):
         self.LAYERS = []
         selObj = pm.ls(type='renderLayer')
@@ -466,6 +473,20 @@ class MRRenderLayerPass():
                 logging.warning('addObj2Layer: layer is None')
             if not l :
                 logging.warning('addObj2Layer: selection is None')
+                                
+    def removePass2Layer(self,layer,pass_list):
+        list_values = get_dict_list_values(pass_list)
+        log_list(list_values)
+        #editRenderLayerMembers -noRecurse layer2 nurbsSphere2
+        if layer and list_values :
+            #disconnectAttr -nextAvailable layer2.renderPass ambientRaw.owner
+            for item in list_values :
+                layer.renderPass.disconnect(item.owner, nextAvailable=1)
+        else :
+            if not layer :
+                logging.warning('removePass2Layer: layer is None')
+            if not list_values :
+                logging.warning('removePass2Layer: pass is None')
                 
     def removeOverrides2Layer(self,layer,obj_list):
         l = get_dict_list_values(obj_list)
