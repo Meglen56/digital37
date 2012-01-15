@@ -5,6 +5,8 @@ LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
 LOG_LEVEL = LOG_LEVELS.get('debug')
 logging.basicConfig(level=LOG_LEVEL)
 
+import traceback
+
 import sip
 from PyQt4 import QtCore, QtGui
 import maya.OpenMayaUI
@@ -30,6 +32,12 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         #self.ui.listWidget_L.itemSelectionChanged.connect( self.updateAll )
         self.listWidget_L.itemSelectionChanged.connect( self.updateAllExceptLayer )
         
+        # for rename layer
+        self.listWidget_L.itemDoubleClicked.connect( self.getActiveLayer )
+        self.listWidget_L.itemChanged.connect( self.renameLayer )
+        
+        self.listWidget_SP.itemChanged.connect( self.updateScenePasses )
+        
         self.listWidget_SP.dragMoveEvent = self.dragMoveEvent_SP
         self.listWidget_ASP.dragMoveEvent = self.dragMoveEvent_ASP
         self.listWidget_AVP.dragMoveEvent = self.dragMoveEvent_AVP
@@ -42,6 +50,8 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         logging.debug('custom dragMoveEvent')
         if e.source() == self.listWidget_AVP :
             e.accept()
+            # Add passes to scenes
+            #self.updateScenePasses()
         else :
             e.ignore()
         
@@ -53,6 +63,8 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
             #self.listWidget_SP.setDefaultDropAction(QtCore.Qt.CopyAction)
             e.accept()
             e.setDropAction(QtCore.Qt.CopyAction)
+            # add custom cmd to add passes to selected layers
+            #self.addAssociatedPasses2Layers()
         else :
             e.ignore()
         
@@ -81,6 +93,12 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                     listItem.append( QtGui.QListWidgetItem(s.keys()[0]) )
             for i in range(len(listItem)) :
                 listWidget.insertItem(i+1,listItem[i])
+                # Add editable to listWidget_L's item
+                if listWidget == self.listWidget_L :
+                    listItem[i].setFlags(listItem[i].flags() | QtCore.Qt.ItemIsEditable)
+    
+    def getLayerDict(self):
+        pass
 
 
     def removeListWidgetItem(self,listWidget,inputStringList):
@@ -105,9 +123,9 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 logging.warning('can not remove itemWidget')
             
     def getAllItemsInListWidget(self,listWidget):
-        items = listWidget.findItems('',QtCore.Qt.MatchRegExp)
         items_dict = []
-        for item in items :
+        for i in xrange(listWidget.count()):
+            item = listWidget.item(i)
             items_dict.append({item.text():item})
         return items_dict
                 
@@ -222,10 +240,60 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         RLP.log_dict(self.RLP.LAYER_ACTIVE)
     
     def setActiveLayer(self,layer_current):
+        # clear selection in listWidget_L
+        self.listWidget_L.clearSelection()
         # get widgetitem
         listItems = self.getItemsInListWidget(self.listWidget_L, layer_current.longName())
-        print listItems
-        self.listWidget_L.setCurrentItem( listItems[0].values()[0] )
+        if listItems :
+            self.listWidget_L.setCurrentItem( listItems[0].values()[0] )
+    
+    def renameLayer(self):
+        logging.debug('rename layer')
+        # Get selected listWidgetItem
+        txt = self.listWidget_L.currentItem().text()
+        
+        #logging.debug('layer text:',str(txt))
+        try :
+            RLP.rename( self.RLP.LAYER_ACTIVE.values()[0], txt )
+        except :
+            traceback.print_exc()
+        
+    def updateScenePasses(self):
+        logging.debug('updateScenePasses')
+        pass_names_list = []
+        # Get all widgetItems in listWidget_SP
+        listWidgetItems = self.getAllItemsInListWidget(self.listWidget_SP)
+        print '*-*'
+        print listWidgetItems
+        if listWidgetItems :
+            for listWidgetItem in listWidgetItems :
+                try:
+                    pass_names_list.append( str( listWidgetItem.values()[0].text() ) )
+                except:
+                    traceback.print_exc()
+            if pass_names_list :
+                self.RLP.updateScenePasses(pass_names_list)
+                    
+    def addAssociatedPasses2Layers(self):
+        pass_names_list = []
+        # Get selected widgetItems in listWidget_SP
+        self.getSelectedLayers()
+        listWidgetItems = self.listWidget_SP.selectedItems()
+        for listWidgetItem in listWidgetItems :
+            pass_names_list.append( listWidgetItem.text() )
+        if self.RLP.LAYERS_SELECTED and pass_names_list :
+            self.RLP.addPasses2Layers(self.RLP.LAYERS_SELECTED,pass_names_list)
+        
+    def on_pushButton_L_add_pressed(self):
+        newLayer = self.RLP.createNewLayer()
+        # Add newlayer to listwidget
+        self.appendListWidgetItem(self.listWidget_L, [{newLayer.longName():newLayer}])
+        
+        # select newlayer in listwidget_L
+        self.setActiveLayer(newLayer)
+        # update other lists
+        self.updateAllExceptLayer()     
+        
         
     def on_pushButton_L_refresh_pressed(self):
         # Get selection layer first
@@ -318,6 +386,13 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 self.removeListWidgetItem(self.listWidget_ASP, sels_dict)
                 # Remove pass to layer
                 self.RLP.removePass2Layer( self.RLP.LAYER_ACTIVE.values()[0], sels_dict )
+                            
+    def on_pushButton_SP_remove_pressed(self):
+        sels_dict_listWidget = self.RLP.getObjsFromSelsInListWidget(self.listWidget_SP)
+        if sels_dict_listWidget :
+            self.removeListWidgetItem(self.listWidget_SP, sels_dict_listWidget)
+            # Remove passes
+            self.RLP.removeScenePasses( sels_dict_listWidget )
         
     def delSelItemsInListWidget(self,listWidget):
         items = listWidget.selectedItems()

@@ -1,18 +1,24 @@
-import pymel.core as pm
-
-joints = pm.ls(dag=1,sl=1,type='joint')
-for joint in joints :
-    
-    plane = pm.polyPlane(sh=0,ax=[1,0,0],w=10,h=10,sx=1,sy=1)
-    pm.select(joint,r=1)
-    pm.select(plane,tgl=1)
-    pm.pointConstraint(offset=[0.5,0,0],weight=1)
-    pm.orientConstraint(offset=[0,0,0],weight=1)
-    
-    plane = pm.polyPlane(sh=0,ax=[1,0,0],w=10,h=10,sx=1,sy=1)
-    pm.select(joint,r=1)
-    pm.select(plane,tgl=1)
-    pm.pointConstraint(offset=[-0.5,0,0],weight=1)
-    pm.orientConstraint(offset=[0,0,0],weight=1)  
-    
-    
+{'mv2DToxik':'2DMotionVector', 'mv3D':'3DMotionVector', 'ambient':'ambient',\
+'ambientIrradiance':'ambientIrradiance','ambientRaw':'ambientMaterialColor',\ 
+'AO':'ambientOcclusion', 'beauty':'beauty',\
+'beautyNoReflectRefract':'beautyWithoutReflectionsRefractions',\ 
+'blank':'blank', 'depth':'cameraDepth', 'depthRemapped':'cameraDepthRemapped',\ 
+'coverage':'coverage', 'customColor':'customColor', 'customDepth':'customDepth',\ 
+'customLabel':'customLabel', 'customVector':'customVector',\ 
+'diffuse':'diffuse', 'diffuseMaterialColor':'diffuseMaterialColor',\ 
+'diffuseNoShadow':'diffuseWithoutShadows', 'directIrradiance':'directIrradiance',\ 
+'directIrradianceNoShadow':'directIrradianceWithoutShadows',\ 
+'glowSource':'glowSource', 'incandescence':'incandescence',\ 
+'incidenceCN':'incidenceCamNorm', 'incidenceCNMat':'incidenceCamNormMaterial',\ 
+'incidenceLN':'incidenceLightNorm', 'indirect':'indirect', 'volumeLight':'lightVolume',\ 
+'matte':'matte', 'normalCam':'normalCam', 'normalCamMaterial':'normalCamMaterial',\ 
+'mv2DNormRemap':'normalized2DMotionVector', 'normalObj':'normalObj',\
+'normalObjMaterial':'normalObjMaterial', 'normalWorld':'normalWorld',\ 
+'normalWorldMaterial':'normalWorldMaterial', 'volumeObject':'objectVolume', 'opacity':'opacity',\ 
+'shadowRaw':'rawShadow', 'reflectedMaterialColor':'reflectedMaterialColor',\ 
+'reflection':'reflection', 'refraction':'refraction',\ 
+'refractionMaterialColor':'refractionMaterialColor',\ 
+'scatter':'scatter', 'volumeScene':'sceneVolume', 'shadow':'shadow',\ 
+'specular':'specular', 'specularNoShadow':'specularWithoutShadows',\ 
+'translucence':'translucence', 'translucenceNoShadow':'translucenceWithoutShadows',\ 
+'UVPass':'UV', 'worldPosition':'worldPosition'}

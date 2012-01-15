@@ -5,12 +5,14 @@
 #Update: 
 #Howto use : 
 import logging 
+#from idlelib.RemoteDebugger import traceback
 LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
               'warning': logging.WARNING, 'error': logging.ERROR,\
               'critical': logging.CRITICAL}
 LOG_LEVEL = LOG_LEVELS.get('debug')
 logging.basicConfig(level=LOG_LEVEL)
 
+import traceback
 import maya.cmds as cmds
 import pymel.core as pm
 from pymel.all import mel
@@ -138,7 +140,10 @@ def log_list(inputList):
             for i in inputList :
                 s += '\t' + str(i)
         logging.debug(s)
-                
+            
+def rename(node,name):
+    pm.rename(node,name)
+    
 def getSelection():
     logging.debug('MRRenderLayerPass getSelection')
     selObjShort = pm.ls(sl=1,l=1)
@@ -367,13 +372,38 @@ class MRRenderLayerPass():
                   'normalCamMaterial','normalObj','normalObjMaterial','normalWorld','normalWorldMaterial',\
                   'opacity','reflectedMaterialColor','reflection','refraction','refractionMaterialColor',\
                   'scatter','shadow','shadowRaw','specular','specularNoShadow','translucence',\
-                  'translucenceNoShadow','volumeLight','volumeObject','volumeScene','worldPosition'] 
+                  'translucenceNoShadow','volumeLight','volumeObject','volumeScene','worldPosition']
+    PASSES_ALL_DICT = [{'mv2DToxik':'2DMotionVector'}, {'mv3D':'3DMotionVector'}, {'ambient':'ambient'},\
+                    {'ambientIrradiance':'ambientIrradiance'},{'ambientRaw':'ambientMaterialColor'},\
+                    {'AO':'ambientOcclusion'}, {'beauty':'beauty'},\
+                    {'beautyNoReflectRefract':'beautyWithoutReflectionsRefractions'},\
+                    {'blank':'blank'}, {'depth':'cameraDepth'}, {'depthRemapped':'cameraDepthRemapped'},\ 
+                    {'coverage':'coverage'}, {'customColor':'customColor'}, {'customDepth':'customDepth'},\ 
+                    {'customLabel':'customLabel'}, {'customVector':'customVector'},\ 
+                    {'diffuse':'diffuse'}, {'diffuseMaterialColor':'diffuseMaterialColor'},\ 
+                    {'diffuseNoShadow':'diffuseWithoutShadows'}, {'directIrradiance':'directIrradiance'},\ 
+                    {'directIrradianceNoShadow':'directIrradianceWithoutShadows'},\ 
+                    {'glowSource':'glowSource'}, {'incandescence':'incandescence'},\ 
+                    {'incidenceCN':'incidenceCamNorm'}, {'incidenceCNMat':'incidenceCamNormMaterial'},\ 
+                    {'incidenceLN':'incidenceLightNorm'}, {'indirect':'indirect'}, {'volumeLight':'lightVolume'},\ 
+                    {'matte':'matte'}, {'normalCam':'normalCam'}, {'normalCamMaterial':'normalCamMaterial'},\ 
+                    {'mv2DNormRemap':'normalized2DMotionVector'}, {'normalObj':'normalObj'},\
+                    {'normalObjMaterial':'normalObjMaterial'}, {'normalWorld':'normalWorld'},\ 
+                    {'normalWorldMaterial':'normalWorldMaterial'}, {'volumeObject':'objectVolume'}, {'opacity':'opacity'},\ 
+                    {'shadowRaw':'rawShadow'}, {'reflectedMaterialColor':'reflectedMaterialColor'},\ 
+                    {'reflection':'reflection'}, {'refraction':'refraction'},\ 
+                    {'refractionMaterialColor':'refractionMaterialColor'},\ 
+                    {'scatter':'scatter'}, {'volumeScene':'sceneVolume'}, {'shadow':'shadow'},\ 
+                    {'specular':'specular'}, {'specularNoShadow':'specularWithoutShadows'},\ 
+                    {'translucence':'translucence'}, {'translucenceNoShadow':'translucenceWithoutShadows'},\ 
+                    {'UVPass':'UV'}, {'worldPosition':'worldPosition']
     def __init__(self):
         logging.debug('Init MRRenderLayerPass class')
         self.PASSES_COLOR = ['beauty','depth','diffuse','incandescence','indirect','normalWorld',
                              'reflection','refraction','shadow','specular']
         self.PASSES_COLOR_AVAILABLE = [ x for x in MRRenderLayerPass.PASSES_ALL if x not in self.PASSES_COLOR ]
         self.PASSES_SCENE = []
+        self.PASSES_SCENE_NAME_LIST = []
         self.PASSES_AVAILABLE = []
         self.LAYER_NAME = 'color'
         self.PREFIX_PASS = ''
@@ -422,10 +452,12 @@ class MRRenderLayerPass():
     
     def getScenePasses(self):
         self.PASSES_SCENE = []
+        self.PASSES_SCENE_NAME_LIST = []
         passes = pm.ls(type='renderPass')
         if passes :
             for p in passes :
                 self.PASSES_SCENE.append( {self.getPassName(p):p})
+                self.PASSES_SCENE_NAME_LIST.append( self.getPassName(p) )
         log_list(self.PASSES_SCENE)
 
     def getAvailablePasses(self):
@@ -512,6 +544,14 @@ class MRRenderLayerPass():
                     logging.warning('can not get pynode from listwidgetItem')
         return nodes_dict
 
+    def removeScenePasses(self,passesList_dict):
+        try:
+            pm.delete( get_dict_list_values(passesList_dict) )
+        except:
+            traceback.print_exc()
+        else:
+            logging.debug('remove scenes passes success')
+            
     def getPassByLayer(self,layer):
         passes = None
         passDict = []
@@ -558,14 +598,18 @@ class MRRenderLayerPass():
         #log_dict( overrides )
         return overrides
         
-    def createNewLayer(self):
+    def createNewMRLayer(self):
         newLayer = pm.createRenderLayer(n=self.LAYER_NAME)
         pm.editRenderLayerGlobals(currentRenderLayer=newLayer)
         #editRenderLayerAdjustment "defaultRenderGlobals.currentRenderer"
         pm.editRenderLayerAdjustment(DEFAULT_RENDER_GLOBALS.currentRenderer)
         DEFAULT_RENDER_GLOBALS.currentRenderer.set('mentalRay')    
         return newLayer     
-    
+        
+    def createNewLayer(self):
+        newLayer = pm.createRenderLayer()
+        return newLayer   
+        
     def setRenderLayerAttr(self,attr,val):
         # Check if attr exists
         logging.debug('attr: ' + str(attr))
@@ -612,11 +656,26 @@ class MRRenderLayerPass():
                     pm.editRenderLayerAdjustment(cam.miEnvironmentShader)
                     renderCamEnv[0].message.disconnect(cam.miEnvironmentShader)
     
-    def createPass(self,passName):
+    def createPass2CurrentLayer(self,passName):
         logging.debug('self.PREFIX_PASS:' + self.PREFIX_PASS)
         logging.debug('self.SUFFIX_PASS:' + self.SUFFIX_PASS)
         renderPass = pm.createNode( 'renderPass', n=self.PREFIX_PASS \
                                     + '_' + passName + '_' + self.SUFFIX_PASS )
+        #renderPass = pm.ls(sl=1)
+        #logging.debug('MAYA_LOCATION: '+MAYA_LOCATION)
+        
+        passName = PASSES_ALL_DICT
+        if passName != 'depth' :
+            presetMel = MAYA_LOCATION+'/presets/attrPresets/renderPass/'+passName+'.mel'
+        else :
+            presetMel = MAYA_LOCATION+'/presets/attrPresets/renderPass/cameraDepth.mel'
+        logging.debug('presetMel: '+presetMel)
+        
+        mel.applyAttrPreset(renderPass, presetMel, 1)
+        self.CURRENT_LAYER.renderPass.connect(renderPass.owner,nextAvailable=1)
+    
+    def addPass(self,passName):
+        renderPass = pm.createNode( 'renderPass' )
         #renderPass = pm.ls(sl=1)
         #logging.debug('MAYA_LOCATION: '+MAYA_LOCATION)
         if passName != 'depth' :
@@ -626,14 +685,58 @@ class MRRenderLayerPass():
         logging.debug('presetMel: '+presetMel)
         
         mel.applyAttrPreset(renderPass, presetMel, 1)
-        self.CURRENT_LAYER.renderPass.connect(renderPass.owner,nextAvailable=1)
 
-
+    def removePass(self,passName) :
+        try:
+            pm.delete( PyNode(passName) )
+        except:
+            traceback.print_exc()
+        else:
+            logging.debug('success del ',passName)
+                    
+    def updateScenePasses(self,pass_names_list):
+        if pass_names_list :
+            print '*'
+            print self.PASSES_SCENE_NAME_LIST
+            print '*'
+            print pass_names_list
+            self.getScenePasses()
+            addList = [x for x in pass_names_list \
+                       if x not in self.PASSES_SCENE_NAME_LIST]
+            removeList = [x for x in self.PASSES_SCENE_NAME_LIST \
+                          if x not in pass_names_list]
+            if addList :
+                # add passes to scene
+                for pass_name in addList:
+                    print '*'
+                    print pass_name
+                    #logging.debug('add pass name:',pass_name)
+                    try:
+                        self.addPass( pass_name )
+                    except:
+                        traceback.print_exc()
+                        
+            if removeList :
+                # add passes to scene
+                for pass_name in removeList :
+                    try:
+                        self.removePass( pass_name )
+                    except:
+                        traceback.print_exc()
+                        
+    def addPasses2Layers(self,layers,pass_names_list):
+        if layers and pass_names_list :
+            for layer in layers :
+                for pass_name in pass_names_list :
+                    try:
+                        layer.values()[0].renderPass.connect(PyNode(pass_name).owner,nextAvailable=1)
+                    except:
+                        traceback.print_exc()
 
     def createAOTransparencyLayer(self,isAddPass):
         selObj = getGeometrySelection()
         
-        self.CURRENT_LAYER = self.createNewLayer()
+        self.CURRENT_LAYER = self.createNewMRLayer()
         
         shaderNoDis,shaderNoDisSG = createShader('surfaceShader',(self.LAYER_NAME+'_MAT'))
         
@@ -727,7 +830,7 @@ class MRRenderLayerPass():
         
         if isAddPass == True :
             # Add ao pass
-            self.createPass('ambientOcclusion')
+            self.createPass2CurrentLayer('ambientOcclusion')
             
         pm.select(cl=1)
 
@@ -736,7 +839,7 @@ class MRRenderLayerPass():
     def createAOLayer(self,isAddPass):
         selObj = getGeometrySelection()
         
-        self.CURRENT_LAYER = self.createNewLayer()
+        self.CURRENT_LAYER = self.createNewMRLayer()
         
         #AOMat = pm.shadingNode('surfaceShader',n='AO_mat',asShader=True)
         shaderNoDis,shaderNoDisSG = createShader('surfaceShader',(self.LAYER_NAME+'_MAT'))
@@ -797,18 +900,18 @@ class MRRenderLayerPass():
         logging.debug('isAddPass:'+str(isAddPass))
         if isAddPass == True :
             # Add ao pass
-            self.createPass('ambientOcclusion')
+            self.createPass2CurrentLayer('ambientOcclusion')
                     
         pm.select(cl=1)
         
     def createColorPasses(self):
         for p in self.PASSES_COLOR :
-            self.createPass(p)
+            self.createPass2CurrentLayer(p)
             
     def createColorLayer(self):
         selObj = getDAGSelection()
         if selObj :
-            self.CURRENT_LAYER = self.createNewLayer()
+            self.CURRENT_LAYER = self.createNewMRLayer()
             self.createColorPasses()  
             self.setRenderLayerAttr(MI_DEFAULT_FRAME_BUFFER.datatype, 5)
             self.setRenderLayerAttr(DEFAULT_RENDER_GLOBALS.imageFormat, 51)
@@ -821,7 +924,7 @@ class MRRenderLayerPass():
             
     def createShadowLayer(self,layerName='Shadow_Mask_Layer',shaderName='Shadow_Mask_MAT',outAlpha=1):
         sel = getGeometrySelection()
-        newLayer = self.createNewLayer()
+        newLayer = self.createNewMRLayer()
         # Create material
         MRMaterial().createShadowShader(shaderName,sel,outAlpha)
         pm.select(cl=1)
@@ -836,7 +939,7 @@ class MRRenderLayerPass():
             logging.warning('select some lights and some objects first.')
             return None
         else :
-            newLayer = self.createNewLayer(name)
+            newLayer = self.createNewMRLayer(name)
             
 #            luzMat = pm.shadingNode('lambert',n=(name+'_MAT'),asShader=True)
             shaderNoDis,shaderNoDisSG = createShader('lambert',(name+'_MAT'))
