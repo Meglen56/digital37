@@ -102,6 +102,7 @@ GEOMETRY_TYEPS = ['<class \'pymel.core.nodetypes.Mesh\'>',\
                   '<class \'pymel.core.nodetypes.NurbsSurface\'>',\
                   '<class \'pymel.core.nodetypes.Subdiv\'>']   
 SHADING_ENGINE_TYPE = '<class \'pymel.core.nodetypes.ShadingEngine\'>'
+PASS_TYPE = '<class \'pymel.core.nodetypes.RenderPass\'>'
   
 #source_list is a dict, remove_value_list is a list  
 def dict_remove_by_value(source_list,remove_value_list):    
@@ -140,6 +141,8 @@ def log_list(inputList):
             for i in inputList :
                 s += '\t' + str(i)
         logging.debug(s)
+    else:
+        logging.debug('log_list:input is None')
             
 def rename(node,name):
     pm.rename(node,name)
@@ -364,46 +367,42 @@ def setRenderStatus(renderStatus):
                 setAttr(attr,v[1])
                                                         
 class MRRenderLayerPass():
-    PASSES_ALL = ['AO','UVPass','ambient','ambientIrradiance','ambientRaw','beauty','beautyNoReflectRefract',\
-                  'coverage','customColor','customDepth','customLabel','customVector','depth',\
-                  'depthRemapped','diffuse','diffuseMaterialColor','diffuseNoShadow','directIrradiance',\
-                  'directIrradianceNoShadow','glowSource','incandescence','incidenceCN','incidenceCNMat',\
-                  'incidenceLN','indirect','matte','mv2DNormRemap','mv2DToxik','mv3D','normalCam',\
-                  'normalCamMaterial','normalObj','normalObjMaterial','normalWorld','normalWorldMaterial',\
-                  'opacity','reflectedMaterialColor','reflection','refraction','refractionMaterialColor',\
-                  'scatter','shadow','shadowRaw','specular','specularNoShadow','translucence',\
-                  'translucenceNoShadow','volumeLight','volumeObject','volumeScene','worldPosition']
-    PASSES_ALL_DICT = [{'mv2DToxik':'2DMotionVector'}, {'mv3D':'3DMotionVector'}, {'ambient':'ambient'},\
-                    {'ambientIrradiance':'ambientIrradiance'},{'ambientRaw':'ambientMaterialColor'},\
-                    {'AO':'ambientOcclusion'}, {'beauty':'beauty'},\
-                    {'beautyNoReflectRefract':'beautyWithoutReflectionsRefractions'},\
-                    {'blank':'blank'}, {'depth':'cameraDepth'}, {'depthRemapped':'cameraDepthRemapped'},\ 
-                    {'coverage':'coverage'}, {'customColor':'customColor'}, {'customDepth':'customDepth'},\ 
-                    {'customLabel':'customLabel'}, {'customVector':'customVector'},\ 
-                    {'diffuse':'diffuse'}, {'diffuseMaterialColor':'diffuseMaterialColor'},\ 
-                    {'diffuseNoShadow':'diffuseWithoutShadows'}, {'directIrradiance':'directIrradiance'},\ 
-                    {'directIrradianceNoShadow':'directIrradianceWithoutShadows'},\ 
-                    {'glowSource':'glowSource'}, {'incandescence':'incandescence'},\ 
-                    {'incidenceCN':'incidenceCamNorm'}, {'incidenceCNMat':'incidenceCamNormMaterial'},\ 
-                    {'incidenceLN':'incidenceLightNorm'}, {'indirect':'indirect'}, {'volumeLight':'lightVolume'},\ 
-                    {'matte':'matte'}, {'normalCam':'normalCam'}, {'normalCamMaterial':'normalCamMaterial'},\ 
-                    {'mv2DNormRemap':'normalized2DMotionVector'}, {'normalObj':'normalObj'},\
-                    {'normalObjMaterial':'normalObjMaterial'}, {'normalWorld':'normalWorld'},\ 
-                    {'normalWorldMaterial':'normalWorldMaterial'}, {'volumeObject':'objectVolume'}, {'opacity':'opacity'},\ 
-                    {'shadowRaw':'rawShadow'}, {'reflectedMaterialColor':'reflectedMaterialColor'},\ 
-                    {'reflection':'reflection'}, {'refraction':'refraction'},\ 
-                    {'refractionMaterialColor':'refractionMaterialColor'},\ 
-                    {'scatter':'scatter'}, {'volumeScene':'sceneVolume'}, {'shadow':'shadow'},\ 
-                    {'specular':'specular'}, {'specularNoShadow':'specularWithoutShadows'},\ 
-                    {'translucence':'translucence'}, {'translucenceNoShadow':'translucenceWithoutShadows'},\ 
-                    {'UVPass':'UV'}, {'worldPosition':'worldPosition']
+    PASSES_ALL = {'mv2DToxik':'2DMotionVector', 'mv3D':'3DMotionVector', 'ambient':'ambient',\
+                  'ambientIrradiance':'ambientIrradiance','ambientRaw':'ambientMaterialColor',\
+                  'AO':'ambientOcclusion', 'beauty':'beauty',\
+                  'beautyNoReflectRefract':'beautyWithoutReflectionsRefractions',\
+                  'blank':'blank', 'depth':'cameraDepth', \
+                  'depthRemapped':'cameraDepthRemapped',\
+                  'coverage':'coverage', 'customColor':'customColor',\
+                  'customDepth':'customDepth','customLabel':'customLabel',\
+                  'customVector':'customVector','diffuse':'diffuse',\
+                  'diffuseMaterialColor':'diffuseMaterialColor',\
+                  'diffuseNoShadow':'diffuseWithoutShadows',\
+                  'directIrradiance':'directIrradiance',\
+                  'directIrradianceNoShadow':'directIrradianceWithoutShadows',\
+                  'glowSource':'glowSource', 'incandescence':'incandescence',\
+                  'incidenceCN':'incidenceCamNorm', 'incidenceCNMat':'incidenceCamNormMaterial',\
+                  'incidenceLN':'incidenceLightNorm', 'indirect':'indirect', \
+                  'volumeLight':'lightVolume', 'matte':'matte', 'normalCam':'normalCam',\
+                  'normalCamMaterial':'normalCamMaterial',\
+                  'mv2DNormRemap':'normalized2DMotionVector',\
+                  'normalObj':'normalObj','normalObjMaterial':'normalObjMaterial',\
+                  'normalWorld':'normalWorld','normalWorldMaterial':'normalWorldMaterial',\
+                  'volumeObject':'objectVolume', 'opacity':'opacity', 'shadowRaw':'rawShadow',\
+                  'reflectedMaterialColor':'reflectedMaterialColor','reflection':'reflection',\
+                  'refraction':'refraction','refractionMaterialColor':'refractionMaterialColor',\
+                  'scatter':'scatter', 'volumeScene':'sceneVolume', 'shadow':'shadow',\
+                  'specular':'specular', 'specularNoShadow':'specularWithoutShadows',\
+                  'translucence':'translucence', 'translucenceNoShadow':'translucenceWithoutShadows',\
+                  'UVPass':'UV', 'worldPosition':'worldPosition'}
+    
     def __init__(self):
         logging.debug('Init MRRenderLayerPass class')
+        #
         self.PASSES_COLOR = ['beauty','depth','diffuse','incandescence','indirect','normalWorld',
                              'reflection','refraction','shadow','specular']
-        self.PASSES_COLOR_AVAILABLE = [ x for x in MRRenderLayerPass.PASSES_ALL if x not in self.PASSES_COLOR ]
+        self.PASSES_COLOR_AVAILABLE = [ x for x in self.PASSES_ALL.keys() if x not in self.PASSES_COLOR ]
         self.PASSES_SCENE = []
-        self.PASSES_SCENE_NAME_LIST = []
         self.PASSES_AVAILABLE = []
         self.LAYER_NAME = 'color'
         self.PREFIX_PASS = ''
@@ -422,6 +421,53 @@ class MRRenderLayerPass():
         else :
             return None
         
+    def getNameByNode(self,inputObjList):
+        if type(inputObjList) == type([]) :
+            names_list = []
+            for l in inputObjList :
+                try:
+                    name = l.longName()
+                except:
+                    traceback.print_exc()
+                else:
+                    names_list.append( name )
+            return names_list
+        elif type(inputObjList) == type('') or str( type(inputObjList) ) == PASS_TYPE :
+            name = None
+            try:
+                name = inputObjList.name()
+            except:
+                traceback.print_exc()
+            return name
+        else:
+            print type(inputObjList)
+            
+            logging.error('getNameByNode:input obj type is wrong')
+            return None
+            
+    def getNodeByName(self,inputNameList):
+        if type(inputNameList) == type([]) :
+            nodes_list = []
+            for l in inputNameList :
+                try:
+                    node = PyNode( l )
+                except:
+                    traceback.print_exc()
+                else :
+                    nodes_list.append( node )
+            return nodes_list
+        elif type(inputNameList) == type('') :
+            node = None
+            try:
+                node = PyNode( inputNameList )
+            except:
+                traceback.print_exc()
+            return node
+        else:
+            print type(inputNameList)
+            logging.error('getNodeByName:input name type is wrong')
+            return None
+        
     def getLayers(self):
         self.LAYERS = []
         selObj = pm.ls(type='renderLayer')
@@ -429,58 +475,38 @@ class MRRenderLayerPass():
             selObj.remove(PyNode('defaultRenderLayer'))
             log_list(selObj)
             for l in selObj :
-                self.LAYERS.append({l.longName():l})
-            
-    def getLayerByName(self,layerName):
-        layer = None
-        selObj = pm.ls(type='renderLayer')
-        if selObj :
-            for l in selObj :
-                if l.longName() == layerName :
-                    layer = l
-        if not layer :
-            logging.warning(str(layerName) + ' is not a render layer name')
-        return layer
-                
-    def getLayerName(self,layer):
-        layerName = None
-        try: 
-            layerName = PyNode(layer).longName()
-        except : 
-            logging.warning('can not get layer by name')
-        return layerName
+                try:
+                    name = l.longName()
+                except:
+                    traceback.print_exc()
+                else: 
+                    self.LAYERS.append( name )
     
     def getScenePasses(self):
         self.PASSES_SCENE = []
-        self.PASSES_SCENE_NAME_LIST = []
         passes = pm.ls(type='renderPass')
         if passes :
             for p in passes :
-                self.PASSES_SCENE.append( {self.getPassName(p):p})
-                self.PASSES_SCENE_NAME_LIST.append( self.getPassName(p) )
+                self.PASSES_SCENE.append( self.getNameByNode(p) )
         log_list(self.PASSES_SCENE)
 
     def getAvailablePasses(self):
         self.PASSES_AVAILABLE = []
-        passNameList = []
         self.getScenePasses()
-        for p in self.PASSES_SCENE :
-            for k,v in p.items() :
-                passNameList.append(k)
                 
         if self.PASSES_SCENE :
-            pNames = [ k for k in self.PASSES_ALL if k not in passNameList ]
+            pNames = [ k for k in self.PASSES_ALL.keys() if k not in self.PASSES_SCENE ]
             for pn in pNames :
-                self.PASSES_AVAILABLE.append( {pn:self.getPassByName(pn)})
+                self.PASSES_AVAILABLE.append( pn )
         # If scene has no pass
         else :
-            for pn in self.PASSES_ALL :
-                self.PASSES_AVAILABLE.append( {pn:self.getPassByName(pn)})
+            for pn in self.PASSES_ALL.keys() :
+                self.PASSES_AVAILABLE.append( pn )
                         
     def getObjInLayer(self,layer):
-        objs = pm.editRenderLayerMembers(layer,q=1,fullNames=1)
-        log_list(objs)
-        return objs
+        obj_names_list = pm.editRenderLayerMembers(layer,q=1,fullNames=1)
+        log_list(obj_names_list)
+        return obj_names_list
 
     def addObj2Layer(self,layer,obj_list):
         l = get_dict_list_values(obj_list)
@@ -507,6 +533,9 @@ class MRRenderLayerPass():
                 logging.warning('addObj2Layer: selection is None')
                                 
     def removePass2Layer(self,layer,pass_list):
+        # Get layer first
+        layer = self.getNodeByName(layer)
+        
         list_values = get_dict_list_values(pass_list)
         log_list(list_values)
         #editRenderLayerMembers -noRecurse layer2 nurbsSphere2
@@ -521,6 +550,9 @@ class MRRenderLayerPass():
                 logging.warning('removePass2Layer: pass is None')
                 
     def removeOverrides2Layer(self,layer,obj_list):
+        # Get layer first
+        layer = self.getNodeByName(layer)
+        
         l = get_dict_list_values(obj_list)
         log_list(l)
         #editRenderLayerMembers -noRecurse layer2 nurbsSphere2
@@ -554,38 +586,22 @@ class MRRenderLayerPass():
             
     def getPassByLayer(self,layer):
         passes = None
-        passDict = []
-        if layer :
-            try :
-                passes = layer.renderPass.connections(p=0,d=1)
-            except :
-                logging.warning('can not get passes in input layer')
-            else :
-                for p in passes :
-                    passDict.append({self.getPassName(p):p})
-        return passDict
-            
-    def getPassByName(self,passName):
-        passObj = None
-        passes = pm.ls(type='renderPass')
-        if passName :
-            for p in passes :
-                if p.longName() == passName :
-                    passObj = p
-        if not passObj :
-            try:
-                logging.warning(str(passName) + ' is not a render pass name')
-            except:
-                logging.error('can not getPassByName')
-        return passObj
-            
-    def getPassName(self,p):
-        passName = None
-        try: 
-            passName = PyNode(p).longName()
-        except : 
-            logging.warning('can not get layer by name')
-        return passName        
+        passes_list = []
+        # get layer by layer name
+        try:
+            layer = self.getNodeByName(layer)
+        except:
+            traceback.print_exc()
+        else :
+            if layer :
+                try :
+                    passes = layer.renderPass.connections(p=0,d=1)
+                except :
+                    logging.warning('can not get passes in input layer')
+                else :
+                    for p in passes :
+                        passes_list.append( self.getNameByNode(p) )
+        return passes_list
         
     def getOverridesInLayer(self,layer):
         overrides = None
@@ -601,7 +617,6 @@ class MRRenderLayerPass():
     def createNewMRLayer(self):
         newLayer = pm.createRenderLayer(n=self.LAYER_NAME)
         pm.editRenderLayerGlobals(currentRenderLayer=newLayer)
-        #editRenderLayerAdjustment "defaultRenderGlobals.currentRenderer"
         pm.editRenderLayerAdjustment(DEFAULT_RENDER_GLOBALS.currentRenderer)
         DEFAULT_RENDER_GLOBALS.currentRenderer.set('mentalRay')    
         return newLayer     
@@ -663,29 +678,25 @@ class MRRenderLayerPass():
                                     + '_' + passName + '_' + self.SUFFIX_PASS )
         #renderPass = pm.ls(sl=1)
         #logging.debug('MAYA_LOCATION: '+MAYA_LOCATION)
-        
-        passName = PASSES_ALL_DICT
-        if passName != 'depth' :
-            presetMel = MAYA_LOCATION+'/presets/attrPresets/renderPass/'+passName+'.mel'
-        else :
-            presetMel = MAYA_LOCATION+'/presets/attrPresets/renderPass/cameraDepth.mel'
-        logging.debug('presetMel: '+presetMel)
-        
-        mel.applyAttrPreset(renderPass, presetMel, 1)
+        self.applyPassPreset(renderPass, passName)
+
         self.CURRENT_LAYER.renderPass.connect(renderPass.owner,nextAvailable=1)
     
     def addPass(self,passName):
-        renderPass = pm.createNode( 'renderPass' )
+        renderPass = pm.createNode( 'renderPass',n=passName )
         #renderPass = pm.ls(sl=1)
         #logging.debug('MAYA_LOCATION: '+MAYA_LOCATION)
-        if passName != 'depth' :
-            presetMel = MAYA_LOCATION+'/presets/attrPresets/renderPass/'+passName+'.mel'
-        else :
-            presetMel = MAYA_LOCATION+'/presets/attrPresets/renderPass/cameraDepth.mel'
-        logging.debug('presetMel: '+presetMel)
-        
-        mel.applyAttrPreset(renderPass, presetMel, 1)
+        self.applyPassPreset(renderPass,passName)
 
+    def applyPassPreset(self,renderPass,passName) :
+
+        passName =  self.PASSES_ALL[passName]
+
+        presetMel = MAYA_LOCATION+'/presets/attrPresets/renderPass/'+passName+'.mel'
+        logging.debug('presetMel: '+presetMel)   
+        
+        mel.applyAttrPreset(renderPass, presetMel, 1)     
+        
     def removePass(self,passName) :
         try:
             pm.delete( PyNode(passName) )
@@ -697,13 +708,13 @@ class MRRenderLayerPass():
     def updateScenePasses(self,pass_names_list):
         if pass_names_list :
             print '*'
-            print self.PASSES_SCENE_NAME_LIST
+            print self.PASSES_SCENE
             print '*'
             print pass_names_list
             self.getScenePasses()
             addList = [x for x in pass_names_list \
-                       if x not in self.PASSES_SCENE_NAME_LIST]
-            removeList = [x for x in self.PASSES_SCENE_NAME_LIST \
+                       if x not in self.PASSES_SCENE]
+            removeList = [x for x in self.PASSES_SCENE \
                           if x not in pass_names_list]
             if addList :
                 # add passes to scene
@@ -724,6 +735,46 @@ class MRRenderLayerPass():
                     except:
                         traceback.print_exc()
                         
+    def updateAssociatedPasses(self,pass_names_list):
+        print 'self.LAYERS_SELECTED:'
+        print self.LAYERS_SELECTED
+        print type(self.LAYERS_SELECTED)
+        print type([])
+        if self.LAYERS_SELECTED :
+            # get layer frm layer name
+            for layer in self.getNodeByName( self.LAYERS_SELECTED ) :
+                # Get passes in layer
+                passes_list = self.getPassByLayer(layer)
+                addList = [x for x in pass_names_list \
+                           if x not in passes_list]
+                removeList = [x for x in passes_list \
+                              if x not in pass_names_list]
+                
+                if addList :
+                    for pass_name in addList :
+                        try:
+                            renderPass = PyNode(pass_name)
+                        except:
+                            traceback.print_exc()
+                        else:
+                            try:
+                                layer.renderPass.connect(renderPass.owner,nextAvailable=1)
+                            except:
+                                traceback.print_exc()
+                
+                if removeList :
+                    # add passes to scene
+                    for pass_name in removeList :
+                        try:
+                            renderPass = PyNode(pass_name)
+                        except:
+                            traceback.print_exc()
+                        else:
+                            try:
+                                layer.renderPass.disconnect(renderPass.owner)
+                            except:
+                                traceback.print_exc()
+            
     def addPasses2Layers(self,layers,pass_names_list):
         if layers and pass_names_list :
             for layer in layers :
