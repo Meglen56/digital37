@@ -1,2 +1,2 @@
-a = ['a']
+a = {'a':'a'}
 print dir(a)

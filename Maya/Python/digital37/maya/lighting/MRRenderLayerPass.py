@@ -117,6 +117,13 @@ def get_dict_list_values(source_list):
         return_list.append( l.values()[0] )    
     return return_list
 
+def dict_add(dict1,dict2):
+    for k,v in dict2.items() :
+        if not dict1.has_key(k) :
+            dict1[k] = v
+    print dict1
+    return dict1
+
 def log_dict(inputDict):
     if inputDict :
         s = ''
@@ -145,7 +152,10 @@ def log_list(inputList):
         logging.debug('log_list:input is None')
             
 def rename(node,name):
-    pm.rename(node,name)
+    try:
+        pm.rename(node,name)
+    except:
+        traceback.print_exc()
     
 def getSelection():
     logging.debug('MRRenderLayerPass getSelection')
@@ -165,9 +175,9 @@ def getSelection_dict():
         logging.warning('select some objects first.')
         return None
     else :
-        sels_dict = []
+        sels_dict = {}
         for sel in sels :
-            sels_dict.append( {PyNode(sel).longName():sel} )
+            sels_dict[ sel.longName() ] = sel
         return sels_dict
         
 def getDAGSelection():
@@ -446,6 +456,7 @@ class MRRenderLayerPass():
             return None
             
     def getNodeByName(self,inputNameList):
+        print type(inputNameList)
         if type(inputNameList) == type([]) :
             nodes_list = []
             for l in inputNameList :
@@ -464,9 +475,17 @@ class MRRenderLayerPass():
                 traceback.print_exc()
             return node
         else:
-            print type(inputNameList)
-            logging.error('getNodeByName:input name type is wrong')
-            return None
+            # there are some bugs inputNameList maybe obj
+            # For example : render layer
+            # so try PyNode( inputNameList )
+            try:
+                node = PyNode( inputNameList )
+            except:
+                traceback.print_exc()
+                logging.error('getNodeByName:input name type is wrong')
+                return None
+            else:
+                return node
         
     def getLayers(self):
         self.LAYERS = []
@@ -520,25 +539,66 @@ class MRRenderLayerPass():
             if not l :
                 logging.warning('addObj2Layer: selection is None')
                 
-    def removeObj2Layer(self,layer,obj_list):
-        l = get_dict_list_values(obj_list)
+    def removePassOfLayer(self,layer,obj_list):
+        l = [x for x in obj_list.values()]
         log_list(l)
         #editRenderLayerMembers -noRecurse layer2 nurbsSphere2
         if layer and l :
+            # Get layer obj from layer name
+            logging.debug('removePassOfLaye:')
+            #logging.debug('layer:',layer)
+            print type(layer)
+            layer = PyNode(layer)
+            print layer
+            print type(layer)
+            for item in l :
+                pm.editRenderLayerMembers(layer,item,remove=1)
+        else :
+            if not layer :
+                logging.warning('removePassOfLaye: layer is None')
+            if not l :
+                logging.warning('removePassOfLaye: selection is None')
+                                
+    def removeObj2Layer(self,layer,obj_list):
+        l = [x for x in obj_list.values()]
+        log_list(l)
+        #editRenderLayerMembers -noRecurse layer2 nurbsSphere2
+        if layer and l :
+            # Get layer obj from layer name
+            logging.debug('removeObj2Layer:')
+            #logging.debug('layer:',layer)
+            print type(layer)
+            layer = PyNode(layer)
+            print layer
+            print type(layer)
             pm.editRenderLayerMembers(layer,l,noRecurse=1,remove=1)
         else :
             if not layer :
-                logging.warning('addObj2Layer: layer is None')
+                logging.warning('removeObj2Layer: layer is None')
             if not l :
-                logging.warning('addObj2Layer: selection is None')
-                                
+                logging.warning('removeObj2Layer: selection is None')
+                        
+    def removeLayerByListWidget(self,layer_dict):
+        layers = []
+        try:
+            layers = layer_dict.values()
+        except:
+            traceback.print_exc()
+        else:
+            if layers :
+                for layer in layers:
+                    print layer
+                    try:
+                        pm.delete( layer.longName() )
+                    except:
+                        traceback.print_exc()
+                
     def removePass2Layer(self,layer,pass_list):
         # Get layer first
         layer = self.getNodeByName(layer)
+
+        list_values = pass_list.values()
         
-        list_values = get_dict_list_values(pass_list)
-        log_list(list_values)
-        #editRenderLayerMembers -noRecurse layer2 nurbsSphere2
         if layer and list_values :
             #disconnectAttr -nextAvailable layer2.renderPass ambientRaw.owner
             for item in list_values :
@@ -565,20 +625,21 @@ class MRRenderLayerPass():
                 logging.warning('removeOverrides2Layer: selection is None')
             
     def getObjsFromSelsInListWidget(self,listWidget):
-        nodes_dict = []
+        nodes_dict = {}
         items = listWidget.selectedItems()
         if items:
             for item in items :
                 # Get item's node
                 try :
-                    nodes_dict.append( {item.text():PyNode(item.text())} )
+                    nodes_dict[str(item.text())] = PyNode( str(item.text()) )
                 except :
                     logging.warning('can not get pynode from listwidgetItem')
+                    print traceback.print_exc()
         return nodes_dict
 
     def removeScenePasses(self,passesList_dict):
         try:
-            pm.delete( get_dict_list_values(passesList_dict) )
+            pm.delete( passesList_dict.values() )
         except:
             traceback.print_exc()
         else:
