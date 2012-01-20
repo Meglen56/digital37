@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1235</width>
-    <height>585</height>
+    <width>1111</width>
+    <height>709</height>
    </rect>
   </property>
   <property name="font">
@@ -22,213 +22,45 @@
    <locale language="English" country="UnitedStates"/>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="layoutWidget">
+   <widget class="QWidget" name="">
     <property name="geometry">
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>1221</width>
-      <height>568</height>
+      <width>1111</width>
+      <height>671</height>
      </rect>
     </property>
-    <layout class="QHBoxLayout" name="horizontalLayout_7">
+    <layout class="QVBoxLayout" name="verticalLayout_10">
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_8">
-         <item>
-          <layout class="QVBoxLayout" name="verticalLayout_7">
-           <item>
-            <widget class="QLabel" name="label_RL">
-             <property name="text">
-              <string>Render Layers</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QListWidget" name="listWidget_L">
-             <property name="locale">
-              <locale language="English" country="UnitedStates"/>
-             </property>
-             <property name="selectionMode">
-              <enum>QAbstractItemView::ExtendedSelection</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_L_add">
-             <property name="text">
-              <string>Add</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_L_remove">
-             <property name="text">
-              <string>Remove</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QVBoxLayout" name="verticalLayout_9">
-             <item>
-              <widget class="QPushButton" name="pushButton_CSRL">
-               <property name="text">
-                <string>Copy Selected Render Layer</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="pushButton_ESRL">
-               <property name="text">
-                <string>Export Selected Render Layers</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="pushButton_IRL">
-               <property name="text">
-                <string>Import Render Layers</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_L_apply">
-             <property name="text">
-              <string>Apply</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_L_refresh">
-             <property name="text">
-              <string>Refresh</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="Line" name="line_3">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_6">
-         <item>
-          <widget class="QLabel" name="label_OBJ">
-           <property name="text">
-            <string>Associated Objects:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QListWidget" name="listWidget_AO">
-           <property name="locale">
-            <locale language="English" country="UnitedStates"/>
-           </property>
-           <property name="selectionMode">
-            <enum>QAbstractItemView::ExtendedSelection</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pushButton_AO_add">
-           <property name="text">
-            <string>Add</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pushButton_AO_remove">
-           <property name="text">
-            <string>Remove</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="Line" name="line_4">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_Obj_2">
-         <item>
-          <widget class="QLabel" name="label_Outline">
-           <property name="text">
-            <string>Overrides:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QListWidget" name="listWidget_O">
-           <property name="locale">
-            <locale language="English" country="UnitedStates"/>
-           </property>
-           <property name="selectionMode">
-            <enum>QAbstractItemView::ExtendedSelection</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pushButton_O_remove">
-           <property name="text">
-            <string>Remove</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-      </layout>
+      <layout class="QHBoxLayout" name="horizontalLayout_3"/>
      </item>
      <item>
-      <widget class="Line" name="line">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
+      <widget class="QPushButton" name="pushButton_refresh">
+       <property name="text">
+        <string>Refresh</string>
        </property>
       </widget>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_6">
+      <layout class="QHBoxLayout" name="horizontalLayout_7">
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
+        <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <layout class="QVBoxLayout" name="verticalLayout_8">
            <item>
-            <layout class="QVBoxLayout" name="verticalLayout">
+            <layout class="QVBoxLayout" name="verticalLayout_7">
              <item>
-              <widget class="QLabel" name="label_SP">
+              <widget class="QLabel" name="label_RL">
                <property name="text">
-                <string>Scene Passes:</string>
+                <string>Scene Render Layers:</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QListWidget" name="listWidget_SP">
+              <widget class="QListWidget" name="listWidget_SL">
                <property name="locale">
                 <locale language="English" country="UnitedStates"/>
-               </property>
-               <property name="dragEnabled">
-                <bool>true</bool>
-               </property>
-               <property name="dragDropOverwriteMode">
-                <bool>false</bool>
-               </property>
-               <property name="dragDropMode">
-                <enum>QAbstractItemView::DragDrop</enum>
-               </property>
-               <property name="defaultDropAction">
-                <enum>Qt::MoveAction</enum>
                </property>
                <property name="selectionMode">
                 <enum>QAbstractItemView::ExtendedSelection</enum>
@@ -236,162 +68,37 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="pushButton_SP_remove">
-               <property name="text">
-                <string>Remove</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QVBoxLayout" name="verticalLayout_2">
-             <item>
-              <widget class="QLabel" name="label_AVP">
-               <property name="text">
-                <string>Available Passes:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QListWidget" name="listWidget_AVP">
-               <property name="locale">
-                <locale language="English" country="UnitedStates"/>
-               </property>
-               <property name="dragEnabled">
-                <bool>true</bool>
-               </property>
-               <property name="dragDropMode">
-                <enum>QAbstractItemView::DragDrop</enum>
-               </property>
-               <property name="defaultDropAction">
-                <enum>Qt::MoveAction</enum>
-               </property>
-               <property name="selectionMode">
-                <enum>QAbstractItemView::ExtendedSelection</enum>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QVBoxLayout" name="verticalLayout_AP">
-           <item>
-            <widget class="QLabel" name="label_AP">
-             <property name="text">
-              <string>Associated Passes:</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QListWidget" name="listWidget_ASP">
-             <property name="locale">
-              <locale language="English" country="UnitedStates"/>
-             </property>
-             <property name="dragEnabled">
-              <bool>true</bool>
-             </property>
-             <property name="dragDropMode">
-              <enum>QAbstractItemView::DragDrop</enum>
-             </property>
-             <property name="defaultDropAction">
-              <enum>Qt::MoveAction</enum>
-             </property>
-             <property name="selectionMode">
-              <enum>QAbstractItemView::ExtendedSelection</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_ASP_remove">
-             <property name="text">
-              <string>Remove</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="Line" name="line_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_5">
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_5">
-           <item>
-            <layout class="QVBoxLayout" name="verticalLayout_SCM">
-             <item>
-              <widget class="QLabel" name="label_CM_2">
-               <property name="text">
-                <string>Scene Contribution Maps:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QListWidget" name="listWidget_SCM">
-               <property name="locale">
-                <locale language="English" country="UnitedStates"/>
-               </property>
-               <property name="dragEnabled">
-                <bool>true</bool>
-               </property>
-               <property name="dragDropMode">
-                <enum>QAbstractItemView::DragDrop</enum>
-               </property>
-               <property name="defaultDropAction">
-                <enum>Qt::MoveAction</enum>
-               </property>
-               <property name="selectionMode">
-                <enum>QAbstractItemView::ExtendedSelection</enum>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="pushButton_SCM_add">
+              <widget class="QPushButton" name="pushButton_SL_add">
                <property name="text">
                 <string>Add</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="pushButton_SCM_remove">
+              <widget class="QPushButton" name="pushButton_SL_remove">
                <property name="text">
                 <string>Remove</string>
                </property>
               </widget>
              </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QVBoxLayout" name="verticalLayout_4">
              <item>
-              <widget class="QLabel" name="label_CM">
-               <property name="text">
-                <string>Associated Contribution Maps:</string>
+              <widget class="Line" name="line_5">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QListWidget" name="listWidget_ACM">
+              <widget class="QLabel" name="label_RL_2">
+               <property name="text">
+                <string>Create Render Layers:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QListWidget" name="listWidget_CL">
                <property name="locale">
                 <locale language="English" country="UnitedStates"/>
-               </property>
-               <property name="dragEnabled">
-                <bool>true</bool>
-               </property>
-               <property name="dragDropMode">
-                <enum>QAbstractItemView::DragDrop</enum>
-               </property>
-               <property name="defaultDropAction">
-                <enum>Qt::MoveAction</enum>
                </property>
                <property name="selectionMode">
                 <enum>QAbstractItemView::ExtendedSelection</enum>
@@ -399,16 +106,26 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="pushButton_ACM_add">
+              <layout class="QVBoxLayout" name="verticalLayout_9"/>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_CL_add">
                <property name="text">
                 <string>Add</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="pushButton_ACM_remove">
+              <widget class="QPushButton" name="pushButton_CL_remove">
                <property name="text">
                 <string>Remove</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_CL_apply">
+               <property name="text">
+                <string>Apply</string>
                </property>
               </widget>
              </item>
@@ -417,27 +134,25 @@
           </layout>
          </item>
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout_AOCM">
+          <widget class="Line" name="line_3">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_6">
            <item>
-            <widget class="QLabel" name="label_CM_3">
+            <widget class="QLabel" name="label_OBJ">
              <property name="text">
               <string>Associated Objects:</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QListWidget" name="listWidget_AOCM">
+            <widget class="QListWidget" name="listWidget_AO">
              <property name="locale">
               <locale language="English" country="UnitedStates"/>
-             </property>
-             <property name="dragEnabled">
-              <bool>true</bool>
-             </property>
-             <property name="dragDropMode">
-              <enum>QAbstractItemView::DragDrop</enum>
-             </property>
-             <property name="defaultDropAction">
-              <enum>Qt::MoveAction</enum>
              </property>
              <property name="selectionMode">
               <enum>QAbstractItemView::ExtendedSelection</enum>
@@ -445,18 +160,326 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton_AOCM_add">
+            <widget class="QPushButton" name="pushButton_AO_add">
              <property name="text">
               <string>Add</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton_AOCM_remove">
+            <widget class="QPushButton" name="pushButton_AO_remove">
              <property name="text">
               <string>Remove</string>
              </property>
             </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="Line" name="line_4">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_Obj_2">
+           <item>
+            <widget class="QLabel" name="label_Outline">
+             <property name="text">
+              <string>Overrides:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListWidget" name="listWidget_O">
+             <property name="locale">
+              <locale language="English" country="UnitedStates"/>
+             </property>
+             <property name="selectionMode">
+              <enum>QAbstractItemView::ExtendedSelection</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_O_remove">
+             <property name="text">
+              <string>Remove</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout">
+               <item>
+                <widget class="QLabel" name="label_SP">
+                 <property name="text">
+                  <string>Scene Passes:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QListWidget" name="listWidget_SP">
+                 <property name="locale">
+                  <locale language="English" country="UnitedStates"/>
+                 </property>
+                 <property name="dragEnabled">
+                  <bool>true</bool>
+                 </property>
+                 <property name="dragDropOverwriteMode">
+                  <bool>false</bool>
+                 </property>
+                 <property name="dragDropMode">
+                  <enum>QAbstractItemView::DragDrop</enum>
+                 </property>
+                 <property name="defaultDropAction">
+                  <enum>Qt::MoveAction</enum>
+                 </property>
+                 <property name="selectionMode">
+                  <enum>QAbstractItemView::ExtendedSelection</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pushButton_SP_remove">
+                 <property name="text">
+                  <string>Remove</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_2">
+               <item>
+                <widget class="QLabel" name="label_AVP">
+                 <property name="text">
+                  <string>Available Passes:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QListWidget" name="listWidget_AVP">
+                 <property name="locale">
+                  <locale language="English" country="UnitedStates"/>
+                 </property>
+                 <property name="dragEnabled">
+                  <bool>true</bool>
+                 </property>
+                 <property name="dragDropMode">
+                  <enum>QAbstractItemView::DragDrop</enum>
+                 </property>
+                 <property name="defaultDropAction">
+                  <enum>Qt::MoveAction</enum>
+                 </property>
+                 <property name="selectionMode">
+                  <enum>QAbstractItemView::ExtendedSelection</enum>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_AP">
+             <item>
+              <widget class="QLabel" name="label_AP">
+               <property name="text">
+                <string>Associated Passes:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QListWidget" name="listWidget_ASP">
+               <property name="locale">
+                <locale language="English" country="UnitedStates"/>
+               </property>
+               <property name="dragEnabled">
+                <bool>true</bool>
+               </property>
+               <property name="dragDropMode">
+                <enum>QAbstractItemView::DragDrop</enum>
+               </property>
+               <property name="defaultDropAction">
+                <enum>Qt::MoveAction</enum>
+               </property>
+               <property name="selectionMode">
+                <enum>QAbstractItemView::ExtendedSelection</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_ASP_remove">
+               <property name="text">
+                <string>Remove</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="Line" name="line_2">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_5">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_SCM">
+               <item>
+                <widget class="QLabel" name="label_CM_2">
+                 <property name="text">
+                  <string>Scene Contr. Maps:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QListWidget" name="listWidget_SCM">
+                 <property name="locale">
+                  <locale language="English" country="UnitedStates"/>
+                 </property>
+                 <property name="dragEnabled">
+                  <bool>true</bool>
+                 </property>
+                 <property name="dragDropMode">
+                  <enum>QAbstractItemView::DragDrop</enum>
+                 </property>
+                 <property name="defaultDropAction">
+                  <enum>Qt::MoveAction</enum>
+                 </property>
+                 <property name="selectionMode">
+                  <enum>QAbstractItemView::ExtendedSelection</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pushButton_SCM_add">
+                 <property name="text">
+                  <string>Add</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pushButton_SCM_remove">
+                 <property name="text">
+                  <string>Remove</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_4">
+               <item>
+                <widget class="QLabel" name="label_CM">
+                 <property name="text">
+                  <string>Associated Contr. Maps:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QListWidget" name="listWidget_ACM">
+                 <property name="locale">
+                  <locale language="English" country="UnitedStates"/>
+                 </property>
+                 <property name="dragEnabled">
+                  <bool>true</bool>
+                 </property>
+                 <property name="dragDropMode">
+                  <enum>QAbstractItemView::DragDrop</enum>
+                 </property>
+                 <property name="defaultDropAction">
+                  <enum>Qt::MoveAction</enum>
+                 </property>
+                 <property name="selectionMode">
+                  <enum>QAbstractItemView::ExtendedSelection</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pushButton_ACM_add">
+                 <property name="text">
+                  <string>Add</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pushButton_ACM_remove">
+                 <property name="text">
+                  <string>Remove</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_AOCM">
+             <item>
+              <widget class="QLabel" name="label_CM_3">
+               <property name="text">
+                <string>Associated Objects:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QListWidget" name="listWidget_AOCM">
+               <property name="locale">
+                <locale language="English" country="UnitedStates"/>
+               </property>
+               <property name="dragEnabled">
+                <bool>true</bool>
+               </property>
+               <property name="dragDropMode">
+                <enum>QAbstractItemView::DragDrop</enum>
+               </property>
+               <property name="defaultDropAction">
+                <enum>Qt::MoveAction</enum>
+               </property>
+               <property name="selectionMode">
+                <enum>QAbstractItemView::ExtendedSelection</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_AOCM_add">
+               <property name="text">
+                <string>Add</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_AOCM_remove">
+               <property name="text">
+                <string>Remove</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
           </layout>
          </item>
@@ -468,6 +491,34 @@
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1111</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFIle">
+    <property name="title">
+     <string>Layer</string>
+    </property>
+    <addaction name="actionImport_Layers"/>
+    <addaction name="actionExport_Layers"/>
+   </widget>
+   <addaction name="menuFIle"/>
+  </widget>
+  <action name="actionImport_Layers">
+   <property name="text">
+    <string>Import Layers </string>
+   </property>
+  </action>
+  <action name="actionExport_Layers">
+   <property name="text">
+    <string>Export Layers</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

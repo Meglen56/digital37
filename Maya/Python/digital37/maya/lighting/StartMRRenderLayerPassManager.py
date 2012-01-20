@@ -28,14 +28,15 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         #self.ui = RLPUI.Ui_root()
         
         self.RLP = RLP.MRRenderLayerPass()
-
         
         #self.ui.listWidget_L.itemSelectionChanged.connect( self.updateAll )
-        self.listWidget_L.itemSelectionChanged.connect( self.updateAllExceptLayer )
+        self.listWidget_SL.itemSelectionChanged.connect( self.updateAllExceptLayer )
+        self.listWidget_CL.itemSelectionChanged.connect( self.updateLayerSettings_create )
         
         # for rename layer
-        self.listWidget_L.itemDoubleClicked.connect( self.getActiveLayer )
-        self.listWidget_L.itemChanged.connect( self.renameLayer )
+        self.listWidget_SL.itemDoubleClicked.connect( self.getActiveLayer )
+        self.listWidget_SL.itemChanged.connect( self.renameLayer_SL )
+        #self.listWidget_CL.itemChanged.connect( self.renameLayer_CL )
         
         self.listWidget_SP.itemChanged.connect( self.updateScenePasses )
         self.listWidget_ASP.itemChanged.connect( self.updateAssociatedPasses )
@@ -47,6 +48,45 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         # init lists
         self.updateAll()
         
+        self.createContextMenu()
+        self.listWidget_CL.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        #self.listWidget_CL.customContextMenuRequested.connect(self.showContextMenu)
+        self.listWidget_CL.customContextMenuRequested.connect(self.showContextMenu)
+        
+    def createContextMenu(self):
+        # 必须将ContextMenuPolicy设置为Qt.CustomContextMenu  
+        # 否则无法使用customContextMenuRequested信号  
+        
+        # we do not need set this
+        #self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        # set no contextmenu for default  
+        #self.setContextMenuPolicy(QtCore.Qt.NoContextMenu)
+        
+        #self.customContextMenuRequested.connect(self.showContextMenu)  
+      
+        self.contextMenu = QtGui.QMenu(self)  
+        self.actionA = self.contextMenu.addAction(u'Add')  
+        self.actionB = self.contextMenu.addAction(u'Remove')  
+
+        self.actionA.triggered.connect(self.actionHandler_add)  
+        self.actionB.triggered.connect(self.actionHandler_remove)  
+      
+    def showContextMenu(self, pos):  
+        # mouse position
+        #self.contextMenu.move(self.pos() + pos)  
+        self.contextMenu.move(self.pos() + pos + self.listWidget_CL.pos() )  
+        self.contextMenu.show()  
+
+    def actionHandler_add(self):  
+        # function for menu
+        print 'action handler_add'
+        self.listWidget_CL_add()
+              
+    def actionHandler_remove(self):  
+        # function for menu
+        print 'action handler_remove'
+        self.listWidget_CL_remove()
+
     # listWidget_SP can only accept listWidget_AVP's drag and drop
     def dragMoveEvent_SP(self,e):
         logging.debug('custom dragMoveEvent')
@@ -115,7 +155,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 for i in range(len(listItem)) :
                     listWidget.insertItem(i+1,listItem[i])
                     # Add editable to listWidget_L's item
-                    if listWidget == self.listWidget_L :
+                    if listWidget == self.listWidget_SL :
                         listItem[i].setFlags(listItem[i].flags() | QtCore.Qt.ItemIsEditable)
             elif type(inputList) == type({}) :
                 listItem = []
@@ -125,12 +165,28 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 for i in range(len(listItem)) :
                     listWidget.insertItem(i+1,listItem[i])
                     # Add editable to listWidget_L's item
-                    if listWidget == self.listWidget_L :
+                    if listWidget == self.listWidget_SL :
                         listItem[i].setFlags(listItem[i].flags() | QtCore.Qt.ItemIsEditable)
             else :
                 print type(inputList)
                 logging.error('appendListWidget input arg error')
     
+    # add menu cmd for listWidget_CL
+    def listWidget_CL_add(self):
+        self.appendListWidgetItem(self.listWidget_CL, {'layer':'layer'})
+    
+    # add menu cmd for listWidget_CL
+    def listWidget_CL_remove(self):
+        listItems = self.listWidget_CL.selectedItems()
+        if listItems:
+            for l in listItems :
+                i = self.listWidget_CL.row(l)
+                try:
+                    self.listWidget_CL.takeItem(i)
+                except:
+                    traceback.print_exc()
+                    logging.warning('can not remove itemWidget')
+        
     def getLayerDict(self):
         pass
 
@@ -213,8 +269,10 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         return matchMember
                  
     def updateLayerList(self):
+        # Get layers first
+        self.RLP.getLayers()
         # Get render inputDict        self.RLP.getLayers()
-        self.insertListWidgetItem(self.listWidget_L, self.RLP.LAYERS)
+        self.insertListWidgetItem(self.listWidget_SL, self.RLP.LAYERS)
         
     def updateAssociatedObjectList(self):
         logging.debug('updateAssociatedObjectList')
@@ -277,11 +335,19 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         self.updateScenePassList()
         self.updateAvailablePassList()
         self.updateOverridesList()      
+                    
+    def updateLayerSettings_create(self):
+        self.getSelectedLayers()
+        self.updateAssociatedObjectList()
+        self.updateAssociatedPassList()
+        self.updateScenePassList()
+        self.updateAvailablePassList()
+        self.updateOverridesList()      
                                         
     def getSelectedLayers(self):
         self.RLP.LAYERS_SELECTED = []
         #self.RLP.LAYERS_SELECTED = 
-        for selItem in self.listWidget_L.selectedItems() :
+        for selItem in self.listWidget_SL.selectedItems() :
             # use str() to convert qstring to string
             layerName = str( selItem.text() )
             self.RLP.LAYERS_SELECTED.append( layerName )
@@ -291,7 +357,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         layerName = ''
         self.RLP.LAYER_ACTIVE = []
         #currentItem = self.ui.listWidget_L.currentItem()
-        currentItems = self.listWidget_L.selectedItems()
+        currentItems = self.listWidget_SL.selectedItems()
         if not currentItems:
             logging.debug('no active layer')
         else:
@@ -314,19 +380,19 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
     
     def setActiveLayer(self,layer_current):
         # clear selection in listWidget_L
-        self.listWidget_L.clearSelection()
+        self.listWidget_SL.clearSelection()
         # get widgetitem
-        listItems = self.getItemsInListWidget(self.listWidget_L, layer_current.longName())
+        listItems = self.getItemsInListWidget(self.listWidget_SL, layer_current.longName())
         if listItems :
-            self.listWidget_L.setCurrentItem( listItems.values()[0] )
+            self.listWidget_SL.setCurrentItem( listItems.values()[0] )
     
-    def renameLayer(self):
-        logging.debug('rename layer')
+    def renameLayer_SL(self):
+        logging.debug('rename layer_SL')
         # Get selected listWidgetItem
-        self.getActiveLayer()
-        
+        # Important: no need for self.getActiveLayer
+        # Because item double clicked connected self.getActiveLayer
         if self.RLP.LAYER_ACTIVE :
-            item = self.listWidget_L.currentItem()
+            item = self.listWidget_SL.currentItem()
             txt = str( item.text() )
             if txt :
                 #logging.debug('layer text:',str(txt))
@@ -334,7 +400,10 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                     RLP.rename( self.RLP.LAYER_ACTIVE[0], txt )
                 except :
                     traceback.print_exc()
-            
+    
+    def renameLayer_CL(self):
+        pass
+    
     def updateScenePasses(self):
         logging.debug('updateScenePasses')
         # Get all widgetItems in listWidget_SP
@@ -370,24 +439,24 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         if self.RLP.LAYERS_SELECTED and pass_names_list :
             self.RLP.addPasses2Layers(self.RLP.LAYERS_SELECTED,pass_names_list)
         
-    def on_pushButton_L_add_pressed(self):
+    def on_pushButton_SL_add_pressed(self):
         newLayer = self.RLP.createNewLayer()
         # Add newlayer to listwidget
-        self.appendListWidgetItem(self.listWidget_L, [{newLayer.longName():newLayer}])
+        self.appendListWidgetItem(self.listWidget_SL, {newLayer.longName():newLayer})
         
         # select newlayer in listwidget_L
         self.setActiveLayer(newLayer)
         # update other lists
         self.updateAllExceptLayer()     
                             
-    def on_pushButton_L_remove_pressed(self):
-        sels_dict_listWidget = self.RLP.getObjsFromSelsInListWidget(self.listWidget_L)
+    def on_pushButton_SL_remove_pressed(self):
+        sels_dict_listWidget = self.RLP.getObjsFromSelsInListWidget(self.listWidget_SL)
         if sels_dict_listWidget:
-            self.removeListWidgetItem(self.listWidget_L, sels_dict_listWidget)
+            self.removeListWidgetItem(self.listWidget_SL, sels_dict_listWidget)
             # Remove pass to layer
             self.RLP.removeLayerByListWidget( sels_dict_listWidget )        
         
-    def on_pushButton_L_refresh_pressed(self):
+    def on_pushButton_refresh_pressed(self):
         # Get selection layer first
         #self.getActiveLayer()
         self.updateAll()
