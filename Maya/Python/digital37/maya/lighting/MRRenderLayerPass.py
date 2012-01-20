@@ -28,6 +28,36 @@ MRCMD = '''unifiedRenderGlobalsWindow;
 //addOneTabToGlobalsWindow("mentalRay", "Options", "createMentalRayOptionsTab");
 '''
 
+PASSES_ALL = {'mv2DToxik':'2DMotionVector', 'mv3D':'3DMotionVector', 'ambient':'ambient',\
+                  'ambientIrradiance':'ambientIrradiance','ambientRaw':'ambientMaterialColor',\
+                  'AO':'ambientOcclusion', 'beauty':'beauty',\
+                  'beautyNoReflectRefract':'beautyWithoutReflectionsRefractions',\
+                  'blank':'blank', 'depth':'cameraDepth', \
+                  'depthRemapped':'cameraDepthRemapped',\
+                  'coverage':'coverage', 'customColor':'customColor',\
+                  'customDepth':'customDepth','customLabel':'customLabel',\
+                  'customVector':'customVector','diffuse':'diffuse',\
+                  'diffuseMaterialColor':'diffuseMaterialColor',\
+                  'diffuseNoShadow':'diffuseWithoutShadows',\
+                  'directIrradiance':'directIrradiance',\
+                  'directIrradianceNoShadow':'directIrradianceWithoutShadows',\
+                  'glowSource':'glowSource', 'incandescence':'incandescence',\
+                  'incidenceCN':'incidenceCamNorm', 'incidenceCNMat':'incidenceCamNormMaterial',\
+                  'incidenceLN':'incidenceLightNorm', 'indirect':'indirect', \
+                  'volumeLight':'lightVolume', 'matte':'matte', 'normalCam':'normalCam',\
+                  'normalCamMaterial':'normalCamMaterial',\
+                  'mv2DNormRemap':'normalized2DMotionVector',\
+                  'normalObj':'normalObj','normalObjMaterial':'normalObjMaterial',\
+                  'normalWorld':'normalWorld','normalWorldMaterial':'normalWorldMaterial',\
+                  'volumeObject':'objectVolume', 'opacity':'opacity', 'shadowRaw':'rawShadow',\
+                  'reflectedMaterialColor':'reflectedMaterialColor','reflection':'reflection',\
+                  'refraction':'refraction','refractionMaterialColor':'refractionMaterialColor',\
+                  'scatter':'scatter', 'volumeScene':'sceneVolume', 'shadow':'shadow',\
+                  'specular':'specular', 'specularNoShadow':'specularWithoutShadows',\
+                  'translucence':'translucence', 'translucenceNoShadow':'translucenceWithoutShadows',\
+                  'UVPass':'UV', 'worldPosition':'worldPosition'}
+PRESET_LAYER = ['Normal','Color','AO','AO_Transparency','Shadow']
+    
 # Load mental ray plugin first, else can not made some global var      
 def loadMRPlugin():
     #Check MR plugin load or not
@@ -377,41 +407,14 @@ def setRenderStatus(renderStatus):
                 setAttr(attr,v[1])
                                                         
 class MRRenderLayerPass():
-    PASSES_ALL = {'mv2DToxik':'2DMotionVector', 'mv3D':'3DMotionVector', 'ambient':'ambient',\
-                  'ambientIrradiance':'ambientIrradiance','ambientRaw':'ambientMaterialColor',\
-                  'AO':'ambientOcclusion', 'beauty':'beauty',\
-                  'beautyNoReflectRefract':'beautyWithoutReflectionsRefractions',\
-                  'blank':'blank', 'depth':'cameraDepth', \
-                  'depthRemapped':'cameraDepthRemapped',\
-                  'coverage':'coverage', 'customColor':'customColor',\
-                  'customDepth':'customDepth','customLabel':'customLabel',\
-                  'customVector':'customVector','diffuse':'diffuse',\
-                  'diffuseMaterialColor':'diffuseMaterialColor',\
-                  'diffuseNoShadow':'diffuseWithoutShadows',\
-                  'directIrradiance':'directIrradiance',\
-                  'directIrradianceNoShadow':'directIrradianceWithoutShadows',\
-                  'glowSource':'glowSource', 'incandescence':'incandescence',\
-                  'incidenceCN':'incidenceCamNorm', 'incidenceCNMat':'incidenceCamNormMaterial',\
-                  'incidenceLN':'incidenceLightNorm', 'indirect':'indirect', \
-                  'volumeLight':'lightVolume', 'matte':'matte', 'normalCam':'normalCam',\
-                  'normalCamMaterial':'normalCamMaterial',\
-                  'mv2DNormRemap':'normalized2DMotionVector',\
-                  'normalObj':'normalObj','normalObjMaterial':'normalObjMaterial',\
-                  'normalWorld':'normalWorld','normalWorldMaterial':'normalWorldMaterial',\
-                  'volumeObject':'objectVolume', 'opacity':'opacity', 'shadowRaw':'rawShadow',\
-                  'reflectedMaterialColor':'reflectedMaterialColor','reflection':'reflection',\
-                  'refraction':'refraction','refractionMaterialColor':'refractionMaterialColor',\
-                  'scatter':'scatter', 'volumeScene':'sceneVolume', 'shadow':'shadow',\
-                  'specular':'specular', 'specularNoShadow':'specularWithoutShadows',\
-                  'translucence':'translucence', 'translucenceNoShadow':'translucenceWithoutShadows',\
-                  'UVPass':'UV', 'worldPosition':'worldPosition'}
+
     
     def __init__(self):
         logging.debug('Init MRRenderLayerPass class')
         #
         self.PASSES_COLOR = ['beauty','depth','diffuse','incandescence','indirect','normalWorld',
                              'reflection','refraction','shadow','specular']
-        self.PASSES_COLOR_AVAILABLE = [ x for x in self.PASSES_ALL.keys() if x not in self.PASSES_COLOR ]
+        self.PASSES_COLOR_AVAILABLE = [ x for x in PASSES_ALL.keys() if x not in self.PASSES_COLOR ]
         self.PASSES_SCENE = []
         self.PASSES_AVAILABLE = []
         self.LAYER_NAME = 'color'
@@ -514,12 +517,12 @@ class MRRenderLayerPass():
         self.getScenePasses()
                 
         if self.PASSES_SCENE :
-            pNames = [ k for k in self.PASSES_ALL.keys() if k not in self.PASSES_SCENE ]
+            pNames = [ k for k in PASSES_ALL.keys() if k not in self.PASSES_SCENE ]
             for pn in pNames :
                 self.PASSES_AVAILABLE.append( pn )
         # If scene has no pass
         else :
-            for pn in self.PASSES_ALL.keys() :
+            for pn in PASSES_ALL.keys() :
                 self.PASSES_AVAILABLE.append( pn )
                         
     def getObjInLayer(self,layer):
@@ -751,7 +754,7 @@ class MRRenderLayerPass():
 
     def applyPassPreset(self,renderPass,passName) :
 
-        passName =  self.PASSES_ALL[passName]
+        passName =  PASSES_ALL[passName]
 
         presetMel = MAYA_LOCATION+'/presets/attrPresets/renderPass/'+passName+'.mel'
         logging.debug('presetMel: '+presetMel)   

@@ -29,6 +29,9 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         
         self.RLP = RLP.MRRenderLayerPass()
         
+        # Init widget
+        self.initLayerPresetCombobox()
+        
         #self.ui.listWidget_L.itemSelectionChanged.connect( self.updateAll )
         self.listWidget_SL.itemSelectionChanged.connect( self.updateAllExceptLayer )
         self.listWidget_CL.itemSelectionChanged.connect( self.updateLayerSettings_create )
@@ -117,28 +120,10 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
             e.accept()
         else :
             e.ignore()            
-                    
-#    def insertListWidgetItem(self,listWidget,inputStringList):
-#        # Clear listWidget first
-#        listWidget.clear()
-#        self.appendListWidgetItem(listWidget, inputStringList)
-#
-#    def appendListWidgetItem(self,listWidget,inputStringList):
-#        # Clear listWidget first
-#        if inputStringList :
-#            listItem = []
-#            for s in inputStringList :
-#                #logging.debug( 's: ' + str(type(s)) )
-#                if type(s) != type({}) :
-#                    listItem.append( QtGui.QListWidgetItem(s) )
-#                else :
-#                    listItem.append( QtGui.QListWidgetItem(s.keys()[0]) )
-#            for i in range(len(listItem)) :
-#                listWidget.insertItem(i+1,listItem[i])
-#                # Add editable to listWidget_L's item
-#                if listWidget == self.listWidget_L :
-#                    listItem[i].setFlags(listItem[i].flags() | QtCore.Qt.ItemIsEditable)
 
+    def initLayerPresetCombobox(self):
+        self.comboBox_O.addItems( RLP.PRESET_LAYER )
+        
     def insertListWidgetItem(self,listWidget,inputList):
         # Clear listWidget first
         listWidget.clear()
@@ -155,7 +140,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 for i in range(len(listItem)) :
                     listWidget.insertItem(i+1,listItem[i])
                     # Add editable to listWidget_L's item
-                    if listWidget == self.listWidget_SL :
+                    if listWidget == self.listWidget_SL or listWidget == self.listWidget_CL:
                         listItem[i].setFlags(listItem[i].flags() | QtCore.Qt.ItemIsEditable)
             elif type(inputList) == type({}) :
                 listItem = []
