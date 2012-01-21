@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1279</width>
-    <height>639</height>
+    <width>1314</width>
+    <height>710</height>
    </rect>
   </property>
   <property name="font">
@@ -22,35 +22,237 @@
    <locale language="English" country="UnitedStates"/>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>1271</width>
-      <height>601</height>
-     </rect>
-    </property>
-    <layout class="QVBoxLayout" name="verticalLayout_5">
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_MenuBar">
-       <item>
-        <widget class="QPushButton" name="pushButton_refresh">
-         <property name="text">
-          <string>Refresh</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
+   <layout class="QVBoxLayout" name="verticalLayout_3">
+    <item>
+     <widget class="QSplitter" name="splitter_2">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <widget class="QWidget" name="">
+       <layout class="QHBoxLayout" name="horizontalLayout_MenuBar">
+        <item>
+         <widget class="QPushButton" name="pushButton_refresh">
+          <property name="text">
+           <string>Refresh</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="layoutWidget_3">
+       <layout class="QHBoxLayout" name="horizontalLayout_10">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetDefaultConstraint</enum>
+        </property>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_createMaterials_04">
+          <item>
+           <widget class="QCheckBox" name="checkBox_layerOverride_materiral">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="text">
+             <string>Layer Override</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_CM_useBackground">
+            <property name="text">
+             <string>Use Background</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_CM_zDepth">
+            <property name="text">
+             <string>Z Depth</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_createMaterials_03">
+          <item>
+           <widget class="QPushButton" name="pushButton_CM_red">
+            <property name="text">
+             <string>Red</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_CM_green">
+            <property name="text">
+             <string>Green</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_CM_blue">
+            <property name="text">
+             <string>Blue</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_createMaterials_02">
+          <item>
+           <widget class="QPushButton" name="pushButton_CM_black">
+            <property name="text">
+             <string>Black</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_CM_blackNoAlpha">
+            <property name="text">
+             <string>Black No Alpha</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="layoutWidget_4">
+       <layout class="QHBoxLayout" name="horizontalLayout_11">
+        <item>
+         <widget class="QPushButton" name="pushButton_RS_apply">
+          <property name="text">
+           <string>Apply Render Status</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox_layerOverride_status">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>Layer Override</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox_castsShadows">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>Casts Shadows</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox_receiveShadows">
+          <property name="text">
+           <string>Receive Shadows</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox_motionBlur">
+          <property name="text">
+           <string>Motion Blur</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox_primaryVisibility">
+          <property name="text">
+           <string>Primary Visibility</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox_smoothShading">
+          <property name="text">
+           <string>Smooth Shading</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox_visibleInReflections">
+          <property name="text">
+           <string>Visible In Reflections</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox_visibleInRefractions">
+          <property name="text">
+           <string>Visible In Refractions</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox_doubleSided">
+          <property name="text">
+           <string>Double Sided</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+          <property name="tristate">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox_opposite">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Opposite</string>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QSplitter" name="splitter">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <widget class="QWidget" name="">
         <layout class="QVBoxLayout" name="verticalLayout_L">
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_10">
            <item>
-            <widget class="QComboBox" name="comboBox"/>
+            <widget class="QComboBox" name="comboBox_L"/>
            </item>
           </layout>
          </item>
@@ -76,16 +278,16 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="pushButton_SL_remove">
+                  <widget class="QPushButton" name="pushButton_SL_add">
                    <property name="text">
-                    <string>Remove</string>
+                    <string>Add</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="pushButton_SL_add">
+                  <widget class="QPushButton" name="pushButton_SL_remove">
                    <property name="text">
-                    <string>Add</string>
+                    <string>Remove</string>
                    </property>
                   </widget>
                  </item>
@@ -108,12 +310,26 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QComboBox" name="comboBox_O"/>
+                  <layout class="QHBoxLayout" name="horizontalLayout_4">
+                   <item>
+                    <widget class="QLabel" name="label_layerName">
+                     <property name="text">
+                      <string>Layer Name:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLineEdit" name="lineEdit_layerName"/>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="comboBox_CL"/>
                  </item>
                  <item>
                   <widget class="QPushButton" name="pushButton_CL_add">
                    <property name="text">
-                    <string>Add                                              </string>
+                    <string>                      Add                     </string>
                    </property>
                   </widget>
                  </item>
@@ -140,15 +356,8 @@
           </layout>
          </item>
         </layout>
-       </item>
-       <item>
-        <widget class="Line" name="line_3">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
+       </widget>
+       <widget class="QWidget" name="">
         <layout class="QVBoxLayout" name="verticalLayout_AO">
          <item>
           <widget class="QLabel" name="label_OBJ">
@@ -170,7 +379,7 @@
          <item>
           <widget class="QPushButton" name="pushButton_AO_add">
            <property name="text">
-            <string> Add                                       </string>
+            <string>                      Add                     </string>
            </property>
           </widget>
          </item>
@@ -182,15 +391,8 @@
           </widget>
          </item>
         </layout>
-       </item>
-       <item>
-        <widget class="Line" name="line_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
+       </widget>
+       <widget class="QWidget" name="">
         <layout class="QVBoxLayout" name="verticalLayout_O">
          <item>
           <widget class="QLabel" name="label_Outline">
@@ -212,20 +414,13 @@
          <item>
           <widget class="QPushButton" name="pushButton_O_remove">
            <property name="text">
-            <string>Remove                                    </string>
+            <string>                Remove                </string>
            </property>
           </widget>
          </item>
         </layout>
-       </item>
-       <item>
-        <widget class="Line" name="line_4">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
+       </widget>
+       <widget class="QWidget" name="">
         <layout class="QVBoxLayout" name="verticalLayout_P">
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -339,15 +534,8 @@
           </layout>
          </item>
         </layout>
-       </item>
-       <item>
-        <widget class="Line" name="line">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
+       </widget>
+       <widget class="QWidget" name="">
         <layout class="QVBoxLayout" name="verticalLayout_M">
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -486,11 +674,11 @@
           </layout>
          </item>
         </layout>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </widget>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QMenuBar" name="menuBar">
@@ -498,7 +686,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1279</width>
+     <width>1314</width>
      <height>18</height>
     </rect>
    </property>

@@ -1,4 +1,13 @@
+# -*- coding: utf-8 -*- 
+
+#Description:
+#Author:honglou(hongloull@gmail.com)
+#Create:2011.12.06
+#Update: 
+#How to use : 
+
 import logging 
+#from PyQt4.uic.Compiler.qtproxies import QtCore
 LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
               'warning': logging.WARNING, 'error': logging.ERROR,\
               'critical': logging.CRITICAL}
@@ -30,8 +39,11 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         self.RLP = RLP.MRRenderLayerPass()
         
         # Init widget
-        self.initLayerPresetCombobox()
+        self.initCombobox_L()
+        self.initCombobox_CL()
         
+        self.comboBox_L.currentIndexChanged.connect( self.switchStackedWidget )
+         
         #self.ui.listWidget_L.itemSelectionChanged.connect( self.updateAll )
         self.listWidget_SL.itemSelectionChanged.connect( self.updateAllExceptLayer )
         self.listWidget_CL.itemSelectionChanged.connect( self.updateLayerSettings_create )
@@ -39,10 +51,11 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         # for rename layer
         self.listWidget_SL.itemDoubleClicked.connect( self.getActiveLayer )
         self.listWidget_SL.itemChanged.connect( self.renameLayer_SL )
-        #self.listWidget_CL.itemChanged.connect( self.renameLayer_CL )
         
         self.listWidget_SP.itemChanged.connect( self.updateScenePasses )
         self.listWidget_ASP.itemChanged.connect( self.updateAssociatedPasses )
+        
+        self.checkBox_doubleSided.clicked.connect( self.updateCheckBox_opposite )
         
         self.listWidget_SP.dragMoveEvent = self.dragMoveEvent_SP
         self.listWidget_ASP.dragMoveEvent = self.dragMoveEvent_ASP
@@ -56,9 +69,19 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         #self.listWidget_CL.customContextMenuRequested.connect(self.showContextMenu)
         self.listWidget_CL.customContextMenuRequested.connect(self.showContextMenu)
         
+    def switchStackedWidget(self):
+        # Get combobox selected index
+        self.stackedWidget.setCurrentIndex( self.comboBox_L.currentIndex() )
+    
+    def updateCheckBox_opposite(self):
+        if self.checkBox_doubleSided.isChecked() :
+            self.checkBox_opposite.setEnabled(False)
+        else :
+            self.checkBox_opposite.setEnabled(True)
+        
     def createContextMenu(self):
-        # ±ØÐë½«ContextMenuPolicyÉèÖÃÎªQt.CustomContextMenu  
-        # ·ñÔòÎÞ·¨Ê¹ÓÃcustomContextMenuRequestedÐÅºÅ  
+        # ï¿½ï¿½ï¿½ë½«ContextMenuPolicyï¿½ï¿½ï¿½ï¿½ÎªQt.CustomContextMenu  
+        # ï¿½ï¿½ï¿½ï¿½ï¿½Þ·ï¿½Ê¹ï¿½ï¿½customContextMenuRequestedï¿½Åºï¿½  
         
         # we do not need set this
         #self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -121,9 +144,13 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         else :
             e.ignore()            
 
-    def initLayerPresetCombobox(self):
-        self.comboBox_O.addItems( RLP.PRESET_LAYER )
-        
+    def initCombobox_L(self):
+        self.comboBox_L.addItems( RLP.MODEL )
+        self.comboBox_L.setCurrentIndex(1)
+
+    def initCombobox_CL(self):
+        self.comboBox_CL.addItems( RLP.LAYER_PRESET )
+                
     def insertListWidgetItem(self,listWidget,inputList):
         # Clear listWidget first
         listWidget.clear()
@@ -526,6 +553,47 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
             self.removeListWidgetItem(self.listWidget_SP, sels_dict_listWidget)
             # Remove passes
             self.RLP.removeScenePasses( sels_dict_listWidget )
+        
+                                                                                
+    def on_pushButton_RS_apply_pressed(self):
+        layerOverride = self.checkBox_layerOverride_status.isChecked()
+        
+        renderStatus = {'castsShadows':[self.checkBox_castsShadows,1],\
+                        'receiveShadows':[self.checkBox_receiveShadows,1],\
+                        'motionBlur':[self.checkBox_motionBlur,1],\
+                        'primaryVisibility':[self.checkBox_primaryVisibility,1],\
+                        'smoothShading':[self.checkBox_smoothShading,1],\
+                        'visibleInReflections':[self.checkBox_visibleInReflections,1],\
+                        'visibleInRefractions':[self.checkBox_visibleInRefractions,1],\
+                        'doubleSided':[self.checkBox_doubleSided,1],\
+                        'opposite':[self.checkBox_opposite,1]
+                        }
+        for v in renderStatus.itervalues() :
+            v[1] = v[0].isChecked()
+        RLP.setRenderStatus( renderStatus, layerOverride )
+
+
+    def on_pushButton_CM_black_pressed(self):
+        self.RLP.create_black_shader( self.checkBox_layerOverride_materiral.isChecked() )
+        
+    def on_pushButton_CM_blackNoAlpha_pressed(self):
+        self.RLP.createShader([0,0,0],[0,0,0],'BLACK_NO_ALPHA_MATTE')
+                                        
+    def on_pushButton_CM_red_pressed(self):
+        self.RLP.createShader([1,0,0],[1,1,1],'RED_MATTE')
+                                        
+    def on_pushButton_CM_green_pressed(self):
+        self.RLP.createShader([0,1,0],[1,1,1],'GREEN_MATTE')
+                                        
+    def on_pushButton_CM_blue_pressed(self):
+        self.RLP.createShader([0,0,1],[1,1,1],'BLUE_MATTE')
+                                        
+    def on_pushButton_CM_useBackground_pressed(self):
+        self.RLP.createShadowShader('userBackGround',None,1)
+                                        
+    def on_pushButton_CM_zDepth_pressed(self):
+        self.RLP.createZDepthShader('Z_Depth_MAT')
+        
         
     def delSelItemsInListWidget(self,listWidget):
         items = listWidget.selectedItems()

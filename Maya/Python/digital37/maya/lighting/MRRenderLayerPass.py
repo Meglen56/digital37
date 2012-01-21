@@ -56,7 +56,8 @@ PASSES_ALL = {'mv2DToxik':'2DMotionVector', 'mv3D':'3DMotionVector', 'ambient':'
                   'specular':'specular', 'specularNoShadow':'specularWithoutShadows',\
                   'translucence':'translucence', 'translucenceNoShadow':'translucenceWithoutShadows',\
                   'UVPass':'UV', 'worldPosition':'worldPosition'}
-PRESET_LAYER = ['Normal','Color','AO','AO_Transparency','Shadow']
+LAYER_PRESET = ['Normal','Color','AO','AO_Transparency','Shadow']
+MODEL = ['Manager Render Layer','Create Render Layer']
     
 # Load mental ray plugin first, else can not made some global var      
 def loadMRPlugin():
@@ -92,8 +93,6 @@ def setAttr(attr,val):
         # Re lock again if locked before
         if isLock == 1 :
             attr.lock()
-        else :
-            logging.warning(str(attr) + ' does not exists')
 
 DEFAULT_RENDER_GLOBALS = PyNode('defaultRenderGlobals')
 
@@ -398,13 +397,18 @@ def getTransparencyShader(input):
     logging.debug('---------getTransparencyShader Finish------------\n')
     return shapeFaces
             
-def setRenderStatus(renderStatus):
+def setRenderStatus(renderStatus, layerOverride = False):
     sels = getGeometrySelection()
     if sels :
         for sel in sels :
-            for k,v in renderStatus.items() :
+            for k,v in renderStatus.iteritems() :
                 attr = PyNode(sel.longName()+'.'+k)
                 setAttr(attr,v[1])
+                if layerOverride :
+                    try:
+                        pm.editRenderLayerAdjustment( attr )
+                    except:
+                        traceback.print_exc()
                                                         
 class MRRenderLayerPass():
 
@@ -423,8 +427,19 @@ class MRRenderLayerPass():
         self.LAYER_CURRENT = None
         self.LAYERS_SELECTED = []
         self.LAYERS = []
-        self.LAYER_ACTIVE = {}
+        self.LAYER_ACTIVE = []
+        self.LAYER_ACTIVE_SCENE = None
         self.getLayers()
+        
+    # Get LAYER_ACTIVE_SCENE
+    def getActiveLayer(self):
+        #mel:editRenderLayerGlobals -q -crl
+        layer = pm.editRenderLayerGlobals(q=1,crl=1)
+        if layer:
+            try:
+                self.LAYER_ACTIVE_SCENE = PyNode(layer)
+            except:
+                traceback.print_exc()
         
     # Get current active layer
     def getLayerCurrent(self):
@@ -1039,9 +1054,9 @@ class MRRenderLayerPass():
             
     def createShadowLayer(self,layerName='Shadow_Mask_Layer',shaderName='Shadow_Mask_MAT',outAlpha=1):
         sel = getGeometrySelection()
-        newLayer = self.createNewMRLayer()
+        self.createNewMRLayer()
         # Create material
-        MRMaterial().createShadowShader(shaderName,sel,outAlpha)
+        self.createShadowShader(shaderName,sel,outAlpha)
         pm.select(cl=1)
 
     def createLightLayer(self,name,color):
@@ -1124,11 +1139,26 @@ class MRRenderLayerPass():
             
             return True
 
+    #make shader override layer
+    def makeShaderOverrideLayer(self,shader,layer=None):
+        if not layer:
+            layer = self.LAYER_ACTIVE_SCENE
+        if not layer:
+            logging.error('makeShaderOverrideLayer: can not get current active render layer')
+        else:
+            try:
+                cmd = "hookShaderOverride(\""+layer.longName()+"\",\"\",\""+shader.longName()+"\")"
+            except:
+                logging.error('makeShaderOverrideLayer:')
+                traceback.print_exc()
+            else:
+                mel.eval(cmd)
+       
+    def create_black_shader(self,overrideLayer=False):
+        shader = self.createShader([0,0,0],[1,1,1],'BLACK_MATTE')
+        if overrideLayer :
+            self.makeShaderOverrideLayer( shader )
 
-class MRMaterial():
-    def __init__(self):
-        logging.debug('Init MRMaterial class')
-        
     # Get shadingSG by shader name
     # Return type is string
     def getShadingSG(self,shaderName):
@@ -1192,8 +1222,15 @@ class MRMaterial():
                         
                         displacementShader.connect(shaderSG.displacementShader)
                         pm.select(shapeFace,r=1)
-                        pm.sets(shaderSG,e=1,forceElement=1)    
+                        pm.sets(shaderSG,e=1,forceElement=1)
+        else:
+            # create shader only
+            shader,shaderSG = createShader('surfaceShader', shaderName)
+            shader.outColor.set(outColor)
+            shader.outMatteOpacity.set(outAlpha)
+                        
         pm.select(cl=1)
+        return shader
         
     # Create and assign black shader
     def createShadowShader(self,shaderName='Shadow_Mask_MAT',sel=None,outAlpha=1):
@@ -1323,7 +1360,8 @@ class MRMaterial():
                         pm.select(shapeFace,r=1)
                         pm.sets(shaderSG,e=1,forceElement=1)
         pm.select(cl=1)
-
+        
+        
 class MRRenderSubSet():
     def __init__(self):
         logging.debug('Init MRRenderSubSet class')     
