@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'MRRenderLayerPassManager.ui'
 #
-# Created: Sat Jan 21 14:10:54 2012
+# Created: Sat Jan 21 21:54:34 2012
 #      by: PyQt4 UI code generator 4.8.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -17,7 +17,7 @@ except AttributeError:
 class Ui_root(object):
     def setupUi(self, root):
         root.setObjectName(_fromUtf8("root"))
-        root.resize(1314, 707)
+        root.resize(1314, 710)
         font = QtGui.QFont()
         font.setFamily(_fromUtf8("Arial"))
         root.setFont(font)

@@ -57,6 +57,7 @@ PASSES_ALL = {'mv2DToxik':'2DMotionVector', 'mv3D':'3DMotionVector', 'ambient':'
                   'translucence':'translucence', 'translucenceNoShadow':'translucenceWithoutShadows',\
                   'UVPass':'UV', 'worldPosition':'worldPosition'}
 LAYER_PRESET = ['Normal','Color','AO','AO_Transparency','Shadow']
+LAYER_NAME_DEFAULT = 'layer'
 MODEL = ['Manager Render Layer','Create Render Layer']
     
 # Load mental ray plugin first, else can not made some global var      
@@ -418,31 +419,45 @@ class MRRenderLayerPass():
         #
         self.PASSES_COLOR = ['beauty','depth','diffuse','incandescence','indirect','normalWorld',
                              'reflection','refraction','shadow','specular']
-        self.PASSES_COLOR_AVAILABLE = [ x for x in PASSES_ALL.keys() if x not in self.PASSES_COLOR ]
+        #self.PASSES_COLOR_AVAILABLE = [ x for x in PASSES_ALL.keys() if x not in self.PASSES_COLOR ]
+        self.PASSES_COLOR_AVAILABLE = [ x for x in PASSES_ALL if x not in self.PASSES_COLOR ]
         self.PASSES_SCENE = []
         self.PASSES_AVAILABLE = []
         self.LAYER_NAME = 'color'
         self.PREFIX_PASS = ''
         self.SUFFIX_PASS = ''
         self.LAYER_CURRENT = None
-        self.LAYERS_SELECTED = []
+        self.LAYERS_MANAGER_SELECTED = []
+        self.LAYERS_CREATION_SELECTED = []
         self.LAYERS = []
-        self.LAYER_ACTIVE = []
-        self.LAYER_ACTIVE_SCENE = None
+        self.LAYER_MANAGER_ACTIVE = None
+        # For create mode
+        self.LAYER_CREATION_ACTIVE = [] 
+        self.LAYER_CREATION = {}
+        self.LAYER_SCENE_ACTIVE = None
         self.getLayers()
         
-    # Get LAYER_ACTIVE_SCENE
     def getActiveLayer(self):
+        self.LAYER_MANAGER_ACTIVE = None
+        if len(self.LAYERS_MANAGER_SELECTED) >= 1 :
+            self.LAYER_MANAGER_ACTIVE = self.LAYERS_MANAGER_SELECTED[-1]
+        self.LAYER_CREATION_ACTIVE = None
+        if len(self.LAYERS_CREATION_SELECTED) >= 1 :
+            print self.LAYERS_CREATION_SELECTED
+            self.LAYER_CREATION_ACTIVE = self.LAYERS_CREATION_SELECTED[-1]
+                                  
+    # Get LAYER_SCENE_ACTIVE
+    def getCurrentLayer(self):
         #mel:editRenderLayerGlobals -q -crl
         layer = pm.editRenderLayerGlobals(q=1,crl=1)
         if layer:
             try:
-                self.LAYER_ACTIVE_SCENE = PyNode(layer)
+                self.LAYER_SCENE_ACTIVE = PyNode(layer)
             except:
                 traceback.print_exc()
         
     # Get current active layer
-    def getLayerCurrent(self):
+    def get_layer_current(self):
         layer_current = pm.editRenderLayerGlobals(q=1,crl=1)
         if layer_current :
             return PyNode(layer_current)
@@ -532,18 +547,34 @@ class MRRenderLayerPass():
         self.getScenePasses()
                 
         if self.PASSES_SCENE :
-            pNames = [ k for k in PASSES_ALL.keys() if k not in self.PASSES_SCENE ]
+            #pNames = [ k for k in PASSES_ALL.keys() if k not in self.PASSES_SCENE ]
+            pNames = [ k for k in PASSES_ALL if k not in self.PASSES_SCENE ]
             for pn in pNames :
                 self.PASSES_AVAILABLE.append( pn )
         # If scene has no pass
         else :
-            for pn in PASSES_ALL.keys() :
+            #for pn in PASSES_ALL.keys() :
+            for pn in PASSES_ALL :
                 self.PASSES_AVAILABLE.append( pn )
                         
     def getObjInLayer(self,layer):
         obj_names_list = pm.editRenderLayerMembers(layer,q=1,fullNames=1)
         log_list(obj_names_list)
         return obj_names_list
+    
+    def getCreationLayerAttr(self,layer,attr):
+        obj_names_list = layer_dict = None
+        try:
+            layer_dict = self.LAYER_CREATION.get(layer)
+        except:
+            traceback.print_exc()
+        else:
+            try:
+                obj_names_list = layer_dict.get(attr)
+            except:
+                traceback.print_exc()
+        return obj_names_list
+                
 
     def addObj2Layer(self,layer,obj_list):
         l = get_dict_list_values(obj_list)
@@ -814,45 +845,60 @@ class MRRenderLayerPass():
                     except:
                         traceback.print_exc()
                         
-    def updateAssociatedPasses(self,pass_names_list):
-        print 'self.LAYERS_SELECTED:'
-        print self.LAYERS_SELECTED
-        print type(self.LAYERS_SELECTED)
-        print type([])
-        if self.LAYERS_SELECTED :
-            # get layer frm layer name
-            for layer in self.getNodeByName( self.LAYERS_SELECTED ) :
-                # Get passes in layer
-                passes_list = self.getPassByLayer(layer)
-                addList = [x for x in pass_names_list \
-                           if x not in passes_list]
-                removeList = [x for x in passes_list \
-                              if x not in pass_names_list]
-                
-                if addList :
-                    for pass_name in addList :
-                        try:
-                            renderPass = PyNode(pass_name)
-                        except:
-                            traceback.print_exc()
-                        else:
+    def updateAssociatedPasses(self,pass_names_list,model='M'):
+        if model == 'M' :
+            print 'self.LAYERS_MANAGER_SELECTED:'
+            print self.LAYERS_MANAGER_SELECTED
+            print type(self.LAYERS_MANAGER_SELECTED)
+            print type([])
+            if self.LAYERS_MANAGER_SELECTED :
+                # get layer frm layer name
+                for layer in self.getNodeByName( self.LAYERS_MANAGER_SELECTED ) :
+                    # Get passes in layer
+                    passes_list = self.getPassByLayer(layer)
+                    addList = [x for x in pass_names_list \
+                               if x not in passes_list]
+                    removeList = [x for x in passes_list \
+                                  if x not in pass_names_list]
+                    
+                    if addList :
+                        for pass_name in addList :
                             try:
-                                layer.renderPass.connect(renderPass.owner,nextAvailable=1)
+                                renderPass = PyNode(pass_name)
                             except:
                                 traceback.print_exc()
-                
-                if removeList :
-                    # add passes to scene
-                    for pass_name in removeList :
-                        try:
-                            renderPass = PyNode(pass_name)
-                        except:
-                            traceback.print_exc()
-                        else:
+                            else:
+                                try:
+                                    layer.renderPass.connect(renderPass.owner,nextAvailable=1)
+                                except:
+                                    traceback.print_exc()
+                    
+                    if removeList :
+                        # add passes to scene
+                        for pass_name in removeList :
                             try:
-                                layer.renderPass.disconnect(renderPass.owner)
+                                renderPass = PyNode(pass_name)
                             except:
                                 traceback.print_exc()
+                            else:
+                                try:
+                                    layer.renderPass.disconnect(renderPass.owner)
+                                except:
+                                    traceback.print_exc()
+        else:
+            if self.LAYERS_CREATION_SELECTED :
+                self.update_creation_layers(self.LAYERS_CREATION_SELECTED, 'AP', pass_names_list)
+                
+    def update_creation_layers(self,layers_create_active,key,value):
+        for layer in layers_create_active :
+            if not layer in self.LAYER_CREATION :
+                self.LAYER_CREATION.setdefault(layer,{})
+            if not key in self.LAYER_CREATION[layer] :
+                self.LAYER_CREATION[layer].setdefault( key, value )
+            else:
+                self.LAYER_CREATION[layer].update( {key:value} )
+        print 'self.LAYER_CREATION:'
+        print self.LAYER_CREATION
             
     def addPasses2Layers(self,layers,pass_names_list):
         if layers and pass_names_list :
@@ -1141,8 +1187,10 @@ class MRRenderLayerPass():
 
     #make shader override layer
     def makeShaderOverrideLayer(self,shader,layer=None):
+        logging.debug('makeShaderOverrideLayer')
+        self.getCurrentLayer()
         if not layer:
-            layer = self.LAYER_ACTIVE_SCENE
+            layer = self.LAYER_SCENE_ACTIVE
         if not layer:
             logging.error('makeShaderOverrideLayer: can not get current active render layer')
         else:
@@ -1154,11 +1202,18 @@ class MRRenderLayerPass():
             else:
                 mel.eval(cmd)
        
-    def create_black_shader(self,overrideLayer=False):
-        shader = self.createShader([0,0,0],[1,1,1],'BLACK_MATTE')
+    def create_shader(self,outColor,outValue,shaderName,overrideLayer=False):
+        #shader = self.createShader([0,0,0],[1,1,1],'BLACK_MATTE')
+        shader = self.createShader(outColor,outValue,shaderName)
         if overrideLayer :
             self.makeShaderOverrideLayer( shader )
-
+       
+    def create_shadow_shader(self,shaderName,overrideLayer=False):
+        #shader = self.createShader([0,0,0],[1,1,1],'BLACK_MATTE')
+        shader = self.createShadowShader(shaderName,None,1)
+        if overrideLayer :
+            self.makeShaderOverrideLayer( shader )
+            
     # Get shadingSG by shader name
     # Return type is string
     def getShadingSG(self,shaderName):
@@ -1230,6 +1285,7 @@ class MRRenderLayerPass():
             shader.outMatteOpacity.set(outAlpha)
                         
         pm.select(cl=1)
+        print shader
         return shader
         
     # Create and assign black shader
@@ -1287,6 +1343,12 @@ class MRRenderLayerPass():
                         displacementShader.connect(shaderSG.displacementShader)
                         pm.select(shapeFace,r=1)
                         pm.sets(shaderSG,e=1,forceElement=1)
+        else:
+            shaderNoDis,shaderNoDisSG = createShader('useBackground', shaderName)
+            shaderNoDis.specularColor.set([0,0,0])
+            shaderNoDis.reflectivity.set(0)
+            shaderNoDis.reflectionLimit.set(0)
+            shaderNoDis.matteOpacity.set(outAlpha)
         pm.select(cl=1)
 
     #Z-DEPTH
