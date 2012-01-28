@@ -13,10 +13,14 @@ LOG_LEVEL = LOG_LEVELS.get('debug')
 logging.basicConfig(level=LOG_LEVEL)
 
 import traceback
-import maya.cmds as cmds
+import itertools
 import pymel.core as pm
 from pymel.all import mel
 from pymel.core.general import PyNode
+
+TYPE_LIST = '<type \'list\'>'
+TYPE_STR = '<type \'str\'>'
+TYPE_DICT = '<type \'dict\'>'
 
 MRCMD = '''unifiedRenderGlobalsWindow;
 //updateRendererUI;
@@ -63,9 +67,9 @@ MODEL = ['Manager Render Layer','Create Render Layer']
 # Load mental ray plugin first, else can not made some global var      
 def loadMRPlugin():
     #Check MR plugin load or not
-    if not cmds.pluginInfo( 'Mayatomr', query=True, loaded=True ) :
+    if not pm.pluginInfo( 'Mayatomr', query=True, loaded=True ) :
         logging.warning('Maya to MentalRay Plugin has not been loaded.Loading Mayatomr now.')
-        cmds.loadPlugin( 'Mayatomr' )
+        pm.loadPlugin( 'Mayatomr' )
 loadMRPlugin()
 #mel.eval(MRCMD)
 
@@ -196,11 +200,18 @@ def getSelection():
         return None
     else :
         return selObjShort
+    
+def get_selection_names():
+    sel = pm.ls(sl=1,l=1)
+    if not sel :
+        logging.warning('select some objects first.')
+        return None
+    else :
+        return set( itertools.imap(lambda x:x.longName(), sel ) )
 
 def getSelection_dict():
     logging.debug('MRRenderLayerPass getSelection_dict')
     sels = pm.ls(sl=1,l=1)
-    logging.debug(str(sels))
     if not sels :
         logging.warning('select some objects first.')
         return None
@@ -411,9 +422,7 @@ def setRenderStatus(renderStatus, layerOverride = False):
                     except:
                         traceback.print_exc()
                                                         
-class MRRenderLayerPass():
-
-    
+class MRRenderLayerPass(object):
     def __init__(self):
         logging.debug('Init MRRenderLayerPass class')
         #
@@ -465,7 +474,7 @@ class MRRenderLayerPass():
             return None
         
     def getNameByNode(self,inputObjList):
-        if type(inputObjList) == type([]) :
+        if type(inputObjList) == TYPE_LIST :
             names_list = []
             for l in inputObjList :
                 try:
@@ -490,7 +499,7 @@ class MRRenderLayerPass():
             
     def getNodeByName(self,inputNameList):
         print type(inputNameList)
-        if type(inputNameList) == type([]) :
+        if type(inputNameList) == TYPE_LIST :
             nodes_list = []
             for l in inputNameList :
                 try:
@@ -559,9 +568,12 @@ class MRRenderLayerPass():
                         
     def getObjInLayer(self,layer):
         obj_names_list = pm.editRenderLayerMembers(layer,q=1,fullNames=1)
-        log_list(obj_names_list)
         return obj_names_list
     
+    # Return set
+    def get_obj_in_layer(self,layer):
+        return set( pm.editRenderLayerMembers(layer,q=1,fullNames=1) )
+        
     def getCreationLayerAttr(self,layer,attr):
         obj_names_list = layer_dict = None
         try:
@@ -576,17 +588,20 @@ class MRRenderLayerPass():
         return obj_names_list
                 
 
-    def addObj2Layer(self,layer,obj_list):
-        l = get_dict_list_values(obj_list)
-        log_list(l)
+    def add_obj_to_layer_by_dict_list(self,layer,obj_list):
+        obj_list = get_dict_list_values(obj_list)
+        log_list(obj_list)
+        self.add_obj_to_layer(layer, obj_list)
+        
+    def add_obj_to_layer(self,layer,obj_list):
         #editRenderLayerMembers -noRecurse layer2 nurbsSphere2
-        if layer and l :
-            pm.editRenderLayerMembers(layer,l,noRecurse=1)
+        if layer and obj_list :
+            pm.editRenderLayerMembers(layer,obj_list,noRecurse=1)
         else :
             if not layer :
-                logging.warning('addObj2Layer: layer is None')
-            if not l :
-                logging.warning('addObj2Layer: selection is None')
+                logging.warning('add_obj_to_layer: layer is None')
+            if not obj_list :
+                logging.warning('add_obj_to_layer: selection is None')
                 
     def removePassOfLayer(self,layer,obj_list):
         l = [x for x in obj_list.values()]
@@ -724,8 +739,8 @@ class MRRenderLayerPass():
         #log_dict( overrides )
         return overrides
         
-    def createNewMRLayer(self):
-        newLayer = pm.createRenderLayer(n=self.LAYER_NAME)
+    def createNewMRLayer(self,layerName):
+        newLayer = pm.createRenderLayer(n=layerName)
         pm.editRenderLayerGlobals(currentRenderLayer=newLayer)
         pm.editRenderLayerAdjustment(DEFAULT_RENDER_GLOBALS.currentRenderer)
         DEFAULT_RENDER_GLOBALS.currentRenderer.set('mentalRay')    
@@ -850,7 +865,6 @@ class MRRenderLayerPass():
             print 'self.LAYERS_MANAGER_SELECTED:'
             print self.LAYERS_MANAGER_SELECTED
             print type(self.LAYERS_MANAGER_SELECTED)
-            print type([])
             if self.LAYERS_MANAGER_SELECTED :
                 # get layer frm layer name
                 for layer in self.getNodeByName( self.LAYERS_MANAGER_SELECTED ) :
@@ -887,27 +901,63 @@ class MRRenderLayerPass():
                                     traceback.print_exc()
         else:
             if self.LAYERS_CREATION_SELECTED :
-                self.update_creation_layers(self.LAYERS_CREATION_SELECTED, 'AP', pass_names_list)
+                self.set_creation_layers_attr(self.LAYERS_CREATION_SELECTED, 'AP', pass_names_list)
                 
-    def update_creation_layers(self,layers_create_active,key,value):
-        for layer in layers_create_active :
-            if not layer in self.LAYER_CREATION :
-                self.LAYER_CREATION.setdefault(layer,{})
-            if not key in self.LAYER_CREATION[layer] :
-                self.LAYER_CREATION[layer].setdefault( key, value )
-            else:
-                self.LAYER_CREATION[layer].update( {key:value} )
+    def set_creation_layers_attr(self,key,value):
+        for layer in self.LAYERS_CREATION_SELECTED :
+            self.set_creation_layer_attr(layer, key, value)
         print 'self.LAYER_CREATION:'
         print self.LAYER_CREATION
             
-    def addPasses2Layers(self,layers,pass_names_list):
-        if layers and pass_names_list :
-            for layer in layers :
-                for pass_name in pass_names_list :
-                    try:
-                        layer.values()[0].renderPass.connect(PyNode(pass_name).owner,nextAvailable=1)
-                    except:
-                        traceback.print_exc()
+    def set_creation_layer_attr(self,layer,key,value):
+        if not layer in self.LAYER_CREATION :
+            self.LAYER_CREATION.setdefault(layer,{})
+        if not key in self.LAYER_CREATION[layer] :
+            self.LAYER_CREATION[layer].setdefault( key, value )
+        else:
+            self.LAYER_CREATION[layer].update( {key:value} )
+                    
+    def create_creation_layers(self):
+        for layerName in self.LAYER_CREATION :
+            # Create MR layer
+            layer = self.createNewMRLayer(layerName)
+            
+            # Add objects
+            obj_list = self.LAYER_CREATION[layerName].get('AO')
+            if obj_list :
+                # Add objs to layer
+                self.add_obj_to_layer(layer, obj_list)
+                
+            # Add passes
+            pass_list = self.LAYER_CREATION[layerName].get('AP')
+            if pass_list :
+                self.add_pass_to_layer(layer,pass_list)
+                
+            # Add overrides
+            overrides_list = self.LAYER_CREATION[layerName].get('O')
+            if overrides_list :
+                self.add_pass_to_layer(layer,overrides_list)
+                
+            # Material
+            # Get layer preset
+            preset = self.LAYER_CREATION[layer].get('PRESET')
+            #['Normal','Color','AO','AO_Transparency','Shadow']
+            if preset == 'AO' :
+                self.create_and_assign_AO_shader(obj_list)
+            elif preset == 'AO_Transparency' :
+                self.create_and_assign_AO_shader(obj_list)
+            elif preset == 'Shadow' :
+                self.create_and_assign_AO_shader(obj_list)
+                
+             
+        
+    def add_pass_to_layer(self,layer,pass_names_list):
+        if layer and pass_names_list :
+            for pass_name in pass_names_list :
+                try:
+                    layer.values()[0].renderPass.connect(PyNode(pass_name).owner,nextAvailable=1)
+                except:
+                    traceback.print_exc()
 
     def createAOTransparencyLayer(self,isAddPass):
         selObj = getGeometrySelection()
@@ -1010,6 +1060,44 @@ class MRRenderLayerPass():
             
         pm.select(cl=1)
 
+  
+    def create_and_assign_AO_shader(self,obj_list):
+        #AOMat = pm.shadingNode('surfaceShader',n='AO_mat',asShader=True)
+        shaderNoDis,shaderNoDisSG = createShader('surfaceShader',(self.LAYER_NAME+'_MAT'))
+        
+        AONode = pm.createNode('mib_amb_occlusion')
+        AONode.outValue.connect(shaderNoDis.outColor)
+        AONode.samples.set(64)
+        
+        if obj_list:
+            for each in obj_list :
+                nodeType = type(each)
+                logging.debug(str(nodeType))
+                
+                # Get dispalcement shader if input is geometry
+                logging.debug('****'+str(each))
+                eachSn = each.getParent()
+                
+                # Check shape has displacement shader or not
+                displacementShaders, shapeFaces = getDisplacementShader2(each)
+                
+                # First assign no displacement shader to all
+                logging.debug('First assign no displacement shader to all' )
+                pm.select(each,r=1)
+                pm.sets(shaderNoDisSG,e=1,forceElement=1)
+                    
+                # If shape has displacement shader,then assign displacement shader again    
+                if displacementShaders != [] :
+                    logging.debug('each: ' + str(each))
+                    for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
+                        shader,shaderSG = createShader('surfaceShader',(self.LAYER_NAME+'_'+str(eachSn)+'_MAT'))
+                        displacementShader.connect(shaderSG.displacementShader)
+                        AONode = pm.createNode('mib_amb_occlusion')
+                        AONode.outValue.connect(shader.outColor)
+                        AONode.samples.set(64)
+                                
+                        pm.select(shapeFace,r=1)
+                        pm.sets(shaderSG,e=1,forceElement=1)                        
 
   
     def createAOLayer(self,isAddPass):
