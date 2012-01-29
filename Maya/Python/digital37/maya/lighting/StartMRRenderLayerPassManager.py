@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 #Description:
 #Author:honglou(hongloull@gmail.com)
@@ -7,6 +7,7 @@
 #How to use : 
 
 import logging 
+from timeit import itertools
 #from PyQt4.uic.Compiler.qtproxies import QtCore
 LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
               'warning': logging.WARNING, 'error': logging.ERROR,\
@@ -55,7 +56,8 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         
         # for rename layer
         self.listWidget_SL.itemDoubleClicked.connect( self.getActiveLayer )
-        self.listWidget_CL.itemDoubleClicked.connect( self.getActiveLayer )
+        self.listWidget_CL.itemDoubleClicked.connect( self.get_layer_name_before_rename )
+        
         self.listWidget_SL.itemChanged.connect( self.renameLayer_SL )
         self.listWidget_CL.itemChanged.connect( self.renameLayer_CL )
         
@@ -75,7 +77,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         self.listWidget_CL.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         #self.listWidget_CL.customContextMenuRequested.connect(self.showContextMenu)
         self.listWidget_CL.customContextMenuRequested.connect(self.showContextMenu)
-        
+
     def switchStackedWidget(self):
         # Get combobox selected index
         self.stackedWidget.setCurrentIndex( self.comboBox_L.currentIndex() )
@@ -90,7 +92,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         layerPreset = str( self.comboBox_CL.currentText() )
         # Get selected layers
         self.getSelectedLayers()
-        self.RLP.set_creation_layers_attr('PRESET', layerPreset)
+        self.RLP.set_creation_layers_attr('PRESET', layerPreset,'Update')
         
     def updateCheckBox_opposite(self):
         if self.checkBox_doubleSided.isChecked() :
@@ -99,9 +101,6 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
             self.checkBox_opposite.setEnabled(True)
         
     def createContextMenu(self):
-        # ���뽫ContextMenuPolicy����ΪQt.CustomContextMenu  
-        # �����޷�ʹ��customContextMenuRequested�ź�  
-        
         # we do not need set this
         #self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         # set no contextmenu for default  
@@ -183,35 +182,55 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         # Get listWidget items first
         widgetListItems = self.getAllItemsInListWidget(listWidget)
         
+        print 'inputList',
+        print inputList
         if inputList :
-            if type(inputList) == RLP.TYPE_LIST :
-                listItem = []
-                #for l in [x for x in inputList if x not in widgetListItems.keys()] :
-                for l in (x for x in inputList if x not in widgetListItems) :
-                    listItem.append( QtGui.QListWidgetItem( l ) )
-                    
-                for i in range(len(listItem)) :
-                    listWidget.insertItem(i+1,listItem[i])
-                    # Add editable to listWidget_L's item
-                    if listWidget == self.listWidget_SL or listWidget == self.listWidget_CL:
-                        listItem[i].setFlags(listItem[i].flags() | QtCore.Qt.ItemIsEditable)
-                returnItem = listItem[i]
-            elif type(inputList) == RLP.TYPE_DICT :
-                listItem = []
-                #for l in [x for x in inputList.keys() if x not in widgetListItems.keys()]:
-                for l in (x for x in inputList if x not in widgetListItems):
-                    listItem.append( QtGui.QListWidgetItem( l ) )
-                    
-                for i in range(len(listItem)) :
-                    listWidget.insertItem(i+1,listItem[i])
-                    # Add editable to listWidget_L's item
-                    if listWidget == self.listWidget_SL or listWidget == self.listWidget_CL:
-                        listItem[i].setFlags(listItem[i].flags() | QtCore.Qt.ItemIsEditable)
-                returnItem = listItem[i]
-            else :
-                print type(inputList)
-                logging.error('appendListWidget input arg error')
+            widgetItem = None
+            #for l in [x for x in inputList if x not in widgetListItems.keys()] :
+            for i,name in itertools.izip( itertools.count(), (x for x in inputList if x not in widgetListItems) ) :
+                widgetItem = QtGui.QListWidgetItem(name)
+                listWidget.insertItem( i, widgetItem )
+                if listWidget == self.listWidget_SL or listWidget == self.listWidget_CL:
+                    widgetItem.setFlags(widgetItem.flags() | QtCore.Qt.ItemIsEditable)
+            if widgetItem :
+                returnItem = widgetItem
         return returnItem
+#                for l in (x for x in inputList if x not in widgetListItems) :
+#                    listItem.append( QtGui.QListWidgetItem( l ) )
+#                for i in range(len(listItem)) :
+#                    listWidget.insertItem(i+1,listItem[i])
+#                    # Add editable to listWidget_L's item
+#                    if listWidget == self.listWidget_SL or listWidget == self.listWidget_CL:
+#                        listItem[i].setFlags(listItem[i].flags() | QtCore.Qt.ItemIsEditable)
+
+                    
+#            elif type(inputList) == RLP.TYPE_DICT :
+#                listItem = []
+#                #for l in [x for x in inputList.keys() if x not in widgetListItems.keys()]:
+#                for l in (x for x in inputList if x not in widgetListItems):
+#                    listItem.append( QtGui.QListWidgetItem( l ) )
+#                    
+#                for i in range(len(listItem)) :
+#                    listWidget.insertItem(i+1,listItem[i])
+#                    # Add editable to listWidget_L's item
+#                    if listWidget == self.listWidget_SL or listWidget == self.listWidget_CL:
+#                        listItem[i].setFlags(listItem[i].flags() | QtCore.Qt.ItemIsEditable)
+#                if listItem :
+#                    returnItem = listItem[i]
+#            elif type(inputList) == RLP.TYPE_SET :
+#                listItem = []
+#                for l in (x for x in inputList if x not in widgetListItems) :
+#                    listItem.append( QtGui.QListWidgetItem( l ) )
+#                for i in range(len(listItem)) :
+#                    listWidget.insertItem(i+1,listItem[i])
+#                    # Add editable to listWidget_L's item
+#                    if listWidget == self.listWidget_SL or listWidget == self.listWidget_CL:
+#                        listItem[i].setFlags(listItem[i].flags() | QtCore.Qt.ItemIsEditable)
+#                if listItem :
+#                    returnItem = listItem[i]
+#            else :
+#                logging.error('appendListWidget input arg error')
+        
     
     # add menu cmd for listWidget_CL
     def listWidget_CL_add(self):
@@ -232,58 +251,50 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
     def getLayerDict(self):
         pass
 
-
 #    def removeListWidgetItem(self,listWidget,inputStringList):
 #        # Clear listWidget first
 #        if inputStringList :
 #            listWidgetItems_dict = self.getAllItemsInListWidget(listWidget)
-#            listItem = []
-#            for s in inputStringList :
-#                #logging.debug( 's: ' + str(type(s)) )
-#                if type(s) != RLP.TYPE_DICT :
-#                    if s in listWidgetItems_dict.keys():
-#                        listItem.append( listWidgetItems_dict[s] )
-#                else :
-#                    items = listWidget.findItems(s.keys()[0],QtCore.Qt.MatchFixedString)
-#                    if items :
-#                        listItem.append( items[0] )   
-#
-#            for l in listItem :
-#                i = listWidget.row(l)
-#                logging.debug('list widget\' row: ' + str(i))
-#                listWidget.takeItem(i)
-#                logging.warning('can not remove itemWidget')
-
+#            if inputStringList == RLP.TYPE_LIST :
+#                listItem = []
+#                for s in inputStringList :
+#                    #logging.debug( 's: ' + str(type(s)) )
+#                    if type(s) != RLP.TYPE_DICT :
+#                        #if s in listWidgetItems_dict.keys():
+#                        if s in listWidgetItems_dict:
+#                            listItem.append( listWidgetItems_dict[s] )
+#                    else :
+#                        items = listWidget.findItems(s.keys()[0],QtCore.Qt.MatchFixedString)
+#                        if items :
+#                            listItem.append( items[0] )   
+#    
+#                for l in listItem :
+#                    i = listWidget.row(l)
+#                    logging.debug('list widget\' row: ' + str(i))
+#                    try:
+#                        listWidget.takeItem(i)
+#                    except:
+#                        traceback.print_exc()
+#                        logging.warning('can not remove itemWidget')
+#            else :
+#                #inputStringList = dict
+#                #for k in inputStringList.keys() :
+#                for k in inputStringList :
+#                    i = listWidget.row( listWidgetItems_dict[k] )
+#                    try:
+#                        listWidget.takeItem(i)
+#                    except:
+#                        traceback.print_exc()
+#                        logging.warning('can not remove itemWidget')   
+                        
     def removeListWidgetItem(self,listWidget,inputStringList):
         # Clear listWidget first
         if inputStringList :
-            listWidgetItems_dict = self.getAllItemsInListWidget(listWidget)
-            if inputStringList == RLP.TYPE_LIST :
-                listItem = []
-                for s in inputStringList :
-                    #logging.debug( 's: ' + str(type(s)) )
-                    if type(s) != RLP.TYPE_DICT :
-                        #if s in listWidgetItems_dict.keys():
-                        if s in listWidgetItems_dict:
-                            listItem.append( listWidgetItems_dict[s] )
-                    else :
-                        items = listWidget.findItems(s.keys()[0],QtCore.Qt.MatchFixedString)
-                        if items :
-                            listItem.append( items[0] )   
-    
-                for l in listItem :
-                    i = listWidget.row(l)
-                    logging.debug('list widget\' row: ' + str(i))
-                    try:
-                        listWidget.takeItem(i)
-                    except:
-                        traceback.print_exc()
-                        logging.warning('can not remove itemWidget')
-            else :
-                #inputStringList = dict
-                #for k in inputStringList.keys() :
-                for k in inputStringList :
-                    i = listWidget.row( listWidgetItems_dict[k] )
+            for k in inputStringList :
+                items = listWidget.findItems(k,QtCore.Qt.MatchFixedString)
+                # Items maybe None
+                if items:
+                    i = listWidget.row(items[0])
                     try:
                         listWidget.takeItem(i)
                     except:
@@ -336,7 +347,11 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 self.insertListWidgetItem(self.listWidget_AO, obj_names_list)            
         else:
             if self.RLP.LAYER_CREATION_ACTIVE :
-                obj_names_list = self.RLP.getCreationLayerAttr( self.RLP.LAYER_CREATION_ACTIVE,'AO' )
+                print 'self.RLP.LAYER_CREATION_ACTIVE:',
+                print self.RLP.LAYER_CREATION_ACTIVE
+                obj_names_list = self.RLP.get_creation_layer_attr( self.RLP.LAYER_CREATION_ACTIVE,'AO' )
+                print 'obj_names_list:',
+                print obj_names_list
                 self.insertListWidgetItem(self.listWidget_AO, obj_names_list)            
         
     def updateOverridesList(self):
@@ -361,7 +376,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 self.insertListWidgetItem(self.listWidget_ASP, passes_list)
         else:
             if self.RLP.LAYER_CREATION_ACTIVE :
-                passes_list = self.RLP.getCreationLayerAttr( self.RLP.LAYER_CREATION_ACTIVE,'AP' )
+                passes_list = self.RLP.get_creation_layer_attr( self.RLP.LAYER_CREATION_ACTIVE,'AP' )
                 self.insertListWidgetItem(self.listWidget_ASP, passes_list)
         
     def updateScenePassList(self):
@@ -381,7 +396,6 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
     def updateAll(self):
         # Update all layers to list
         self.updateLayerList()
-        
         layer_current = None
         # First check if some layers in list have been selected
         self.getActiveLayer()
@@ -391,7 +405,6 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
             if layer_current : 
                 # Set layer active
                 self.set_layer_manager_active(layer_current)
-        
         self.updateLayerSettings_manager()     
                     
     def updateLayerSettings_manager(self):
@@ -403,8 +416,6 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         self.updateOverridesList()      
                     
     def updateLayerSettings_creation(self):
-        self.getSelectedLayers()
-        #self.getActiveLayer()
         self.updateAssociatedObjectList()
         self.updateAssociatedPassList()
         self.updateScenePassList()
@@ -428,6 +439,56 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 self.RLP.LAYERS_CREATION_SELECTED.append( layerName )
         self.RLP.getActiveLayer()
         
+    def get_layer_name_before_rename(self):
+        self.RLP.LAYER_MANAGER_ACTIVE = None
+        self.RLP.LAYER_CREATION_ACTIVE = None
+        logging.debug('get active layer')
+        if self.MODEL == 'M' :
+            layerName = ''
+            #currentItem = self.ui.listWidget_L.currentItem()
+            currentItems = self.listWidget_SL.selectedItems()
+            if not currentItems:
+                logging.debug('no active layer')
+            else:
+                try:
+                    currentItem = currentItems[-1]
+                except :
+                    logging.debug('can not get active layer')
+                    traceback.print_exc()
+                else :
+                    try:
+                        layerName = str( currentItem.text() )
+                    except:
+                        logging.debug('can not find text()')
+                        traceback.print_exc()
+                    else:
+                        logging.debug('currentItem: ' + layerName )
+                        self.RLP.LAYER_MANAGER_ACTIVE = layerName
+        else :
+            layerName = ''
+            #currentItem = self.ui.listWidget_L.currentItem()
+            currentItems = self.listWidget_CL.selectedItems()
+            if not currentItems:
+                logging.debug('no active layer')
+            else:
+                try:
+                    currentItem = currentItems[-1]
+                except :
+                    logging.debug('can not get active layer')
+                    traceback.print_exc()
+                else :
+                    try:
+                        layerName = str( currentItem.text() )
+                    except:
+                        logging.debug('can not find text()')
+                        traceback.print_exc()
+                    else:
+                        logging.debug('currentItem: ' + layerName )
+                        self.RLP.LAYER_CREATION_ACTIVE = layerName
+                        logging.debug('LAYER_CREATION_ACTIVE: ' + self.RLP.LAYER_CREATION_ACTIVE )
+                        #
+                        self.RLP.LAYER_BEFORE_RENAME = self.RLP.LAYER_CREATION_ACTIVE
+                                
     def getActiveLayer(self):
         self.RLP.LAYER_MANAGER_ACTIVE = None
         self.RLP.LAYER_CREATION_ACTIVE = None
@@ -474,7 +535,8 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                     else:
                         logging.debug('currentItem: ' + layerName )
                         self.RLP.LAYER_CREATION_ACTIVE = layerName
-    
+                        logging.debug('LAYER_CREATION_ACTIVE: ' + self.RLP.LAYER_CREATION_ACTIVE )
+                        
     def set_layer_manager_active(self,layer_current):
         # clear selection in listWidget_L
         self.listWidget_SL.clearSelection()
@@ -505,13 +567,13 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         # Get selected listWidgetItem
         # Important: no need for self.getActiveLayer
         # Because item double clicked connected self.getActiveLayer
+        self.getActiveLayer()
+        #logging.debug('self.RLP.LAYER_CREATION_ACTIVE:',self.RLP.LAYER_CREATION_ACTIVE)
         if self.RLP.LAYER_CREATION_ACTIVE :
-            item = self.listWidget_SL.currentItem()
-            txt = str( item.text() )
-            if txt :
+            if self.RLP.LAYER_BEFORE_RENAME not in self.RLP.LAYER_CREATION :
                 #logging.debug('layer text:',str(txt))
                 try :
-                    RLP.rename( self.RLP.LAYER_CREATION_ACTIVE, txt )
+                    self.RLP.rename_creation_layer()
                 except :
                     traceback.print_exc()
 
@@ -569,16 +631,19 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         self.updateLayerSettings_manager()     
                             
     def on_pushButton_SL_remove_pressed(self):
-        sels_dict_listWidget = self.RLP.getObjsFromSelsInListWidget(self.listWidget_SL)
-        if sels_dict_listWidget:
-            self.removeListWidgetItem(self.listWidget_SL, sels_dict_listWidget)
+        sels_set_listWidget = self.get_selected_widgetItem_text(self.listWidget_SL)
+        if sels_set_listWidget:
+            self.removeListWidgetItem(self.listWidget_SL, sels_set_listWidget)
             # Remove pass to layer
-            self.RLP.removeLayerByListWidget( sels_dict_listWidget )     
+            self.RLP.removeLayerByListWidget( sels_set_listWidget )     
             
         
     def on_pushButton_CL_add_pressed(self):
+        # Important: Clear list selection
+        self.listWidget_CL.clearSelection()
+        
         # Get layer name
-        layerName = layerNameExt = self.lineEdit_layerName.text()
+        layerName = layerNameExt = str( self.lineEdit_layerName.text() )
         # Check layer name is existes or not
         layerNameLists = self.getTextListsFromListWidget( self.listWidget_CL )
         if layerNameExt in layerNameLists :
@@ -590,13 +655,17 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 else :
                     break
         # Get layer preset
-        layerPreset = self.comboBox_CL.currentText()
+        layerPreset = str(self.comboBox_CL.currentText())
+        
         # Add newlayer to listwidget
         currentItem = self.appendListWidgetItem(self.listWidget_CL, {layerNameExt:None})
         # Select listWidgetItem
         if currentItem :
             self.listWidget_CL.clearSelection()
             self.listWidget_CL.setCurrentItem( currentItem )
+        # update LAYER_CREATION
+        self.RLP.init_creation_layer_attr(layerNameExt)
+        self.RLP.set_creation_layer_attr(layerNameExt,'PRESET', layerPreset,'Update')
 
     def on_pushButton_CL_apply_pressed(self):
         # Create creation layers
@@ -611,117 +680,131 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         #self.set_layer_manager_active( self.RLP.LAYER_MANAGER_ACTIVE )
 
     def on_pushButton_AO_add_pressed(self):
-        if self.MODEL == 'M' :
-            # Get selection obj
-            sels_set = RLP.get_selection_names()
-            # Get layer active
-            self.getActiveLayer()
-            if self.RLP.LAYER_MANAGER_ACTIVE and sels_set:
-                # Get current obj in list
-                obj_names_set = self.RLP.get_obj_in_layer( self.RLP.LAYER_MANAGER_ACTIVE )
-                # Remove objs
-                sels_set = sels_set - obj_names_set
-                self.appendListWidgetItem(self.listWidget_AO, sels_set)
-                # Add objs to layer
-                self.RLP.add_obj_to_layer_by_dict_list( self.RLP.LAYER_MANAGER_ACTIVE, sels_set )
-        else:
-            # Get selection obj
-            sels_dict = RLP.getSelection_dict()
-            # Get layer active
-            self.getActiveLayer()
-            if self.RLP.LAYER_CREATION_ACTIVE and sels_dict:
-                RLP.log_list( sels_dict )
-                self.appendListWidgetItem(self.listWidget_AO, sels_dict)
-                self.RLP.set_creation_layers_attr( self.RLP.LAYER_CREATION_ACTIVE, 'AO', sels_dict )
+        self.getSelectedLayers()
+        # Get selection obj
+        sels_set = RLP.get_selection_names()
+        if sels_set :
+            if self.MODEL == 'M' :
+                if self.RLP.LAYERS_MANAGER_SELECTED :
+                    # Get current obj in list
+                    obj_names_set = self.RLP.get_obj_in_layer( self.RLP.LAYER_MANAGER_ACTIVE )
+                    # Remove objs
+                    sels_set = sels_set - obj_names_set
+                    self.appendListWidgetItem(self.listWidget_AO, sels_set)
+                    # Add objs to layer
+                    self.RLP.add_obj_to_layers( self.RLP.LAYERS_MANAGER_SELECTED, sels_set )
+            else:
+                if self.RLP.LAYERS_CREATION_SELECTED :
+                    self.appendListWidgetItem(self.listWidget_AO, sels_set)
+                    print 'sels_set:',
+                    print sels_set
+                    self.RLP.set_creation_layers_attr( 'AO', sels_set, 'Add' )
                 
 #    def on_pushButton_AO_add_pressed(self):
 #        if self.MODEL == 'M' :
 #            # Get selection obj
-#            sels_dict = RLP.getSelection_dict()
+#            sels_set = RLP.getSelection_dict()
 #            # Get layer active
 #            self.getActiveLayer()
-#            if self.RLP.LAYER_MANAGER_ACTIVE and sels_dict:
+#            if self.RLP.LAYER_MANAGER_ACTIVE and sels_set:
 #                # Get current obj in list
 #                objs = self.RLP.getObjInLayer( self.RLP.LAYER_MANAGER_ACTIVE )
 #                logging.debug('objs:')
 #                RLP.log_list( objs )
 #                # Remove objs
-#                sels_dict = RLP.dict_remove_by_value( sels_dict, objs )
-#                logging.debug('sels_dict:')
-#                RLP.log_list( sels_dict )
-#                self.appendListWidgetItem(self.listWidget_AO, sels_dict)
+#                sels_set = RLP.dict_remove_by_value( sels_set, objs )
+#                logging.debug('sels_set:')
+#                RLP.log_list( sels_set )
+#                self.appendListWidgetItem(self.listWidget_AO, sels_set)
 #                # Add objs to layer
-#                self.RLP.add_obj_to_layer_by_dict_list( self.RLP.LAYER_MANAGER_ACTIVE, sels_dict )
+#                self.RLP.add_obj_to_layer_by_dict_list( self.RLP.LAYER_MANAGER_ACTIVE, sels_set )
 #        else:
 #            # Get selection obj
-#            sels_dict = RLP.getSelection_dict()
+#            sels_set = RLP.getSelection_dict()
 #            # Get layer active
 #            self.getActiveLayer()
-#            if self.RLP.LAYER_CREATION_ACTIVE and sels_dict:
-#                RLP.log_list( sels_dict )
-#                self.appendListWidgetItem(self.listWidget_AO, sels_dict)
-#                self.RLP.set_creation_layers_attr( self.RLP.LAYER_CREATION_ACTIVE, 'AO', sels_dict )
+#            if self.RLP.LAYER_CREATION_ACTIVE and sels_set:
+#                RLP.log_list( sels_set )
+#                self.appendListWidgetItem(self.listWidget_AO, sels_set)
+#                self.RLP.set_creation_layers_attr( self.RLP.LAYER_CREATION_ACTIVE, 'AO', sels_set )
 
     def on_pushButton_O_remove_pressed(self):
         # Get layer active
         self.getActiveLayer()
         if self.RLP.LAYER_MANAGER_ACTIVE :
             # For user select some widgetItems in listWidget
-            sels_dict = self.RLP.getObjsFromSelsInListWidget(self.listWidget_O)
+            sels_set = self.get_selected_widgetItem_text(self.listWidget_O)
 
-            if sels_dict:
-                logging.debug('sels_dict:')
-                RLP.log_dict( sels_dict )
-                self.removeListWidgetItem(self.listWidget_O, sels_dict)
+            if sels_set:
+                logging.debug('sels_set:')
+                RLP.log_dict( sels_set )
+                self.removeListWidgetItem(self.listWidget_O, sels_set)
                 # Remove objs to layer
-                self.RLP.removePassOfLayer( self.RLP.LAYER_MANAGER_ACTIVE, sels_dict )
+                self.RLP.removePassOfLayer( self.RLP.LAYER_MANAGER_ACTIVE, sels_set )
             
     def on_pushButton_AO_remove_pressed(self):
-        # Get layer active
-        self.getActiveLayer()
+        self.getSelectedLayers()
+        # Get selection obj:For user select some objs in model view
+        sels_set = RLP.get_selection_names()
         
-        if self.RLP.LAYER_MANAGER_ACTIVE:
-            # Get selection obj # For user select some objs in model view
-            sels_dict = RLP.getSelection_dict()
-            
-            # For user select some widgetItems in listWidget
-            sels_dict_listWidget = self.RLP.getObjsFromSelsInListWidget(self.listWidget_AO)
-            
-            if sels_dict_listWidget :
-                # sels_dict may be None, so set to list to use extend func
-                if not sels_dict :
-                    sels_dict = {}
-                #sels_dict.extend( sels_dict_listWidget )
-                try:
-                    sels_dict = RLP.dict_add(sels_dict,sels_dict_listWidget)
-                except:
-                    traceback.print_exc()
+        if self.MODEL == 'M' :
+            if self.RLP.LAYERS_MANAGER_SELECTED:
+                # For user select some widgetItems in listWidget
+                sels_set_listWidget = self.get_selected_widgetItem_text(self.listWidget_AO)
+                # add model sel and widget sel
+                sels_set = sels_set | sels_set_listWidget
+                if sels_set:
+                    logging.debug('sels_set:')
+                    RLP.log_list( sels_set )
+                    self.removeListWidgetItem(self.listWidget_AO, sels_set)
+                    # Remove objs to layer
+                    self.RLP.remove_obj_from_layer( self.RLP.LAYER_MANAGER_ACTIVE, sels_set )
+        else:
+            if self.RLP.LAYERS_CREATION_SELECTED:
+                # For user select some widgetItems in listWidget
+                sels_set_listWidget = self.get_selected_widgetItem_text(self.listWidget_AO)
+                # add model sel and widget sel
+                sels_set = sels_set | sels_set_listWidget
+                if sels_set:
+                    logging.debug('sels_set:')
+                    RLP.log_list( sels_set )
+                    self.removeListWidgetItem(self.listWidget_AO, sels_set)
+                    # Remove objs from creation layer
+                    self.RLP.set_creation_layers_attr('AO', sels_set, 'Remove')
                 
-            if sels_dict:
-                logging.debug('sels_dict:')
-                RLP.log_list( sels_dict )
-                self.removeListWidgetItem(self.listWidget_AO, sels_dict)
-                # Remove objs to layer
-                self.RLP.removeObj2Layer( self.RLP.LAYER_MANAGER_ACTIVE, sels_dict )
-                            
+            
+    def get_widgetItem_text(self,item):
+        return str(item.text())
+    
+    def get_selected_widgetItem_text(self,listWidget):
+        nodes_set = set()
+        for i in itertools.imap( lambda x:str(x.text()), listWidget.selectedItems() ) :
+            nodes_set.add(i)
+#        items = listWidget.selectedItems()
+#        if items:
+#            for item in items :
+#                # Get item's text
+#                nodes_set.add( str(item.text()) )
+        return nodes_set
+    
     def on_pushButton_ASP_remove_pressed(self):
         # Get layer active
         self.getActiveLayer()
         
         if self.RLP.LAYER_MANAGER_ACTIVE :
             # For user select some widgetItems in listWidget
-            sels_dict_listWidget = self.RLP.getObjsFromSelsInListWidget(self.listWidget_ASP)
-            if sels_dict_listWidget:
-                self.removeListWidgetItem(self.listWidget_ASP, sels_dict_listWidget)
+            sels_set_listWidget = self.get_selected_widgetItem_text(self.listWidget_ASP)
+            if sels_set_listWidget:
+                self.removeListWidgetItem(self.listWidget_ASP, sels_set_listWidget)
                 # Remove pass to layer
-                self.RLP.removePass2Layer( self.RLP.LAYER_MANAGER_ACTIVE, sels_dict_listWidget )
+                self.RLP.removePass2Layer( self.RLP.LAYER_MANAGER_ACTIVE, sels_set_listWidget )
                             
     def on_pushButton_SP_remove_pressed(self):
-        sels_dict_listWidget = self.RLP.getObjsFromSelsInListWidget(self.listWidget_SP)
-        if sels_dict_listWidget :
-            self.removeListWidgetItem(self.listWidget_SP, sels_dict_listWidget)
+        sels_set_listWidget = self.get_selected_widgetItem_text(self.listWidget_SP)
+        if sels_set_listWidget :
+            self.removeListWidgetItem(self.listWidget_SP, sels_set_listWidget)
             # Remove passes
-            self.RLP.removeScenePasses( sels_dict_listWidget )
+            self.RLP.removeScenePasses( sels_set_listWidget )
         
                                                                                 
     def on_pushButton_RS_apply_pressed(self):
@@ -798,4 +881,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

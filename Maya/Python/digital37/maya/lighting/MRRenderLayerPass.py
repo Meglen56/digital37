@@ -18,9 +18,10 @@ import pymel.core as pm
 from pymel.all import mel
 from pymel.core.general import PyNode
 
-TYPE_LIST = '<type \'list\'>'
-TYPE_STR = '<type \'str\'>'
-TYPE_DICT = '<type \'dict\'>'
+TYPE_LIST = type([])
+TYPE_STR = type('')
+TYPE_DICT = type({})
+TYPE_SET = type(set())
 
 MRCMD = '''unifiedRenderGlobalsWindow;
 //updateRendererUI;
@@ -70,7 +71,7 @@ def loadMRPlugin():
     if not pm.pluginInfo( 'Mayatomr', query=True, loaded=True ) :
         logging.warning('Maya to MentalRay Plugin has not been loaded.Loading Mayatomr now.')
         pm.loadPlugin( 'Mayatomr' )
-loadMRPlugin()
+#loadMRPlugin()
 #mel.eval(MRCMD)
 
 def setAttr(attr,val):
@@ -111,7 +112,7 @@ def setRendererToMR():
     # Display render settings window to fix some menetal ray attr do not exists
     #mel.eval('mentalrayAddTabs;')
 
-setRendererToMR()
+#setRendererToMR()
 
 # Get some global var
 MAYA_LOCATION = mel.getenv('MAYA_LOCATION')
@@ -205,7 +206,7 @@ def get_selection_names():
     sel = pm.ls(sl=1,l=1)
     if not sel :
         logging.warning('select some objects first.')
-        return None
+        return set()
     else :
         return set( itertools.imap(lambda x:x.longName(), sel ) )
 
@@ -441,7 +442,8 @@ class MRRenderLayerPass(object):
         self.LAYERS = []
         self.LAYER_MANAGER_ACTIVE = None
         # For create mode
-        self.LAYER_CREATION_ACTIVE = [] 
+        self.LAYER_CREATION_ACTIVE = None 
+        self.LAYER_BEFORE_RENAME = None
         self.LAYER_CREATION = {}
         self.LAYER_SCENE_ACTIVE = None
         self.getLayers()
@@ -574,33 +576,39 @@ class MRRenderLayerPass(object):
     def get_obj_in_layer(self,layer):
         return set( pm.editRenderLayerMembers(layer,q=1,fullNames=1) )
         
-    def getCreationLayerAttr(self,layer,attr):
-        obj_names_list = layer_dict = None
-        try:
+    def get_creation_layer_attr(self,layer,attr):
+        returnValue = layer_dict = None
+        print 'self.LAYER_CREATION:',
+        print self.LAYER_CREATION
+        if self.LAYER_CREATION.has_key(layer):
+            print 'layer:',
+            print layer
+            print type(layer)
             layer_dict = self.LAYER_CREATION.get(layer)
-        except:
-            traceback.print_exc()
+            print 'layer_dict:',
+            print layer_dict
+            if layer_dict.has_key(attr):
+                returnValue = layer_dict.get(attr)
+                print 'returnValue:',
+                print returnValue
         else:
-            try:
-                obj_names_list = layer_dict.get(attr)
-            except:
-                traceback.print_exc()
-        return obj_names_list
-                
+            logging.debug('get creation layer attr error:')
+        return returnValue
 
-    def add_obj_to_layer_by_dict_list(self,layer,obj_list):
-        obj_list = get_dict_list_values(obj_list)
-        log_list(obj_list)
-        self.add_obj_to_layer(layer, obj_list)
+    def add_obj_to_layers(self,layers,obj_names_list):
+        for layer in layers :
+            self.add_obj_to_layer(layer, obj_names_list)
         
-    def add_obj_to_layer(self,layer,obj_list):
+    def add_obj_to_layer(self,layer,obj_names_list):
         #editRenderLayerMembers -noRecurse layer2 nurbsSphere2
-        if layer and obj_list :
-            pm.editRenderLayerMembers(layer,obj_list,noRecurse=1)
+        if layer and obj_names_list :
+            if type(obj_names_list) == TYPE_SET :
+                obj_names_list = list(obj_names_list)
+            pm.editRenderLayerMembers(layer,obj_names_list,noRecurse=1)
         else :
             if not layer :
                 logging.warning('add_obj_to_layer: layer is None')
-            if not obj_list :
+            if not obj_names_list :
                 logging.warning('add_obj_to_layer: selection is None')
                 
     def removePassOfLayer(self,layer,obj_list):
@@ -624,7 +632,7 @@ class MRRenderLayerPass(object):
                 logging.warning('removePassOfLaye: selection is None')
                                 
     def removeObj2Layer(self,layer,obj_list):
-        l = [x for x in obj_list.values()]
+        l = [x for x in obj_list.itervalues()]
         log_list(l)
         #editRenderLayerMembers -noRecurse layer2 nurbsSphere2
         if layer and l :
@@ -641,6 +649,21 @@ class MRRenderLayerPass(object):
                 logging.warning('removeObj2Layer: layer is None')
             if not l :
                 logging.warning('removeObj2Layer: selection is None')
+                                                
+    def remove_obj_from_layer(self,layer,obj_list):
+        if type(obj_list) == TYPE_SET : 
+            obj_list=list(obj_list)
+        
+        log_list(obj_list)
+        #editRenderLayerMembers -noRecurse layer2 nurbsSphere2
+        if layer and obj_list :
+            layer = PyNode(layer)
+            pm.editRenderLayerMembers(layer,obj_list,noRecurse=1,remove=1)
+        else :
+            if not layer :
+                logging.warning('remove_obj_from_layer: layer is None')
+            if not obj_list :
+                logging.warning('remove_obj_from_layer: selection is None')
                         
     def removeLayerByListWidget(self,layer_dict):
         layers = []
@@ -687,20 +710,7 @@ class MRRenderLayerPass(object):
                 logging.warning('removeOverrides2Layer: layer is None')
             if not l :
                 logging.warning('removeOverrides2Layer: selection is None')
-            
-    def getObjsFromSelsInListWidget(self,listWidget):
-        nodes_dict = {}
-        items = listWidget.selectedItems()
-        if items:
-            for item in items :
-                # Get item's node
-                try :
-                    nodes_dict[str(item.text())] = PyNode( str(item.text()) )
-                except :
-                    logging.warning('can not get pynode from listwidgetItem')
-                    print traceback.print_exc()
-        return nodes_dict
-
+    
     def removeScenePasses(self,passesList_dict):
         try:
             pm.delete( passesList_dict.values() )
@@ -903,19 +913,52 @@ class MRRenderLayerPass(object):
             if self.LAYERS_CREATION_SELECTED :
                 self.set_creation_layers_attr(self.LAYERS_CREATION_SELECTED, 'AP', pass_names_list)
                 
-    def set_creation_layers_attr(self,key,value):
+    def set_creation_layers_attr(self,key,value,model):
+        print 'self.LAYER_CREATION:'
+        print self.LAYER_CREATION
+        # Convert list to set
+        if type(value) == TYPE_LIST :
+            value = set(value)
         for layer in self.LAYERS_CREATION_SELECTED :
-            self.set_creation_layer_attr(layer, key, value)
+            self.set_creation_layer_attr(layer, key, value, model)
         print 'self.LAYER_CREATION:'
         print self.LAYER_CREATION
             
-    def set_creation_layer_attr(self,layer,key,value):
-        if not layer in self.LAYER_CREATION :
-            self.LAYER_CREATION.setdefault(layer,{})
-        if not key in self.LAYER_CREATION[layer] :
-            self.LAYER_CREATION[layer].setdefault( key, value )
+    def init_creation_layer_attr(self,layer):
+        self.LAYER_CREATION[layer] = {'AO':[],'AP':[],'O':[],'PRESET':'Normal'}
+        
+    def rename_creation_layer(self):
+        logging.debug('rename_creation_layer:')
+        print 'self.LAYER_CREATION:',self.LAYER_CREATION
+        # Copy value from old layer
+        try:
+            self.LAYER_CREATION[self.LAYER_CREATION_ACTIVE] = self.LAYER_CREATION[self.LAYER_BEFORE_RENAME]
+        except:
+            pass
         else:
-            self.LAYER_CREATION[layer].update( {key:value} )
+            # Remove old layer
+            self.LAYER_CREATION.pop( self.LAYER_BEFORE_RENAME )
+        print 'self.LAYER_CREATION:',self.LAYER_CREATION
+        
+    def set_creation_layer_attr(self,layer,key,value,model):
+        # Add elements
+        if model == 'Add' :
+            v = list( value - set( self.LAYER_CREATION[layer][key] ) )
+            if v :
+                self.LAYER_CREATION[layer][key].extend(v)
+        # Remove elements
+        elif model == 'Remove' :
+            v = list( set( self.LAYER_CREATION[layer][key] ) - value )
+            if v :
+                self.LAYER_CREATION[layer].update(key,v)
+        # For 'PRESET' attr
+        elif model == 'Update':
+            print self.LAYER_CREATION
+            self.LAYER_CREATION[layer][key] = value
+            print self.LAYER_CREATION
+        else:
+            logging.error('set_creation_layer_attr: input model is wrong')
+            print model
                     
     def create_creation_layers(self):
         for layerName in self.LAYER_CREATION :
@@ -1510,15 +1553,10 @@ class MRRenderLayerPass(object):
                         pm.select(shapeFace,r=1)
                         pm.sets(shaderSG,e=1,forceElement=1)
         pm.select(cl=1)
-        
-        
-class MRRenderSubSet():
-    def __init__(self):
-        logging.debug('Init MRRenderSubSet class')     
-        
+
     def createRenderSubSet(self,subSetName):
         selObj = getGeometrySelection()
-#string $subsetShader=`mrCreateCustomNode -asUtility "" mip_render_subset`;
+        #string $subsetShader=`mrCreateCustomNode -asUtility "" mip_render_subset`;
         subSetShader = pm.createNode('mip_render_subset',asUtility=1)
                                                                     
 #MRRenderLayerPass()
@@ -1530,6 +1568,6 @@ class MRRenderSubSet():
 #MRRenderLayerPass().createLightLayer('test',[0,1,0])
 #MRRenderLayerPass().createColorLayer()
 
-#if __name__ == "__main__":
-#    loadMRPlugin()
-#    setRendererToMR()
+if __name__ == "__main__":
+    loadMRPlugin()
+    setRendererToMR()
