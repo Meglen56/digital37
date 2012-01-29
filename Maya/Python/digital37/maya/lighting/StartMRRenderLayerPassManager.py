@@ -483,11 +483,10 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                         logging.debug('can not find text()')
                         traceback.print_exc()
                     else:
-                        logging.debug('currentItem: ' + layerName )
+                        #logging.debug('currentItem: ' + layerName )
                         self.RLP.LAYER_CREATION_ACTIVE = layerName
-                        logging.debug('LAYER_CREATION_ACTIVE: ' + self.RLP.LAYER_CREATION_ACTIVE )
-                        #
                         self.RLP.LAYER_BEFORE_RENAME = self.RLP.LAYER_CREATION_ACTIVE
+                        logging.debug('LAYER_BEFORE_RENAME: ' + self.RLP.LAYER_BEFORE_RENAME )
                                 
     def getActiveLayer(self):
         self.RLP.LAYER_MANAGER_ACTIVE = None
@@ -536,6 +535,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                         logging.debug('currentItem: ' + layerName )
                         self.RLP.LAYER_CREATION_ACTIVE = layerName
                         logging.debug('LAYER_CREATION_ACTIVE: ' + self.RLP.LAYER_CREATION_ACTIVE )
+            return layerName
                         
     def set_layer_manager_active(self,layer_current):
         # clear selection in listWidget_L
@@ -567,13 +567,13 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         # Get selected listWidgetItem
         # Important: no need for self.getActiveLayer
         # Because item double clicked connected self.getActiveLayer
-        self.getActiveLayer()
-        #logging.debug('self.RLP.LAYER_CREATION_ACTIVE:',self.RLP.LAYER_CREATION_ACTIVE)
-        if self.RLP.LAYER_CREATION_ACTIVE :
-            if self.RLP.LAYER_BEFORE_RENAME not in self.RLP.LAYER_CREATION :
+        newName = self.getActiveLayer()
+        print 'newName:',newName
+        if newName :
+            if newName != self.RLP.LAYER_BEFORE_RENAME :
                 #logging.debug('layer text:',str(txt))
                 try :
-                    self.RLP.rename_creation_layer()
+                    self.RLP.rename_creation_layer(newName)
                 except :
                     traceback.print_exc()
 
@@ -588,26 +588,29 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                         
     def updateAssociatedPasses(self):
         logging.debug('updateAssociatedPasses')
-        
         # Get selected layers
         self.getSelectedLayers()
-        
+        # Get all widgetItems in listWidget_SP
+#        listWidgetItems = self.getAllItemsInListWidget(self.listWidget_ASP)
+#        listWidgetItems_values = (x for x in listWidgetItems.itervalues())
+#        # Remove items if have the same text
+#        # Drag and Drop may be create some same text items
+#        text_list = [x.text() for x in listWidgetItems_values]
+#        for item in listWidgetItems_values :
+#            if text_list.count(item.text()) != 1 :
+#                index = self.listWidget_ASP.row(item)
+#                self.listWidget_ASP.takeItem(index)
+#            
+#        print '*-*'
+#        print listWidgetItems
+        listWidgetItems_names_list = self.getTextListsFromListWidget(self.listWidget_ASP)
         if self.MODEL == 'M' :
             # Only update if some layers selected
-            if self.RLP.LAYERS_MANAGER_SELECTED :
-                # Get all widgetItems in listWidget_SP
-                listWidgetItems = self.getAllItemsInListWidget(self.listWidget_ASP)
-                print '*-*'
-                print listWidgetItems
-                if listWidgetItems :
-                    self.RLP.updateAssociatedPasses( listWidgetItems.keys(),self.MODEL )
+            if self.RLP.LAYERS_MANAGER_SELECTED and listWidgetItems_names_list :
+                self.RLP.updateAssociatedPasses( listWidgetItems_names_list,self.MODEL )
         else:
-            if self.RLP.LAYERS_CREATION_SELECTED :
-                listWidgetItems = self.getAllItemsInListWidget(self.listWidget_ASP)
-                print '*-*'
-                print listWidgetItems
-                if listWidgetItems :
-                    self.RLP.updateAssociatedPasses( listWidgetItems.keys(),self.MODEL )
+            if self.RLP.LAYERS_CREATION_SELECTED and listWidgetItems_names_list :
+                self.RLP.updateAssociatedPasses( listWidgetItems_names_list,self.MODEL )
                     
     def addAssociatedPasses2Layers(self):
         pass_names_list = []

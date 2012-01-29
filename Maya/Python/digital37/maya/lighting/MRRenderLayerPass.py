@@ -911,7 +911,8 @@ class MRRenderLayerPass(object):
                                     traceback.print_exc()
         else:
             if self.LAYERS_CREATION_SELECTED :
-                self.set_creation_layers_attr(self.LAYERS_CREATION_SELECTED, 'AP', pass_names_list)
+                # AP may be add or remove, so use 'update' model
+                self.set_creation_layers_attr('AP', pass_names_list,'Update')
                 
     def set_creation_layers_attr(self,key,value,model):
         print 'self.LAYER_CREATION:'
@@ -923,34 +924,21 @@ class MRRenderLayerPass(object):
             self.set_creation_layer_attr(layer, key, value, model)
         print 'self.LAYER_CREATION:'
         print self.LAYER_CREATION
-            
-    def init_creation_layer_attr(self,layer):
-        self.LAYER_CREATION[layer] = {'AO':[],'AP':[],'O':[],'PRESET':'Normal'}
-        
-    def rename_creation_layer(self):
-        logging.debug('rename_creation_layer:')
-        print 'self.LAYER_CREATION:',self.LAYER_CREATION
-        # Copy value from old layer
-        try:
-            self.LAYER_CREATION[self.LAYER_CREATION_ACTIVE] = self.LAYER_CREATION[self.LAYER_BEFORE_RENAME]
-        except:
-            pass
-        else:
-            # Remove old layer
-            self.LAYER_CREATION.pop( self.LAYER_BEFORE_RENAME )
-        print 'self.LAYER_CREATION:',self.LAYER_CREATION
         
     def set_creation_layer_attr(self,layer,key,value,model):
         # Add elements
         if model == 'Add' :
             v = list( value - set( self.LAYER_CREATION[layer][key] ) )
+            log_list(v)
             if v :
                 self.LAYER_CREATION[layer][key].extend(v)
         # Remove elements
         elif model == 'Remove' :
             v = list( set( self.LAYER_CREATION[layer][key] ) - value )
-            if v :
-                self.LAYER_CREATION[layer].update(key,v)
+            log_list(v)
+            if not v:
+                v = []
+            self.LAYER_CREATION[layer].update({key:v})
         # For 'PRESET' attr
         elif model == 'Update':
             print self.LAYER_CREATION
@@ -959,7 +947,24 @@ class MRRenderLayerPass(object):
         else:
             logging.error('set_creation_layer_attr: input model is wrong')
             print model
-                    
+            
+    def init_creation_layer_attr(self,layer):
+        self.LAYER_CREATION[layer] = {'AO':[],'AP':[],'O':[],'PRESET':'Normal'}
+        
+    def rename_creation_layer(self,newName):
+        logging.debug('rename_creation_layer:')
+        print 'self.LAYER_CREATION:',self.LAYER_CREATION
+        # Copy value from old layer
+        try:
+            self.LAYER_CREATION[newName] = self.LAYER_CREATION[self.LAYER_BEFORE_RENAME]
+        except:
+            traceback.print_exc()
+        else:
+            print 'self.LAYER_CREATION:',self.LAYER_CREATION
+            # Remove old layer
+            self.LAYER_CREATION.pop( self.LAYER_BEFORE_RENAME )
+        print 'self.LAYER_CREATION:',self.LAYER_CREATION
+                            
     def create_creation_layers(self):
         for layerName in self.LAYER_CREATION :
             # Create MR layer
