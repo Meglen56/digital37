@@ -5,20 +5,19 @@
 #Update: 
 #Howto use : 
 import logging 
-#from idlelib.RemoteDebugger import traceback
-LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
-              'warning': logging.WARNING, 'error': logging.ERROR,\
-              'critical': logging.CRITICAL}
-LOG_LEVEL = LOG_LEVELS.get('debug')
-logging.basicConfig(level=LOG_LEVEL)
-
 import traceback
 import itertools
 import pymel.core as pm
 from pymel.all import mel
 from pymel.core.general import PyNode
 
-def setAttr(self,attr,val):
+#LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
+#              'warning': logging.WARNING, 'error': logging.ERROR,\
+#              'critical': logging.CRITICAL}
+#LOG_LEVEL = LOG_LEVELS.get('error')
+#logging.basicConfig(level=LOG_LEVEL)
+    
+def setAttr(attr,val):
     # Check if attr exists
     logging.debug('attr: ' + str(attr))
     if pm.objExists(attr) :
@@ -132,7 +131,7 @@ def getDAGSelection():
         return selObj
 
 def getGeometrySelection():
-    logging.debug('MRRenderLayerPass getDAGSelection')
+    logging.debug('MRRenderLayerPass get geometry Selection')
     selObj = pm.ls(sl=1,dag=1,lf=1,type=['mesh','nurbsSurface','subdiv'])
     if not selObj :
         logging.warning('select some objects first.')
@@ -240,6 +239,14 @@ class MRRenderLayerPass(object):
         self.initMentalRay()
         self.getLayers()
         
+        
+#    def setLog(self,logLevel):
+#        LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
+#              'warning': logging.WARNING, 'error': logging.ERROR,\
+#              'critical': logging.CRITICAL}
+#        LOG_LEVEL = LOG_LEVELS.get(logLevel)
+#        logging.basicConfig(level=LOG_LEVEL)
+    
     # Load mental ray plugin first, else can not made some global var      
     def loadMRPlugin(self):
         #Check MR plugin load or not
@@ -255,81 +262,95 @@ class MRRenderLayerPass(object):
             self.DEFAULT_RENDER_GLOBALS.currentRenderer.set('mentalRay')
             
     def initMentalRay(self):
-        try :
+        try:
             PyNode('defaultRenderGlobals')
         except:
             logging.warning('Get defaultRenderGlobals error.')
             pm.createNode('defaultRenderGlobals')
         self.DEFAULT_RENDER_GLOBALS = PyNode('defaultRenderGlobals')
         
-        try :
+        try:
             PyNode('mentalrayGlobals')
         except:
             logging.warning('Get mentalrayGlobals error.')
-            pm.createNode('mentalrayGlobals')
+            try:
+                mel.eval('miCreateDefaultNodes')
+            except:
+                traceback.print_exc()
         self.MENTAL_RAY_GLOBALS = PyNode('mentalrayGlobals')
                 
         try:
-            self.MI_DEFAULT_OPTIONS = PyNode('miDefaultOptions')
-        except :
+            PyNode('miDefaultOptions')
+        except:
             logging.warning('Get miDefaultOptions error.')
-            pm.createNode('miDefaultOptions')
+            try:
+                mel.eval('miCreateDefaultNodes')
+            except:
+                traceback.print_exc()
         self.MI_DEFAULT_OPTIONS = PyNode('miDefaultOptions')
             
-        try :
+        try:
             PyNode('miDefaultFramebuffer')
-        except :
+        except:
             logging.warning('Get miDefaultFramebuffer error.')
-            pm.createNode('miDefaultFramebuffer')
+            try:
+                mel.eval('miCreateDefaultNodes')
+            except:
+                traceback.print_exc()
         self.MI_DEFAULT_FRAME_BUFFER = PyNode('miDefaultFramebuffer')
         
-        try :
+        try:
             PyNode('mentalrayItemsList')
         except:
             logging.warning('Get mentalrayItemsList error.')
-            pm.createNode('mentalrayItemsList')
+            try:
+                mel.eval('miCreateDefaultNodes')
+            except:
+                traceback.print_exc()
         self.MENTAL_RAY_ITEMS_LIST = PyNode('mentalrayItemsList')
         
         # Connect attributes
         self.setRendererToMR()
-        try:
-            self.MI_DEFAULT_OPTIONS.message.connect( self.MENTAL_RAY_GLOBALS.options )
-        except:
-            traceback.print_exc()
-            
-        try:
-            self.MI_DEFAULT_FRAME_BUFFER.message.connect( self.MENTAL_RAY_GLOBALS.framebuffer )
-        except:
-            traceback.print_exc()
-            
-        try:
-            self.MENTAL_RAY_GLOBALS.message.connect( self.MENTAL_RAY_ITEMS_LIST.globals )
-        except:
-            traceback.print_exc()
-#===============================================================================
-# setAttr defaultRenderGlobals.currentRenderer -type "string" "mentalRay";
-# createNode mentalrayItemsList -name "mentalrayItemsList";
-# createNode mentalrayGlobals -name "mentalrayGlobals";
-# createNode mentalrayOptions -name "miDefaultOptions";
-# createNode mentalrayFramebuffer -name "miDefaultFramebuffer";
-# connectAttr miDefaultOptions.message mentalrayGlobals.options;
-# connectAttr miDefaultFramebuffer.message mentalrayGlobals.framebuffer;
-# connectAttr mentalrayGlobals.message mentalrayItemsList.globals;
-#===============================================================================
+        #=======================================================================
+        # if not self.MENTAL_RAY_GLOBALS.options in self.MI_DEFAULT_OPTIONS.message.listConnections(d=1,p=1) :
+        #    try:
+        #        self.MI_DEFAULT_OPTIONS.message.connect( self.MENTAL_RAY_GLOBALS.options )
+        #    except:
+        #        traceback.print_exc()
+        # 
+        # if not self.MENTAL_RAY_GLOBALS.framebuffer in self.MI_DEFAULT_FRAME_BUFFER.message.listConnections(d=1,p=1) :
+        #    try:
+        #        self.MI_DEFAULT_FRAME_BUFFER.message.connect( self.MENTAL_RAY_GLOBALS.framebuffer )
+        #    except:
+        #        traceback.print_exc()
+        #  
+        # if not self.MENTAL_RAY_ITEMS_LIST.globals in self.MENTAL_RAY_GLOBALS.message.listConnections(d=1,p=1) :  
+        #    try:
+        #        self.MENTAL_RAY_GLOBALS.message.connect( self.MENTAL_RAY_ITEMS_LIST.globals )
+        #    except:
+        #        traceback.print_exc()
+        #=======================================================================
 
     def setRenderStatus(self,renderStatus, layerOverride = False):
+        logging.debug('setRenderStatus')
         sels = getGeometrySelection()
         if sels :
             for sel in sels :
                 for k,v in renderStatus.iteritems() :
                     attr = PyNode(sel.longName()+'.'+k)
-                    self.setAttr(attr,v[1])
                     if layerOverride :
                         try:
                             pm.editRenderLayerAdjustment( attr )
                         except:
                             traceback.print_exc()
-                      
+                    # set attr after layer overrides
+                    #setAttr(attr,v[1])
+                    try:
+                        attr.set( v[1] )
+                    except:
+                        logging.debug('set attr error:')
+                        print attr
+                        traceback.print_exc()
     
     def createShader(self,shaderType,shaderName):
         surfaceShader = pm.shadingNode(shaderType,n=shaderName,asShader=True)
@@ -1199,13 +1220,6 @@ class MRRenderLayerPass(object):
                                 pm.select(k,r=1)
                                 pm.sets(shaderSG,e=1,forceElement=1)
 
-                pm.select(each)
-                logging.debug('each: '+str(each))
-                eachSn = pm.pickWalk(d='down')
-                logging.debug('eachSn: '+str(eachSn[0]))
-                if eachSn[0] != each :
-                    pm.editRenderLayerMembers(self.CURRENT_LAYER,eachSn[0],remove=1)
-  
         # Adjust render layer attr
         self.setRenderLayerAttr(self.MI_DEFAULT_OPTIONS.finalGather, 0)
         self.setRenderLayerAttr(self.MI_DEFAULT_OPTIONS.caustics, 0)
@@ -1747,7 +1761,7 @@ class MRRenderLayerPass(object):
                         pm.sets(shaderSG,e=1,forceElement=1)
         pm.select(cl=1)
 
-    def createRenderSubSet(self,subSetName):
+    def createSubSet(self,subSetName):
         selObj = getGeometrySelection()
         #string $subsetShader=`mrCreateCustomNode -asUtility "" mip_render_subset`;
         subSetShader = pm.createNode('mip_render_subset',asUtility=1)

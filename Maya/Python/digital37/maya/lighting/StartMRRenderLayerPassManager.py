@@ -5,15 +5,18 @@
 #Update: 
 #How to use : 
 import logging
-from timeit import itertools
+
 #from PyQt4.uic.Compiler.qtproxies import QtCore
-LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
-              'warning': logging.WARNING, 'error': logging.ERROR,\
-              'critical': logging.CRITICAL}
-LOG_LEVEL = LOG_LEVELS.get('debug')
-logging.basicConfig(level=LOG_LEVEL)
+#===============================================================================
+# LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
+#              'warning': logging.WARNING, 'error': logging.ERROR,\
+#              'critical': logging.CRITICAL}
+# LOG_LEVEL = LOG_LEVELS.get('debug')
+# logging.basicConfig(level=LOG_LEVEL)
+#===============================================================================
 
 import traceback
+import itertools
 
 import sip
 from PyQt4 import QtCore, QtGui
@@ -45,6 +48,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         self.init_combobox_CL()
         self.init_lineEdit_layerName()
         
+        self.lineEdit_layerName.textChanged.connect( self.set_lineEdit_layerName )
         self.comboBox_L.currentIndexChanged.connect( self.switchStackedWidget )
         self.comboBox_CL.currentIndexChanged.connect( self.setCreationLayerPreset )
          
@@ -180,7 +184,11 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
 
     def init_lineEdit_layerName(self):
         self.lineEdit_layerName.setText( self.RLP.LAYER_NAME_DEFAULT )
-                        
+
+    def set_lineEdit_layerName(self):
+        if not self.lineEdit_layerName.text() :
+            self.init_lineEdit_layerName()
+                                
     def insertListWidgetItem(self,listWidget,inputList):
         # Clear listWidget first
         #listWidget.clear()
@@ -190,8 +198,6 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         returnItem = None
         # Get listWidget items first
         widgetListItems = self.getAllItemsInListWidget(listWidget)
-        
-
         print 'inputList',
         print inputList
         if inputList :
@@ -769,21 +775,19 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                                                                                 
     def on_pushButton_RS_apply_pressed(self):
         layerOverride = self.checkBox_layerOverride_status.isChecked()
-        
-        renderStatus = {'castsShadows':[self.checkBox_castsShadows,1],\
-                        'receiveShadows':[self.checkBox_receiveShadows,1],\
-                        'motionBlur':[self.checkBox_motionBlur,1],\
-                        'primaryVisibility':[self.checkBox_primaryVisibility,1],\
-                        'smoothShading':[self.checkBox_smoothShading,1],\
-                        'visibleInReflections':[self.checkBox_visibleInReflections,1],\
-                        'visibleInRefractions':[self.checkBox_visibleInRefractions,1],\
-                        'doubleSided':[self.checkBox_doubleSided,1],\
-                        'opposite':[self.checkBox_opposite,1]
+        renderStatus = {'castsShadows':[self.checkBox_castsShadows,True],\
+                        'receiveShadows':[self.checkBox_receiveShadows,True],\
+                        'motionBlur':[self.checkBox_motionBlur,True],\
+                        'primaryVisibility':[self.checkBox_primaryVisibility,True],\
+                        'smoothShading':[self.checkBox_smoothShading,True],\
+                        'visibleInReflections':[self.checkBox_visibleInReflections,True],\
+                        'visibleInRefractions':[self.checkBox_visibleInRefractions,True],\
+                        'doubleSided':[self.checkBox_doubleSided,True],\
+                        'opposite':[self.checkBox_opposite,True]
                         }
         for v in renderStatus.itervalues() :
             v[1] = v[0].isChecked()
         self.RLP.setRenderStatus( renderStatus, layerOverride )
-
 
     def on_pushButton_CM_black_pressed(self):
         self.RLP.create_shader( [0,0,0],[1,1,1],'BLACK_MATTE',\
@@ -826,12 +830,20 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                     listWidget.takeItem( row )
                 except:
                     logging.warning('delSelItemInListWidget error')
-                                
+
+def setLog(logLevel):
+    LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
+              'warning': logging.WARNING, 'error': logging.ERROR,\
+              'critical': logging.CRITICAL}
+    LOG_LEVEL = LOG_LEVELS.get(logLevel)
+    logging.basicConfig(level=LOG_LEVEL)
+                                    
 def getMayaWindow():
     ptr = maya.OpenMayaUI.MQtUtil.mainWindow()
     return sip.wrapinstance(long(ptr), QtCore.QObject)
 
-def main():
+def main(logLevel='error'):
+    #setLog(logLevel)
     global MRRenderLayerPassManager_app
     global MRRenderLayerPassManager_myapp
     MRRenderLayerPassManager_app = QtGui.qApp
