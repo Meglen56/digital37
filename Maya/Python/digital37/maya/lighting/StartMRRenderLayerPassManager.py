@@ -32,7 +32,8 @@ import digital37.maya.lighting.MRRenderLayerPass as RLP
 reload(RLP)
 
 class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, debug=True):
+        self.DEBUG = debug
         QtGui.QWidget.__init__(self, parent)
         #self.ui.setupUi(self)
         self.setupUi(self)
@@ -103,7 +104,8 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
             # Get layer preset attr
             preset = self.RLP.get_creation_layer_attr(self.RLP.LAYER_CREATION_ACTIVE, 'PRESET')
             # Set preset
-            if preset != str( self.comboBox_CL.currentText() ) :
+            logging.debug('prest:%s',preset)
+            if preset and preset != str( self.comboBox_CL.currentText() ) :
                 i = self.comboBox_CL.findText( QtCore.QString(preset), QtCore.Qt.MatchFixedString)
                 self.comboBox_CL.setCurrentIndex(i)
         
@@ -136,12 +138,12 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
 
     def actionHandler_add(self):  
         # function for menu
-        print 'action handler_add'
+        logging.debug('action handler_add')
         self.listWidget_CL_add()
               
     def actionHandler_remove(self):  
         # function for menu
-        print 'action handler_remove'
+        logging.debug('action handler_remove')
         self.listWidget_CL_remove()
 
     # listWidget_SP can only accept listWidget_AVP's drag and drop
@@ -198,11 +200,11 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         returnItem = None
         # Get listWidget items first
         widgetListItems = self.getAllItemsInListWidget(listWidget)
-        print 'inputList',
-        print inputList
+        if self.DEBUG:
+            print 'inputList',
+            print inputList
         if inputList :
             widgetItem = None
-            #for l in [x for x in inputList if x not in widgetListItems.keys()] :
             for i,name in itertools.izip( itertools.count(1), (x for x in inputList if x not in widgetListItems) ) :
                 widgetItem = QtGui.QListWidgetItem(name)
                 listWidget.insertItem( i, widgetItem )
@@ -293,11 +295,13 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 self.insertListWidgetItem(self.listWidget_AO, obj_names_list)            
         else:
             if self.RLP.LAYER_CREATION_ACTIVE :
-                print 'self.RLP.LAYER_CREATION_ACTIVE:',
-                print self.RLP.LAYER_CREATION_ACTIVE
+                if self.DEBUG:
+                    print 'self.RLP.LAYER_CREATION_ACTIVE:',
+                    print self.RLP.LAYER_CREATION_ACTIVE
                 obj_names_list = self.RLP.get_creation_layer_attr( self.RLP.LAYER_CREATION_ACTIVE,'AO' )
-                print 'obj_names_list:',
-                print obj_names_list
+                if self.DEBUG:
+                    print 'obj_names_list:',
+                    print obj_names_list
                 self.insertListWidgetItem(self.listWidget_AO, obj_names_list)            
         
     def updateOverridesList(self):
@@ -344,7 +348,8 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                         
     def flattenItemsInListWidget(self,listWidget):
         text_list = set( self.getTextListsFromListWidget(listWidget) )
-        print 'text_list:',text_list
+        if self.DEBUG:
+            print 'text_list:',text_list
         listWidget.clear()
         self.insertListWidgetItem(listWidget, list(text_list))
                 
@@ -431,7 +436,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                         logging.debug('can not find text()')
                         traceback.print_exc()
                     else:
-                        logging.debug('currentItem: ' + layerName )
+                        logging.debug('currentItem: %s' ,layerName )
                         self.RLP.LAYER_MANAGER_ACTIVE = layerName
         else :
             layerName = ''
@@ -455,7 +460,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                         #logging.debug('currentItem: ' + layerName )
                         self.RLP.LAYER_CREATION_ACTIVE = layerName
                         self.RLP.LAYER_BEFORE_RENAME = self.RLP.LAYER_CREATION_ACTIVE
-                        logging.debug('LAYER_BEFORE_RENAME: ' + self.RLP.LAYER_BEFORE_RENAME )
+                        logging.debug('LAYER_BEFORE_RENAME: %s' ,self.RLP.LAYER_BEFORE_RENAME )
                                 
     def getActiveLayer(self):
         self.RLP.LAYER_MANAGER_ACTIVE = None
@@ -480,7 +485,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                         logging.debug('can not find text()')
                         traceback.print_exc()
                     else:
-                        logging.debug('currentItem: ' + layerName )
+                        logging.debug('currentItem: %s',layerName )
                         self.RLP.LAYER_MANAGER_ACTIVE = layerName
         else :
             layerName = ''
@@ -501,9 +506,9 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                         logging.debug('can not find text()')
                         traceback.print_exc()
                     else:
-                        logging.debug('currentItem: ' + layerName )
+                        logging.debug('currentItem: %s' ,layerName )
                         self.RLP.LAYER_CREATION_ACTIVE = layerName
-                        logging.debug('LAYER_CREATION_ACTIVE: ' + self.RLP.LAYER_CREATION_ACTIVE )
+                        logging.debug('LAYER_CREATION_ACTIVE: %s' ,self.RLP.LAYER_CREATION_ACTIVE )
             return layerName
                         
     def set_layer_manager_active(self,layer_current):
@@ -514,7 +519,6 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         if listItems :
             self.listWidget_SL.setCurrentItem( listItems.values()[0] )
             logging.debug('set_layer_manager_active:')
-            print str(listItems.keys()[0])
     
     def renameLayer_SL(self):
         logging.debug('rename layer_SL')
@@ -527,7 +531,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
             if txt :
                 #logging.debug('layer text:',str(txt))
                 try :
-                    RLP.rename( self.RLP.LAYER_MANAGER_ACTIVE, txt )
+                    self.RLP.rename( self.RLP.LAYER_MANAGER_ACTIVE, txt )
                 except :
                     traceback.print_exc()
     
@@ -537,7 +541,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         # Important: no need for self.getActiveLayer
         # Because item double clicked connected self.getActiveLayer
         newName = self.getActiveLayer()
-        print 'newName:',newName
+        logging.debug('newName:%s',newName)
         if newName :
             if newName != self.RLP.LAYER_BEFORE_RENAME :
                 #logging.debug('layer text:',str(txt))
@@ -550,8 +554,8 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         logging.debug('updateScenePasses')
         # Get all widgetItems in listWidget_SP
         listWidgetItems = self.getAllItemsInListWidget(self.listWidget_SP)
-        print '*-*'
-        print listWidgetItems.keys()
+        if self.DEBUG:
+            print listWidgetItems.keys()
         if listWidgetItems :
             self.RLP.updateScenePasses( listWidgetItems.keys() )
                     
@@ -639,7 +643,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
     def on_pushButton_AO_add_pressed(self):
         self.getSelectedLayers()
         # Get selection obj
-        sels_set = RLP.get_selection_names()
+        sels_set = self.RLP.get_selection_names()
         if sels_set :
             if self.MODEL == 'M' :
                 if self.RLP.LAYERS_MANAGER_SELECTED :
@@ -653,37 +657,10 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
             else:
                 if self.RLP.LAYERS_CREATION_SELECTED :
                     self.appendListWidgetItem(self.listWidget_AO, sels_set)
-                    print 'sels_set:',
-                    print sels_set
+                    if self.DEBUG:
+                        print 'sels_set:',
+                        print sels_set
                     self.RLP.set_creation_layers_attr( 'AO', sels_set, 'Add' )
-                
-#    def on_pushButton_AO_add_pressed(self):
-#        if self.MODEL == 'M' :
-#            # Get selection obj
-#            sels_set = RLP.getSelection_dict()
-#            # Get layer active
-#            self.getActiveLayer()
-#            if self.RLP.LAYER_MANAGER_ACTIVE and sels_set:
-#                # Get current obj in list
-#                objs = self.RLP.getObjInLayer( self.RLP.LAYER_MANAGER_ACTIVE )
-#                logging.debug('objs:')
-#                RLP.log_list( objs )
-#                # Remove objs
-#                sels_set = RLP.dict_remove_by_value( sels_set, objs )
-#                logging.debug('sels_set:')
-#                RLP.log_list( sels_set )
-#                self.appendListWidgetItem(self.listWidget_AO, sels_set)
-#                # Add objs to layer
-#                self.RLP.add_obj_to_layer_by_dict_list( self.RLP.LAYER_MANAGER_ACTIVE, sels_set )
-#        else:
-#            # Get selection obj
-#            sels_set = RLP.getSelection_dict()
-#            # Get layer active
-#            self.getActiveLayer()
-#            if self.RLP.LAYER_CREATION_ACTIVE and sels_set:
-#                RLP.log_list( sels_set )
-#                self.appendListWidgetItem(self.listWidget_AO, sels_set)
-#                self.RLP.set_creation_layers_attr( self.RLP.LAYER_CREATION_ACTIVE, 'AO', sels_set )
 
     def on_pushButton_O_remove_pressed(self):
         # Get layer active
@@ -706,7 +683,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
     def on_pushButton_AO_remove_pressed(self):
         self.getSelectedLayers()
         # Get selection obj:For user select some objs in model view
-        sels_set = RLP.get_selection_names()
+        sels_set = self.RLP.get_selection_names()
         
         if self.MODEL == 'M' :
             if self.RLP.LAYERS_MANAGER_SELECTED:
@@ -716,7 +693,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 sels_set = sels_set | sels_set_listWidget
                 if sels_set:
                     logging.debug('sels_set:')
-                    RLP.log_list( sels_set )
+                    self.RLP.log_list( sels_set )
                     self.removeListWidgetItem(self.listWidget_AO, sels_set)
                     # Remove objs to layer
                     self.RLP.remove_obj_from_layers( self.RLP.LAYERS_MANAGER_SELECTED, sels_set )
@@ -728,7 +705,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 sels_set = sels_set | sels_set_listWidget
                 if sels_set:
                     logging.debug('sels_set:')
-                    RLP.log_list( sels_set )
+                    self.RLP.log_list( sels_set )
                     self.removeListWidgetItem(self.listWidget_AO, sels_set)
                     # Remove objs from creation layer
                     self.RLP.set_creation_layers_attr('AO', sels_set, 'Remove')
@@ -820,7 +797,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                                         
     def on_pushButton_CM_zDepth_pressed(self):
         self.RLP.createZDepthShader('Z_Depth_MAT')
-        
+    
     def delSelItemsInListWidget(self,listWidget):
         items = listWidget.selectedItems()
         if items:
@@ -842,8 +819,8 @@ def getMayaWindow():
     ptr = maya.OpenMayaUI.MQtUtil.mainWindow()
     return sip.wrapinstance(long(ptr), QtCore.QObject)
 
-def main(logLevel='error'):
-    #setLog(logLevel)
+def main(logLevel='warning'):
+    setLog(logLevel)
     global MRRenderLayerPassManager_app
     global MRRenderLayerPassManager_myapp
     MRRenderLayerPassManager_app = QtGui.qApp

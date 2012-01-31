@@ -3,11 +3,10 @@
 #from pymel.core.general import PyNode
 
 import logging
-LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
-              'warning': logging.WARNING, 'error': logging.ERROR,\
-              'critical': logging.CRITICAL}
-LOG_LEVEL = LOG_LEVELS.get('warning')
-#logging.basicConfig(level=LOG_LEVEL)
-logging.debug('a')
-logging.critical('b')    
+logger = logging.getLogger('RenderLayerPassManager') 
+logger.setLevel(logging.DEBUG) 
 
+logger.debug('a')
+logger.critical('b')    
+level = logger.getLevel()
+print level

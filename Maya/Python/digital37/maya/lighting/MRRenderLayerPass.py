@@ -10,152 +10,7 @@ import itertools
 import pymel.core as pm
 from pymel.all import mel
 from pymel.core.general import PyNode
-
-#LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
-#              'warning': logging.WARNING, 'error': logging.ERROR,\
-#              'critical': logging.CRITICAL}
-#LOG_LEVEL = LOG_LEVELS.get('error')
-#logging.basicConfig(level=LOG_LEVEL)
-    
-def setAttr(attr,val):
-    # Check if attr exists
-    logging.debug('attr: ' + str(attr))
-    if pm.objExists(attr) :
-        logging.debug('attr: ' + str(attr))
-        # Unlock if locked
-        isLock = 0
-        if attr.isLocked() == 1:
-            attr.unlock()
-            isLock = 1
-            
-        # Break connections
-        attrInputs = attr.connections(p=1,d=1)
-        if len(attrInputs) >= 1 :
-            attr.disconnect( attrInputs[0] )
-            
-        # Set attr 
-        try :
-            attr.set(val)
-        except :
-            logging.warning('set attr error:' + str(attr) + str(val))
-                
-        # Re lock again if locked before
-        if isLock == 1 :
-            attr.lock()
-  
-#source_list is a dict, remove_value_list is a list  
-def dict_remove_by_value(source_list,remove_value_list):    
-    for l in source_list :
-        if l.values()[0] in remove_value_list :
-            source_list.remove(l)
-    return source_list
-
-def get_dict_list_values(source_list):
-    return_list = []
-    for l in source_list :
-        return_list.append( l.values()[0] )    
-    return return_list
-
-def log_dict(inputDict):
-    if inputDict :
-        s = ''
-        try :
-            s += str(inputDict)
-        except :
-            logging.warning('can not convert inputDict to string')        
-        for k,v in inputDict.items() :
-            s += '\t\t'
-            s += 'key:'+str(k) + '\t'
-            s += 'value:'+str(v)
-        logging.debug(s)
-
-def log_list(inputList):
-    if inputList :
-        s = ''
-        if inputList :
-            try :
-                s += str(inputList)
-            except :
-                logging.warning('can not convert inputList to string')
-            for i in inputList :
-                s += '\t' + str(i)
-        logging.debug(s)
-    else:
-        logging.debug('log_list:input is None')
-            
-def rename(node,name):
-    try:
-        pm.rename(node,name)
-    except:
-        traceback.print_exc()
-    
-def getSelection():
-    logging.debug('MRRenderLayerPass getSelection')
-    selObjShort = pm.ls(sl=1,l=1)
-    logging.debug(str(selObjShort))
-    if not selObjShort :
-        logging.warning('select some objects first.')
-        return None
-    else :
-        return selObjShort
-    
-def get_selection_names():
-    sel = pm.ls(sl=1,l=1)
-    if not sel :
-        logging.warning('select some objects first.')
-        return set()
-    else :
-        return set( itertools.imap(lambda x:x.longName(), sel ) )
-
-def getSelection_dict():
-    logging.debug('MRRenderLayerPass getSelection_dict')
-    sels = pm.ls(sl=1,l=1)
-    if not sels :
-        logging.warning('select some objects first.')
-        return None
-    else :
-        sels_dict = {}
-        for sel in sels :
-            sels_dict[ sel.longName() ] = sel
-        return sels_dict
-        
-def getDAGSelection():
-    logging.debug('MRRenderLayerPass getDAGSelection')
-    selObjShort = pm.ls(sl=1)
-    selObj = pm.ls(sl=1,dag=1)
-    logging.debug(str(selObjShort))
-    if not selObjShort :
-        logging.warning('select some objects first.')
-        return None
-    else :
-        return selObj
-
-def getGeometrySelection():
-    logging.debug('MRRenderLayerPass get geometry Selection')
-    selObj = pm.ls(sl=1,dag=1,lf=1,type=['mesh','nurbsSurface','subdiv'])
-    if not selObj :
-        logging.warning('select some objects first.')
-        return None
-    else :
-        return selObj
-    
-def getLightSelection():
-    logging.debug('MRRenderLayerPass getDAGSelection')
-    selObj = pm.ls(sl=1,dag=1,lf=1,type=['spotLight','directionalLight',\
-                                         'volumeLight','areaLight','ambientLight','pointLight'])
-    if not selObj :
-        logging.warning('select some objects first.')
-        return None
-    else :
-        return selObj
-
-# Flatten list with set
-def flattenList(inputs):
-    for i in inputs :
-        if inputs.count(i) != 1 :
-            inputs.remove(i)
-    return inputs
-                                                        
+                   
 class MRRenderLayerPass(object):
     TYPE_LIST = type([])
     TYPE_STR = type('')
@@ -215,7 +70,8 @@ class MRRenderLayerPass(object):
     MENTAL_RAY_ITEMS_LIST = None
     MENTAL_RAY_GLOBALS = None
                 
-    def __init__(self):
+    def __init__(self,debug=True):
+        self.DEBUG = debug
         logging.debug('Init MRRenderLayerPass class')
 
         self.PASSES_COLOR_AVAILABLE = [ x for x in self.PASSES_ALL if x not in self.PASSES_COLOR ]
@@ -239,13 +95,138 @@ class MRRenderLayerPass(object):
         self.initMentalRay()
         self.getLayers()
         
+    def setLog(self,logLevel):
+        LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
+                  'warning': logging.WARNING, 'error': logging.ERROR,\
+                  'critical': logging.CRITICAL}
+        LOG_LEVEL = LOG_LEVELS.get(logLevel)
+        logging.basicConfig(level=LOG_LEVEL)
+                
+    def setAttr(self,attr,val):
+        # Check if attr exists
+        logging.debug('attr: %s',attr)
+        if pm.objExists(attr) :
+            # Unlock if locked
+            isLock = 0
+            if attr.isLocked() == 1:
+                attr.unlock()
+                isLock = 1
+                
+            # Break connections
+            attrInputs = attr.connections(p=1,d=1)
+            if len(attrInputs) >= 1 :
+                attr.disconnect( attrInputs[0] )
+                
+            # Set attr 
+            try :
+                attr.set(val)
+            except :
+                logging.warning('set attr error:' + str(attr) + str(val))
+                    
+            # Re lock again if locked before
+            if isLock == 1 :
+                attr.lock()
+    
+    def log_dict(self,inputDict):
+        if inputDict :
+            s = ''
+            try :
+                s += str(inputDict)
+            except :
+                logging.warning('can not convert inputDict to string')        
+            for k,v in inputDict.items() :
+                s += '\t\t'
+                s += 'key:'+str(k) + '\t'
+                s += 'value:'+str(v)
+            logging.debug(s)
+    
+    def log_list(self,inputList):
+        if inputList :
+            s = ''
+            if inputList :
+                try :
+                    s += str(inputList)
+                except :
+                    logging.warning('can not convert inputList to string')
+                for i in inputList :
+                    s += '\t' + str(i)
+            logging.debug(s)
+        else:
+            logging.debug('log_list:input is None')
+                
+    def rename(self,node,name):
+        try:
+            pm.rename(node,name)
+        except:
+            traceback.print_exc()
         
-#    def setLog(self,logLevel):
-#        LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
-#              'warning': logging.WARNING, 'error': logging.ERROR,\
-#              'critical': logging.CRITICAL}
-#        LOG_LEVEL = LOG_LEVELS.get(logLevel)
-#        logging.basicConfig(level=LOG_LEVEL)
+    def getSelection(self):
+        logging.debug('MRRenderLayerPass getSelection')
+        selObjShort = pm.ls(sl=1,l=1)
+        if not selObjShort :
+            logging.warning('select some objects first.')
+            return None
+        else :
+            return selObjShort
+        
+    def get_selection_names(self):
+        sel = pm.ls(sl=1,l=1)
+        if not sel :
+            logging.warning('select some objects first.')
+            return set()
+        else :
+            return set( itertools.imap(lambda x:x.longName(), sel ) )
+    
+    def getSelection_dict(self):
+        logging.debug('MRRenderLayerPass getSelection_dict')
+        sels = pm.ls(sl=1,l=1)
+        if not sels :
+            logging.warning('select some objects first.')
+            return None
+        else :
+            sels_dict = {}
+            for sel in sels :
+                sels_dict[ sel.longName() ] = sel
+            return sels_dict
+            
+    def getDAGSelection(self):
+        logging.debug('MRRenderLayerPass getDAGSelection')
+        selObjShort = pm.ls(sl=1)
+        selObj = pm.ls(sl=1,dag=1)
+        if not selObjShort :
+            logging.warning('select some objects first.')
+            return None
+        else :
+            return selObj
+    
+    def getGeometrySelection(self):
+        logging.debug('MRRenderLayerPass get geometry Selection')
+        selObj = pm.ls(sl=1,dag=1,lf=1,type=['mesh','nurbsSurface','subdiv'])
+        if not selObj :
+            logging.warning('select some objects first.')
+            return None
+        else :
+            return selObj
+        
+    def getLightSelection(self):
+        logging.debug('MRRenderLayerPass getDAGSelection')
+        selObj = pm.ls(sl=1,dag=1,lf=1,type=['spotLight','directionalLight',\
+                                             'volumeLight','areaLight','ambientLight','pointLight'])
+        if not selObj :
+            logging.warning('select some objects first.')
+            return None
+        else :
+            return selObj
+    
+    # Flatten list with set
+    def flattenList(self,inputs):
+        for i in inputs :
+            if inputs.count(i) != 1 :
+                inputs.remove(i)
+        return inputs
+                                             
+        
+
     
     # Load mental ray plugin first, else can not made some global var      
     def loadMRPlugin(self):
@@ -257,7 +238,7 @@ class MRRenderLayerPass(object):
     # Let maya make some mr attr
     def setRendererToMR(self): 
         renderer = self.DEFAULT_RENDER_GLOBALS.currentRenderer.get()
-        logging.debug('current renderer: ' + str(renderer))
+        logging.debug('current renderer: %s',renderer)
         if renderer != 'mentalRay' :
             self.DEFAULT_RENDER_GLOBALS.currentRenderer.set('mentalRay')
             
@@ -333,7 +314,7 @@ class MRRenderLayerPass(object):
 
     def setRenderStatus(self,renderStatus, layerOverride = False):
         logging.debug('setRenderStatus')
-        sels = getGeometrySelection()
+        sels = self.getGeometrySelection()
         if sels :
             for sel in sels :
                 for k,v in renderStatus.iteritems() :
@@ -344,12 +325,11 @@ class MRRenderLayerPass(object):
                         except:
                             traceback.print_exc()
                     # set attr after layer overrides
-                    #setAttr(attr,v[1])
                     try:
                         attr.set( v[1] )
                     except:
                         logging.debug('set attr error:')
-                        print attr
+                        logging.debug('attr:%s',attr)
                         traceback.print_exc()
     
     def createShader(self,shaderType,shaderName):
@@ -364,7 +344,6 @@ class MRRenderLayerPass(object):
             self.LAYER_MANAGER_ACTIVE = self.LAYERS_MANAGER_SELECTED[-1]
         self.LAYER_CREATION_ACTIVE = None
         if len(self.LAYERS_CREATION_SELECTED) >= 1 :
-            print self.LAYERS_CREATION_SELECTED
             self.LAYER_CREATION_ACTIVE = self.LAYERS_CREATION_SELECTED[-1]
                                   
     # Get LAYER_SCENE_ACTIVE
@@ -404,13 +383,12 @@ class MRRenderLayerPass(object):
                 traceback.print_exc()
             return name
         else:
-            print type(inputObjList)
+            logging.debug('%s', type(inputObjList))
             
             logging.error('getNameByNode:input obj type is wrong')
             return None
             
     def getNodeByName(self,inputNameList):
-        print type(inputNameList)
         if type(inputNameList) == self.TYPE_LIST :
             nodes_list = []
             for l in inputNameList :
@@ -445,29 +423,29 @@ class MRRenderLayerPass(object):
         displacementShaders = []
         shapeFaces = []
         
-        connectionAll = flattenList( inputs.connections(d=1) )
-        logging.debug('inputs: '+str(inputs))
-        logging.debug('connectionAll: '+str(connectionAll))
+        connectionAll = self.flattenList( inputs.connections(d=1) )
+        logging.debug('inputs: %s',inputs)
+        logging.debug('connectionAll: %s',connectionAll)
         for connection in connectionAll :
             if str( type(connection) ) == self.SHADING_ENGINE_TYPE :
                 dispConnections = connection.displacementShader.connections(p=1,d=1)
                 if len(dispConnections) >= 1 :
                     
-                    logging.debug('displacement shader: '+str(dispConnections[0]))
+                    logging.debug('displacement shader: %s',dispConnections[0])
                     #Get ShadingSG's set member
                     members = pm.sets(connection, q=1 )
                     #Get shape's faces in shadingSG'set
                     shape = None
                     shapeFace = []
                     for m in members :
-                        logging.debug('members: ' + str(m))
+                        logging.debug('members: %s',m)
                         # For pCubeShape1.f[0:1]
                         m = str(m)
                         if '.' in m :
                             #shape,face = m.split('.')
                             shape = m.split('.')[0]
-                            logging.debug('shape: ' + str(shape))
-                            logging.debug('inputs: ' + str(inputs))
+                            logging.debug('shape: %s' ,shape)
+                            logging.debug('inputs: %s',inputs)
                             if shape == str(inputs) :
                                 shapeFace.append( m )
                         # For pCubeShape1
@@ -480,10 +458,10 @@ class MRRenderLayerPass(object):
                         displacementShaders.append( dispConnections[0] )
                         
         logging.debug('---------getDisplacementShader Start------------')
-        logging.debug('inputs: ' + str(inputs))
+        logging.debug('inputs: %s' ,inputs)
         for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
-            logging.debug('displacementShader: ' + str(displacementShader))
-            logging.debug('shapeFace: ' + str(shapeFace))
+            logging.debug('displacementShader: %s',displacementShader)
+            logging.debug('shapeFace: %s',shapeFace)
         logging.debug('---------getDisplacementShader Finish------------\n')
         return (displacementShaders, shapeFaces)
 
@@ -491,9 +469,9 @@ class MRRenderLayerPass(object):
     def getTransparencyShader(self,inputs):
         shapeFaces = []
         transparencyConnections = None
-        connectionAll = flattenList( inputs.connections(d=1) )
-        logging.debug('inputs: '+str(inputs))
-        logging.debug('connectionAll: '+str(connectionAll))
+        connectionAll = self.flattenList( inputs.connections(d=1) )
+        logging.debug('inputs: %s',inputs)
+        logging.debug('connectionAll: %s',connectionAll)
         for connection in connectionAll :
             if str( type(connection) ) == self.SHADING_ENGINE_TYPE :
                 transparency = None
@@ -527,14 +505,14 @@ class MRRenderLayerPass(object):
                         shape = None
                         shapeFace = []
                         for m in members :
-                            logging.debug('members: ' + str(m))
+                            logging.debug('members: %s', m)
                             # For pCubeShape1.f[0:1]
                             m = str(m)
                             if '.' in m :
                                 #shape,face = m.split('.')
                                 shape = m.split('.')[0]
-                                logging.debug('shape: ' + str(shape))
-                                logging.debug('inputs: ' + str(inputs))
+                                logging.debug('shape: %s',shape)
+                                logging.debug('inputs: %s',inputs)
                                 if shape == str(inputs) :
                                     shapeFace.append( m )
                             # For pCubeShape1
@@ -551,7 +529,7 @@ class MRRenderLayerPass(object):
                             
                         if shapeFace != [] :
                             logging.debug( 'shapeFace:')
-                            log_list(shapeFace)
+                            self.log_list(shapeFace)
                             if displacement :
                                 #logging.debug( 'displacement:', PyNode(displacement) )
                                 pass
@@ -566,12 +544,12 @@ class MRRenderLayerPass(object):
                             shapeFaces.append( {tuple(shapeFace):[displacement,transparency]} )
     
         logging.debug('---------getTransparencyShader Start------------')
-        logging.debug('inputs: ' + str(inputs))
+        logging.debug('inputs: %s' ,inputs)
         for i in range( len(shapeFaces) ) :
             for k,v in shapeFaces[i].items() :
-                logging.debug('shapeFace: ' + str(k))
-                logging.debug('displacementShader: ' + str(v[0]))
-                logging.debug('transparency: ' + str(v[1]))
+                logging.debug('shapeFace: %s',k)
+                logging.debug('displacementShader: %s',v[0])
+                logging.debug('transparency: %s',v[1])
         logging.debug('---------getTransparencyShader Finish------------\n')
         return shapeFaces
             
@@ -580,7 +558,7 @@ class MRRenderLayerPass(object):
         selObj = pm.ls(type='renderLayer')
         if selObj :
             selObj.remove(PyNode('defaultRenderLayer'))
-            log_list(selObj)
+            self.log_list(selObj)
             for l in selObj :
                 try:
                     name = l.longName()
@@ -595,7 +573,7 @@ class MRRenderLayerPass(object):
         if passes :
             for p in passes :
                 self.PASSES_SCENE.append( self.getNameByNode(p) )
-        log_list(self.PASSES_SCENE)
+        self.log_list(self.PASSES_SCENE)
 
     def getAvailablePasses(self):
         self.PASSES_AVAILABLE = []
@@ -622,19 +600,22 @@ class MRRenderLayerPass(object):
         
     def get_creation_layer_attr(self,layer,attr):
         returnValue = layer_dict = None
-        print 'self.LAYER_CREATION:',
-        print self.LAYER_CREATION
+        logging.debug('%s ',self.LAYER_CREATION)
+        if self.DEBUG:
+            print self.LAYER_CREATION
         if self.LAYER_CREATION.has_key(layer):
-            print 'layer:',
-            print layer
-            print type(layer)
+            if self.DEBUG:
+                print 'layer:',
+                print layer
             layer_dict = self.LAYER_CREATION.get(layer)
-            print 'layer_dict:',
-            print layer_dict
+            if self.DEBUG:
+                print 'layer_dict:',
+                print layer_dict
             if layer_dict.has_key(attr):
                 returnValue = layer_dict.get(attr)
-                print 'returnValue:',
-                print returnValue
+                if self.DEBUG:
+                    print 'returnValue:',
+                    print returnValue
         else:
             logging.debug('get creation layer attr error:')
         return returnValue
@@ -648,7 +629,9 @@ class MRRenderLayerPass(object):
         if layer and obj_names_list :
             if type(obj_names_list) == self.TYPE_SET :
                 obj_names_list = list(obj_names_list)
-            print '**obj_names_list:',obj_names_list
+            if self.DEBUG:
+                print 'obj_names_list:',
+                print obj_names_list
             pm.editRenderLayerMembers(layer,obj_names_list,noRecurse=True)
         else :
             if not layer :
@@ -682,7 +665,8 @@ class MRRenderLayerPass(object):
         else:
             if layers :
                 for layer in layers:
-                    print layer
+                    if self.DEBUG:
+                        print layer
                     try:
                         pm.delete( layer.longName() )
                     except:
@@ -787,9 +771,8 @@ class MRRenderLayerPass(object):
         
     def setRenderLayerAttr(self,attr,val):
         # Check if attr exists
-        logging.debug('attr: ' + str(attr))
+        logging.debug('attr: %s',attr)
         if pm.objExists(attr) :
-            logging.debug('attr: ' + str(attr))
             # Unlock if locked
             isLock = 0
             if attr.isLocked() == 1:
@@ -832,8 +815,8 @@ class MRRenderLayerPass(object):
                     renderCamEnv[0].message.disconnect(cam.miEnvironmentShader)
     
     def createPass2CurrentLayer(self,passName):
-        logging.debug('self.PREFIX_PASS:' + self.PREFIX_PASS)
-        logging.debug('self.SUFFIX_PASS:' + self.SUFFIX_PASS)
+        logging.debug('self.PREFIX_PASS:%s',self.PREFIX_PASS)
+        logging.debug('self.SUFFIX_PASS:%s',self.SUFFIX_PASS)
         renderPass = pm.createNode( 'renderPass', n=self.PREFIX_PASS \
                                     + '_' + passName + '_' + self.SUFFIX_PASS )
         #renderPass = pm.ls(sl=1)
@@ -853,7 +836,7 @@ class MRRenderLayerPass(object):
         passName =  self.PASSES_ALL[passName]
 
         presetMel = self.MAYA_LOCATION+'/presets/attrPresets/renderPass/'+passName+'.mel'
-        logging.debug('presetMel: '+presetMel)   
+        logging.debug('presetMel: %s',presetMel)   
         
         mel.applyAttrPreset(renderPass, presetMel, 1)     
         
@@ -863,14 +846,13 @@ class MRRenderLayerPass(object):
         except:
             traceback.print_exc()
         else:
-            logging.debug('success del ',passName)
+            logging.debug('success del: %s',passName)
                     
     def updateScenePasses(self,pass_names_list):
         if pass_names_list :
-            print '*'
-            print self.PASSES_SCENE
-            print '*'
-            print pass_names_list
+            if self.DEBUG:
+                print self.PASSES_SCENE
+                print pass_names_list
             self.getScenePasses()
             addList = [x for x in pass_names_list \
                        if x not in self.PASSES_SCENE]
@@ -879,8 +861,8 @@ class MRRenderLayerPass(object):
             if addList :
                 # add passes to scene
                 for pass_name in addList:
-                    print '*'
-                    print pass_name
+                    if self.DEBUG:
+                        print pass_name
                     #logging.debug('add pass name:',pass_name)
                     try:
                         self.addPass( pass_name )
@@ -897,9 +879,9 @@ class MRRenderLayerPass(object):
                         
     def updateAssociatedPasses(self,pass_names_list,model='M'):
         if model == 'M' :
-            print 'self.LAYERS_MANAGER_SELECTED:'
-            print self.LAYERS_MANAGER_SELECTED
-            print type(self.LAYERS_MANAGER_SELECTED)
+            if self.DEBUG:
+                print 'self.LAYERS_MANAGER_SELECTED:'
+                print self.LAYERS_MANAGER_SELECTED
             if self.LAYERS_MANAGER_SELECTED :
                 # get layer frm layer name
                 for layer in self.getNodeByName( self.LAYERS_MANAGER_SELECTED ) :
@@ -944,55 +926,63 @@ class MRRenderLayerPass(object):
             del self.LAYER_CREATION[layer]
         
     def set_creation_layers_attr(self,key,value,model):
-        print 'self.LAYER_CREATION:'
-        print self.LAYER_CREATION
+        if self.DEBUG:
+            print 'self.LAYER_CREATION:',
+            print self.LAYER_CREATION
         # Convert list to set
         if type(value) == self.TYPE_LIST :
             value = set(value)
         for layer in self.LAYERS_CREATION_SELECTED :
             self.set_creation_layer_attr(layer, key, value, model)
-        print 'self.LAYER_CREATION:'
-        print self.LAYER_CREATION
+        if self.DEBUG:
+            print 'self.LAYER_CREATION:'
+            print self.LAYER_CREATION
         
     def set_creation_layer_attr(self,layer,key,value,model):
         # Add elements
         if model == 'Add' :
             v = list( value - set( self.LAYER_CREATION[layer][key] ) )
-            log_list(v)
+            self.log_list(v)
             if v :
                 self.LAYER_CREATION[layer][key].extend(v)
         # Remove elements
         elif model == 'Remove' :
             v = list( set( self.LAYER_CREATION[layer][key] ) - value )
-            log_list(v)
+            self.log_list(v)
             if not v:
                 v = []
             self.LAYER_CREATION[layer].update({key:v})
         # For 'PRESET' attr
         elif model == 'Update':
-            print self.LAYER_CREATION
+            if self.DEBUG:
+                print self.LAYER_CREATION
             self.LAYER_CREATION[layer][key] = value
-            print self.LAYER_CREATION
+            if self.DEBUG:
+                print self.LAYER_CREATION
         else:
             logging.error('set_creation_layer_attr: inputs model is wrong')
-            print model
+            if self.DEBUG:
+                print model
             
     def init_creation_layer_attr(self,layer):
         self.LAYER_CREATION[layer] = {'AO':[],'AP':[],'O':[],'PRESET':'Normal'}
         
     def rename_creation_layer(self,newName):
         logging.debug('rename_creation_layer:')
-        print 'self.LAYER_CREATION:',self.LAYER_CREATION
+        if self.DEBUG:
+            print 'self.LAYER_CREATION:',self.LAYER_CREATION
         # Copy value from old layer
         try:
             self.LAYER_CREATION[newName] = self.LAYER_CREATION[self.LAYER_BEFORE_RENAME]
         except:
             traceback.print_exc()
         else:
-            print 'self.LAYER_CREATION:',self.LAYER_CREATION
+            if self.DEBUG:
+                print 'self.LAYER_CREATION:',self.LAYER_CREATION
             # Remove old layer
             self.LAYER_CREATION.pop( self.LAYER_BEFORE_RENAME )
-        print 'self.LAYER_CREATION:',self.LAYER_CREATION
+        if self.DEBUG:
+            print 'self.LAYER_CREATION:',self.LAYER_CREATION
                             
     def create_creation_layers(self):
         for layerName in self.LAYER_CREATION :
@@ -1031,7 +1021,8 @@ class MRRenderLayerPass(object):
         # clear self.LAYER_CREATION
         # clear after loop because during iteration loop can not delete iteration
         self.LAYER_CREATION.clear()
-        print 'self.LAYER_CREATION:',self.LAYER_CREATION
+        if self.DEBUG:
+            print 'self.LAYER_CREATION:',self.LAYER_CREATION
         
     def assign_obj_to_layer(self,layer,obj_names_list):
         if layer and obj_names_list:
@@ -1052,7 +1043,7 @@ class MRRenderLayerPass(object):
                 pm.editRenderLayerAdjustment(attr,layer=layer)
             
     def createAOTransparencyLayer(self,isAddPass):
-        selObj = getGeometrySelection()
+        selObj = self.getGeometrySelection()
         self.CURRENT_LAYER = self.createNewMRLayer()
         shaderNoDis,shaderNoDisSG = self.createShader('surfaceShader',(self.LAYER_NAME+'_MAT'))
         AONode = pm.createNode('mib_fg_occlusion')
@@ -1063,7 +1054,7 @@ class MRRenderLayerPass(object):
                 logging.debug(str(nodeType))
                 
                 # Get dispalcement shader if inputs is geometry
-                logging.debug('****'+str(each))
+                logging.debug('****%s',each)
                 eachSn = each.getParent()
                 
                 # Check shape has displacement shader or not
@@ -1122,9 +1113,9 @@ class MRRenderLayerPass(object):
                                 pm.sets(shaderSG,e=1,forceElement=1)
 
                 pm.select(each)
-                logging.debug('each: '+str(each))
+                logging.debug('each: %s',each)
                 eachSn = pm.pickWalk(d='down')
-                logging.debug('eachSn: '+str(eachSn[0]))
+                logging.debug('eachSn: %s',eachSn[0])
                 if eachSn[0] != each :
                     pm.editRenderLayerMembers(self.CURRENT_LAYER,eachSn[0],remove=1)
 
@@ -1162,7 +1153,7 @@ class MRRenderLayerPass(object):
                 logging.debug(str(nodeType))
                 
                 # Get dispalcement shader if inputs is geometry
-                logging.debug('****'+str(each))
+                logging.debug('%s',each)
                 eachSn = each.getParent()
 
                 # Check shape has displacement shader or not
@@ -1248,7 +1239,7 @@ class MRRenderLayerPass(object):
                 logging.debug(str(nodeType))
                 
                 # Get dispalcement shader if inputs is geometry
-                logging.debug('****'+str(each))
+                logging.debug('****%s',each)
                 eachSn = each.getParent()
                 
                 # Check shape has displacement shader or not
@@ -1261,7 +1252,7 @@ class MRRenderLayerPass(object):
                     
                 # If shape has displacement shader,then assign displacement shader again    
                 if displacementShaders != [] :
-                    logging.debug('each: ' + str(each))
+                    logging.debug('each: %s',each)
                     for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
                         shader,shaderSG = self.createShader('surfaceShader',(self.LAYER_NAME+'_'+str(eachSn)+'_MAT'))
                         displacementShader.connect(shaderSG.displacementShader)
@@ -1284,7 +1275,7 @@ class MRRenderLayerPass(object):
   
   
     def createAOLayer(self,isAddPass):
-        selObj = getGeometrySelection()
+        selObj = self.getGeometrySelection()
         
         self.CURRENT_LAYER = self.createNewMRLayer()
         
@@ -1301,7 +1292,7 @@ class MRRenderLayerPass(object):
                 logging.debug(str(nodeType))
                 
                 # Get dispalcement shader if inputs is geometry
-                logging.debug('****'+str(each))
+                logging.debug('****%s',each)
                 eachSn = each.getParent()
                 
                 # Check shape has displacement shader or not
@@ -1314,7 +1305,7 @@ class MRRenderLayerPass(object):
                     
                 # If shape has displacement shader,then assign displacement shader again    
                 if displacementShaders != [] :
-                    logging.debug('each: ' + str(each))
+                    logging.debug('each: %s',each)
                     for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
                         shader,shaderSG = self.createShader('surfaceShader',(self.LAYER_NAME+'_'+str(eachSn)+'_MAT'))
                         displacementShader.connect(shaderSG.displacementShader)
@@ -1326,9 +1317,9 @@ class MRRenderLayerPass(object):
                         pm.sets(shaderSG,e=1,forceElement=1)                        
 
                 pm.select(each)
-                logging.debug('each: '+str(each))
+                logging.debug('each: %s',each)
                 eachSn = pm.pickWalk(d='down')
-                logging.debug('eachSn: '+str(eachSn[0]))
+                logging.debug('eachSn: %s',eachSn[0])
                 if eachSn[0] != each :
                     pm.editRenderLayerMembers(self.CURRENT_LAYER,eachSn[0],remove=1)
 
@@ -1344,7 +1335,7 @@ class MRRenderLayerPass(object):
 
         # Remove cam lens and env shader            
         self.disConnectCamShader()
-        logging.debug('isAddPass:'+str(isAddPass))
+        logging.debug('isAddPass:%s',isAddPass)
         if isAddPass == True :
             # Add ao pass
             self.createPass2CurrentLayer('ambientOcclusion')
@@ -1366,7 +1357,7 @@ class MRRenderLayerPass(object):
         
         if obj_list:
             for each in obj_list :
-                logging.debug('each: ' + str(each))
+                logging.debug('each: %s',each)
                 # Get dispalcement shader if inputs is geometry
                 eachSn = each.getParent()
                 
@@ -1384,7 +1375,7 @@ class MRRenderLayerPass(object):
                     if not shaderNoDisSG :
                         shaderNoDisSG = self.getShadingSG(shaderName)
                         
-                logging.debug('shaderNoDisSG: ' + str(shaderNoDisSG))
+                logging.debug('shaderNoDisSG: %s', shaderNoDisSG)
                     
                 # First assign no displacement shader to all
                 logging.debug('First assign no displacement shader to all' )
@@ -1393,7 +1384,7 @@ class MRRenderLayerPass(object):
                     
                 # If shape has displacement shader,then assign displacement shader again    
                 if displacementShaders != [] :
-                    logging.debug('each: ' + str(each))
+                    logging.debug('each: %s',each)
                     shaderNameWithDisp = shaderName + "_" + eachSn
                     for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
                         if pm.objExists(shaderNameWithDisp) :
@@ -1423,7 +1414,7 @@ class MRRenderLayerPass(object):
             self.createPass2CurrentLayer(p)
             
     def createColorLayer(self):
-        selObj = getDAGSelection()
+        selObj = self.getDAGSelection()
         if selObj :
             self.CURRENT_LAYER = self.createNewMRLayer()
             self.createColorPasses()  
@@ -1437,15 +1428,15 @@ class MRRenderLayerPass(object):
             pm.select(cl=1)
             
     def createShadowLayer(self,layerName='Shadow_Mask_Layer',shaderName='Shadow_Mask_MAT',outAlpha=1):
-        sel = getGeometrySelection()
+        sel = self.getGeometrySelection()
         self.createNewMRLayer()
         # Create material
         self.createShadowShader(shaderName,sel,outAlpha)
         pm.select(cl=1)
 
     def createLightLayer(self,name,color):
-        selObj = getGeometrySelection()
-        selLight = getLightSelection()
+        selObj = self.getGeometrySelection()
+        selLight = self.getLightSelection()
         if selObj == None :
             logging.warning('select some lights and some objects first.')
             return None
@@ -1478,11 +1469,11 @@ class MRRenderLayerPass(object):
                 
                 # If shape has displacement shader,then assign displacement shader again    
                 if displacementShaders != [] :
-                    logging.debug('each: ' + str(each))
+                    logging.debug('each: %s',each)
                     for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
                         logging.debug('has displaceMentShader' )
-                        logging.debug('displaceMentShader: ' + str(displacementShader))
-                        logging.debug('shapeFace: ' + str(shapeFace))
+                        logging.debug('displaceMentShader: %s' ,displacementShader)
+                        logging.debug('shapeFace: %s',shapeFace)
                         shader,shaderSG = self.createShader('lambert',(newLayer+'_'+str(eachSn)+'_MAT'))
                         shader.diffuse.set(1)
                         displacementShader.connect(shaderSG.displacementShader)
@@ -1491,9 +1482,9 @@ class MRRenderLayerPass(object):
                         pm.sets(shaderSG,e=1,forceElement=1)
                         
                 pm.select(each,r=1)
-                logging.debug('each: '+str(each))
+                logging.debug('each: %s',each)
                 eachSn = pm.pickWalk(d='down')
-                logging.debug('eachSn: '+str(eachSn[0]))
+                logging.debug('eachSn: %s',eachSn[0])
                 if eachSn[0] != each :
                     pm.editRenderLayerMembers(newLayer,eachSn[0],remove=1)
 
@@ -1558,7 +1549,7 @@ class MRRenderLayerPass(object):
         try :
             shaderNoDisSG = PyNode(shaderName).outColor.connections(d=1,p=0,sh=1)
             shaderNoDisSG = shaderNoDisSG.longName()
-            logging.debug('get shadingSG:' + str(shaderNoDisSG))
+            logging.debug('get shadingSG:%s',shaderNoDisSG)
         except :
             logging.debug('can not get shadingSG')
             shaderNoDisSG = pm.sets(renderable=True,noSurfaceShader=True,\
@@ -1570,7 +1561,7 @@ class MRRenderLayerPass(object):
     # Create and assign black shader
     # createShader([0,0,0],[1,1,1],'BLACK')
     def createSurfaceShader(self,outColor,outAlpha,shaderName):
-        selObj = getGeometrySelection()
+        selObj = self.getGeometrySelection()
         shaderNoDis= None
         shaderNoDisSG = None
         shader = None
@@ -1592,7 +1583,7 @@ class MRRenderLayerPass(object):
                     if not shaderNoDisSG :
                         shaderNoDisSG = self.getShadingSG(shaderName)
                         
-                logging.debug('shaderNoDisSG: ' + str(shaderNoDisSG))
+                logging.debug('shaderNoDisSG: %s',shaderNoDisSG)
                     
                 # First assign no displacement shader to all
                 logging.debug('First assign no displacement shader to all' )
@@ -1606,12 +1597,12 @@ class MRRenderLayerPass(object):
                         if pm.objExists(shaderNameWithDisp) :
                             # Get shadingSG
                             shaderSG = self.getShadingSG(shaderNameWithDisp)
-                            logging.debug('shaderSG exists with shaderNameWithDisp: ' + str(shaderSG))
+                            logging.debug('shaderSG exists with shaderNameWithDisp: %s',shaderSG)
                         else :
                             shader,shaderSG = self.createShader('surfaceShader', shaderNameWithDisp)
                             shader.outColor.set(outColor)
                             shader.outMatteOpacity.set(outAlpha)
-                            logging.debug('shaderSG exists with no shaderNameWithDisp: ' + str(shaderSG))
+                            logging.debug('shaderSG exists with no shaderNameWithDisp: %s',shaderSG)
                         
                         displacementShader.connect(shaderSG.displacementShader)
                         pm.select(shapeFace,r=1)
@@ -1623,22 +1614,21 @@ class MRRenderLayerPass(object):
             shader.outMatteOpacity.set(outAlpha)
                         
         pm.select(cl=1)
-        print shader
         return shader
         
     # Create and assign black shader
     def createShadowShader(self,shaderName='Shadow_Mask_MAT',sel=None,outAlpha=1):
         selObj = sel
         if not selObj:
-            selObj = getGeometrySelection()
-        logging.debug('createShadowShader: ' + str(selObj))
+            selObj = self.getGeometrySelection()
+        logging.debug('createShadowShader: %s',selObj)
         shaderNoDis= None
         shaderNoDisSG = None
         shader = None
         shaderSG = None
         if selObj :
             for each in selObj :
-                logging.debug('each: ' + str(each))
+                logging.debug('each: %s',each)
                 # Get dispalcement shader if inputs is geometry
                 eachSn = each.getParent()
                 
@@ -1656,7 +1646,7 @@ class MRRenderLayerPass(object):
                     if not shaderNoDisSG :
                         shaderNoDisSG = self.getShadingSG(shaderName)
                         
-                logging.debug('shaderNoDisSG: ' + str(shaderNoDisSG))
+                logging.debug('shaderNoDisSG: %s',shaderNoDisSG)
                     
                 # First assign no displacement shader to all
                 logging.debug('First assign no displacement shader to all' )
@@ -1665,7 +1655,7 @@ class MRRenderLayerPass(object):
                     
                 # If shape has displacement shader,then assign displacement shader again    
                 if displacementShaders != [] :
-                    logging.debug('each: ' + str(each))
+                    logging.debug('each: %s',each)
                     shaderNameWithDisp = shaderName + "_" + eachSn
                     for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
                         if pm.objExists(shaderNameWithDisp) :
@@ -1719,7 +1709,7 @@ class MRRenderLayerPass(object):
         return (shader,shaderSG)
                         
     def createZDepthShader(self,shaderName='Z_Depth_MAT'):
-        selObj = getGeometrySelection()
+        selObj = self.getGeometrySelection()
         shaderNoDis= None
         shaderNoDisSG = None
         shader = None
@@ -1739,7 +1729,7 @@ class MRRenderLayerPass(object):
                     if not shaderNoDisSG :
                         shaderNoDisSG = self.getShadingSG(shaderName)
                         
-                logging.debug('shaderNoDisSG: ' + str(shaderNoDisSG))
+                logging.debug('shaderNoDisSG: %s',shaderNoDisSG)
                     
                 # First assign no displacement shader to all
                 logging.debug('First assign no displacement shader to all' )
@@ -1762,7 +1752,7 @@ class MRRenderLayerPass(object):
         pm.select(cl=1)
 
     def createSubSet(self,subSetName):
-        selObj = getGeometrySelection()
+        selObj = self.getGeometrySelection()
         #string $subsetShader=`mrCreateCustomNode -asUtility "" mip_render_subset`;
         subSetShader = pm.createNode('mip_render_subset',asUtility=1)
 
