@@ -199,6 +199,15 @@ class MRRenderLayerPass(object):
         else :
             return selObj
     
+    def getShapeSelection(self,sels):
+        logging.debug('MRRenderLayerPass get geometry Selection')
+        selObj = pm.ls(sels,dag=1,lf=1,type=['mesh','nurbsSurface','subdiv'])
+        if not selObj :
+            logging.warning('select some objects first.')
+            return None
+        else :
+            return selObj
+            
     def getGeometrySelection(self):
         logging.debug('MRRenderLayerPass get geometry Selection')
         selObj = pm.ls(sl=1,dag=1,lf=1,type=['mesh','nurbsSurface','subdiv'])
@@ -656,21 +665,19 @@ class MRRenderLayerPass(object):
         layer = PyNode(layer)
         pm.editRenderLayerMembers(layer,obj_list,noRecurse=1,remove=1)
                         
-    def removeLayerByListWidget(self,layer_dict):
-        layers = []
-        try:
-            layers = layer_dict.values()
-        except:
-            traceback.print_exc()
-        else:
-            if layers :
-                for layer in layers:
-                    if self.DEBUG:
-                        print layer
-                    try:
-                        pm.delete( layer.longName() )
-                    except:
-                        traceback.print_exc()
+    def removeLayer(self,layer_set):
+        if layer_set:
+            layer_set = list(layer_set)
+            try:
+                pm.delete( layer_set )
+            except:
+                # If current layer is only the last layer then:
+                #editRenderLayerGlobals -currentRenderLayer defaultRenderLayer;
+                pm.editRenderLayerGlobals(currentRenderLayer='defaultRenderLayer')
+                try:
+                    pm.delete( layer_set )
+                except:
+                    traceback.print_exc()
                                                 
     def remove_pass_from_layer(self,layer,pass_list):
         # Get layer first
@@ -994,6 +1001,8 @@ class MRRenderLayerPass(object):
             
             # Add objects
             obj_list = self.LAYER_CREATION[layerName].get('AO')
+            # Get shape of objects
+            obj_list = self.getShapeSelection(obj_list)
             if obj_list :
                 # Add objs to layer
                 self.add_obj_to_layer(layer, obj_list)
@@ -1138,16 +1147,14 @@ class MRRenderLayerPass(object):
             
         pm.select(cl=1)
         
-        
     def create_and_assign_AO_Transparency_shader(self,obj_name_list):
-        # Convert name list to node list
-        obj_list = (PyNode(x) for x in obj_name_list)
-        
         shaderNoDis,shaderNoDisSG = self.createShader('surfaceShader',(self.LAYER_NAME+'_MAT'))
         AONode = pm.createNode('mib_fg_occlusion')
         AONode.outValue.connect(shaderNoDis.outColor)
         
-        if obj_list:
+        if obj_name_list:
+            # Convert name list to node list
+            obj_list = (PyNode(x) for x in obj_name_list)
             for each in obj_list :
                 nodeType = type(each)
                 logging.debug(str(nodeType))
@@ -1212,7 +1219,7 @@ class MRRenderLayerPass(object):
                                 pm.sets(shaderSG,e=1,forceElement=1)
 
         # Adjust render layer attr
-        self.setRenderLayerAttr(self.MI_DEFAULT_OPTIONS.finalGather, 0)
+        self.setRenderLayerAttr(self.MI_DEFAULT_OPTIONS.finalGather, 1)
         self.setRenderLayerAttr(self.MI_DEFAULT_OPTIONS.caustics, 0)
         self.setRenderLayerAttr(self.MI_DEFAULT_OPTIONS.globalIllum, 0)
         self.setRenderLayerAttr(self.MI_DEFAULT_FRAME_BUFFER.datatype, 2)
@@ -1223,46 +1230,45 @@ class MRRenderLayerPass(object):
   
   
     def create_and_assign_AO_shader(self,obj_name_list):
-        # Convert name list to node list
-        obj_list = (PyNode(x) for x in obj_name_list)
-        
-        #AOMat = pm.shadingNode('surfaceShader',n='AO_mat',asShader=True)
+        # If no selection,then create shader only
         shaderNoDis,shaderNoDisSG = self.createShader('surfaceShader',(self.LAYER_NAME+'_MAT'))
-        
         AONode = pm.createNode('mib_amb_occlusion')
         AONode.outValue.connect(shaderNoDis.outColor)
         AONode.samples.set(64)
-        
-        if obj_list:
-            for each in obj_list :
-                nodeType = type(each)
-                logging.debug(str(nodeType))
-                
-                # Get dispalcement shader if inputs is geometry
-                logging.debug('****%s',each)
-                eachSn = each.getParent()
-                
-                # Check shape has displacement shader or not
-                displacementShaders, shapeFaces = self.getDisplacementShader2(each)
-                
-                # First assign no displacement shader to all
-                logging.debug('First assign no displacement shader to all' )
-                pm.select(each,r=1)
-                pm.sets(shaderNoDisSG,e=1,forceElement=1)
                     
-                # If shape has displacement shader,then assign displacement shader again    
-                if displacementShaders != [] :
-                    logging.debug('each: %s',each)
-                    for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
-                        shader,shaderSG = self.createShader('surfaceShader',(self.LAYER_NAME+'_'+str(eachSn)+'_MAT'))
-                        displacementShader.connect(shaderSG.displacementShader)
-                        AONode = pm.createNode('mib_amb_occlusion')
-                        AONode.outValue.connect(shader.outColor)
-                        AONode.samples.set(64)
-                                
-                        pm.select(shapeFace,r=1)
-                        pm.sets(shaderSG,e=1,forceElement=1)                        
-
+        if obj_name_list :
+            # Convert name list to node list
+            obj_list = (PyNode(x) for x in obj_name_list)
+            if obj_list:
+                for each in obj_list :
+                    nodeType = type(each)
+                    logging.debug(str(nodeType))
+                    
+                    # Get dispalcement shader if inputs is geometry
+                    logging.debug('****%s',each)
+                    eachSn = each.getParent()
+                    
+                    # Check shape has displacement shader or not
+                    displacementShaders, shapeFaces = self.getDisplacementShader2(each)
+                    
+                    # First assign no displacement shader to all
+                    logging.debug('First assign no displacement shader to all' )
+                    pm.select(each,r=1)
+                    pm.sets(shaderNoDisSG,e=1,forceElement=1)
+                        
+                    # If shape has displacement shader,then assign displacement shader again    
+                    if displacementShaders != [] :
+                        logging.debug('each: %s',each)
+                        for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
+                            shader,shaderSG = self.createShader('surfaceShader',(self.LAYER_NAME+'_'+str(eachSn)+'_MAT'))
+                            displacementShader.connect(shaderSG.displacementShader)
+                            AONode = pm.createNode('mib_amb_occlusion')
+                            AONode.outValue.connect(shader.outColor)
+                            AONode.samples.set(64)
+                                    
+                            pm.select(shapeFace,r=1)
+                            pm.sets(shaderSG,e=1,forceElement=1)
+            
         # Adjust render layer attr
         self.setRenderLayerAttr(self.MI_DEFAULT_OPTIONS.finalGather, 0)
         self.setRenderLayerAttr(self.MI_DEFAULT_OPTIONS.caustics, 0)
@@ -1344,9 +1350,6 @@ class MRRenderLayerPass(object):
         
   
     def create_and_assign_shadow_shader(self,obj_name_list):
-        # Convert name list to node list
-        obj_list = (PyNode(x) for x in obj_name_list)
-        
         shaderName = 'Shadow_Mask'
         outAlpha = 1
         
@@ -1355,51 +1358,54 @@ class MRRenderLayerPass(object):
         shader = None
         shaderSG = None        
         
-        if obj_list:
-            for each in obj_list :
-                logging.debug('each: %s',each)
-                # Get dispalcement shader if inputs is geometry
-                eachSn = each.getParent()
-                
-                # Check shape has displacement shader or not
-                displacementShaders, shapeFaces = self.getDisplacementShader2(each)
-                
-                if not pm.objExists(shaderName) :
-                    shaderNoDis,shaderNoDisSG = self.createShader('useBackground', shaderName)
-                    shaderNoDis.specularColor.set([0,0,0])
-                    shaderNoDis.reflectivity.set(0)
-                    shaderNoDis.reflectionLimit.set(0)
-                    shaderNoDis.matteOpacity.set(outAlpha)
-                else :
-                    # Get shaderSG by shader name
-                    if not shaderNoDisSG :
-                        shaderNoDisSG = self.getShadingSG(shaderName)
-                        
-                logging.debug('shaderNoDisSG: %s', shaderNoDisSG)
-                    
-                # First assign no displacement shader to all
-                logging.debug('First assign no displacement shader to all' )
-                pm.select(each,r=1)
-                pm.sets(shaderNoDisSG,e=1,forceElement=1)
-                    
-                # If shape has displacement shader,then assign displacement shader again    
-                if displacementShaders != [] :
+        if obj_name_list :
+            # Convert name list to node list
+            obj_list = (PyNode(x) for x in obj_name_list)
+            if obj_list:
+                for each in obj_list :
                     logging.debug('each: %s',each)
-                    shaderNameWithDisp = shaderName + "_" + eachSn
-                    for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
-                        if pm.objExists(shaderNameWithDisp) :
-                            # Get shadingSG
-                            shaderSG = self.getShadingSG(shaderNameWithDisp)
-                        else :
-                            shader,shaderSG = self.createShader('useBackground', shaderNameWithDisp)
-                            shader.specularColor.set([0,0,0])
-                            shader.reflectivity.set(0)
-                            shader.reflectionLimit.set(0)
-                            shader.matteOpacity.set(outAlpha)
+                    # Get dispalcement shader if inputs is geometry
+                    eachSn = each.getParent()
+                    
+                    # Check shape has displacement shader or not
+                    displacementShaders, shapeFaces = self.getDisplacementShader2(each)
+                    
+                    if not pm.objExists(shaderName) :
+                        shaderNoDis,shaderNoDisSG = self.createShader('useBackground', shaderName)
+                        shaderNoDis.specularColor.set([0,0,0])
+                        shaderNoDis.reflectivity.set(0)
+                        shaderNoDis.reflectionLimit.set(0)
+                        shaderNoDis.matteOpacity.set(outAlpha)
+                    else :
+                        # Get shaderSG by shader name
+                        if not shaderNoDisSG :
+                            shaderNoDisSG = self.getShadingSG(shaderName)
+                            
+                    logging.debug('shaderNoDisSG: %s', shaderNoDisSG)
                         
-                        displacementShader.connect(shaderSG.displacementShader)
-                        pm.select(shapeFace,r=1)
-                        pm.sets(shaderSG,e=1,forceElement=1)
+                    # First assign no displacement shader to all
+                    logging.debug('First assign no displacement shader to all' )
+                    pm.select(each,r=1)
+                    pm.sets(shaderNoDisSG,e=1,forceElement=1)
+                        
+                    # If shape has displacement shader,then assign displacement shader again    
+                    if displacementShaders != [] :
+                        logging.debug('each: %s',each)
+                        shaderNameWithDisp = shaderName + "_" + eachSn
+                        for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
+                            if pm.objExists(shaderNameWithDisp) :
+                                # Get shadingSG
+                                shaderSG = self.getShadingSG(shaderNameWithDisp)
+                            else :
+                                shader,shaderSG = self.createShader('useBackground', shaderNameWithDisp)
+                                shader.specularColor.set([0,0,0])
+                                shader.reflectivity.set(0)
+                                shader.reflectionLimit.set(0)
+                                shader.matteOpacity.set(outAlpha)
+                            
+                            displacementShader.connect(shaderSG.displacementShader)
+                            pm.select(shapeFace,r=1)
+                            pm.sets(shaderSG,e=1,forceElement=1)
         else:
             shaderNoDis,shaderNoDisSG = self.createShader('useBackground', shaderName)
             shaderNoDis.specularColor.set([0,0,0])
@@ -1520,20 +1526,27 @@ class MRRenderLayerPass(object):
         self.getCurrentLayer()
         if not layer:
             layer = self.LAYER_SCENE_ACTIVE
+        if self.DEBUG :
+            print 'layer: ',layer
         if not layer:
             logging.error('makeShaderOverrideLayer: can not get current active render layer')
         else:
-            try:
-                cmd = "hookShaderOverride(\""+layer.longName()+"\",\"\",\""+shader.longName()+"\")"
-            except:
-                logging.error('makeShaderOverrideLayer:')
-                traceback.print_exc()
-            else:
-                mel.eval(cmd)
+            # If defaultRenderLayer skip
+            if layer.longName() != 'defaultRenderLayer':
+                try:
+                    cmd = "hookShaderOverride(\""+layer.longName()+"\",\"\",\""+shader.longName()+"\")"
+                except:
+                    logging.error('makeShaderOverrideLayer:')
+                    traceback.print_exc()
+                else:
+                    mel.eval(cmd)
        
-    def create_shader(self,outColor,outValue,shaderName,overrideLayer=False):
-        #shader = self.self.createShader([0,0,0],[1,1,1],'BLACK_MATTE')
-        shader = self.createShader(outColor,outValue,shaderName)
+    def create_surface_shader(self,outColor,outValue,shaderName,overrideLayer=False):
+        # Get selection
+        shader = self.createSurfaceShader(outColor,outValue,shaderName)
+        if self.DEBUG :
+            print 'shader:',
+            print shader
         if overrideLayer :
             self.makeShaderOverrideLayer( shader )
        
@@ -1579,6 +1592,11 @@ class MRRenderLayerPass(object):
                     shaderNoDis.outColor.set(outColor)
                     shaderNoDis.outMatteOpacity.set(outAlpha)
                 else :
+                    # Get shader for return
+                    try:
+                        shader = PyNode( shaderName )
+                    except:
+                        traceback.print_exc()
                     # Get shaderSG by shader name
                     if not shaderNoDisSG :
                         shaderNoDisSG = self.getShadingSG(shaderName)
@@ -1589,10 +1607,10 @@ class MRRenderLayerPass(object):
                 logging.debug('First assign no displacement shader to all' )
                 pm.select(each,r=1)
                 pm.sets(shaderNoDisSG,e=1,forceElement=1)
-                    
+
                 # If shape has displacement shader,then assign displacement shader again    
                 if displacementShaders != [] :
-                    shaderNameWithDisp = shaderName + "_" + eachSn 
+                    shaderNameWithDisp = shaderName + "_" + eachSn
                     for displacementShader,shapeFace in zip(displacementShaders,shapeFaces) :
                         if pm.objExists(shaderNameWithDisp) :
                             # Get shadingSG
@@ -1614,6 +1632,8 @@ class MRRenderLayerPass(object):
             shader.outMatteOpacity.set(outAlpha)
                         
         pm.select(cl=1)
+        if not shader:
+            shader = shaderNoDis
         return shader
         
     # Create and assign black shader
@@ -1642,6 +1662,11 @@ class MRRenderLayerPass(object):
                     shaderNoDis.reflectionLimit.set(0)
                     shaderNoDis.matteOpacity.set(outAlpha)
                 else :
+                    # Get shader for return
+                    try:
+                        shader = PyNode( shaderName )
+                    except:
+                        traceback.print_exc()
                     # Get shaderSG by shader name
                     if not shaderNoDisSG :
                         shaderNoDisSG = self.getShadingSG(shaderName)
@@ -1678,8 +1703,10 @@ class MRRenderLayerPass(object):
             shaderNoDis.reflectionLimit.set(0)
             shaderNoDis.matteOpacity.set(outAlpha)
         pm.select(cl=1)
-
-    #Z-DEPTH
+        if not shader:
+            shader = shaderNoDis
+        return shader
+    
     def createZDepthNetwork(self,shaderName):
         shader,shaderSG = self.createShader('surfaceShader', shaderName)
                         
@@ -1725,6 +1752,11 @@ class MRRenderLayerPass(object):
                 if not pm.objExists(shaderName) :
                     shaderNoDis,shaderNoDisSG = self.createZDepthNetwork(shaderName)
                 else :
+                    # Get shader for return
+                    try:
+                        shader = PyNode( shaderName )
+                    except:
+                        traceback.print_exc()
                     # Get shaderSG by shader name
                     if not shaderNoDisSG :
                         shaderNoDisSG = self.getShadingSG(shaderName)
@@ -1750,6 +1782,9 @@ class MRRenderLayerPass(object):
                         pm.select(shapeFace,r=1)
                         pm.sets(shaderSG,e=1,forceElement=1)
         pm.select(cl=1)
+        if not shader:
+            shader = shaderNoDis
+        return shader
 
     def createSubSet(self,subSetName):
         selObj = self.getGeometrySelection()

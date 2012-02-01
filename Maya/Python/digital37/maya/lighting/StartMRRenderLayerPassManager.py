@@ -39,7 +39,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         self.setupUi(self)
         #self.ui = RLPUI.Ui_root()
         
-        self.RLP = RLP.MRRenderLayerPass()
+        self.RLP = RLP.MRRenderLayerPass(self.DEBUG)
         
         # init model
         self.MODEL = 'C'
@@ -582,12 +582,14 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                             
     def on_pushButton_SL_remove_pressed(self):
         sels_set_listWidget = self.get_selected_widgetItem_text(self.listWidget_SL)
+        if logging.DEBUG :
+            print 'sels_set_listWidget:',
+            print sels_set_listWidget
         if sels_set_listWidget:
             self.removeListWidgetItem(self.listWidget_SL, sels_set_listWidget)
             # Remove pass to layer
-            self.RLP.removeLayerByListWidget( sels_set_listWidget )     
+            self.RLP.removeLayer( sels_set_listWidget )
             
-        
     def on_pushButton_CL_add_pressed(self):
         # Important: Clear list selection
         self.listWidget_CL.clearSelection()
@@ -767,26 +769,23 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         self.RLP.setRenderStatus( renderStatus, layerOverride )
 
     def on_pushButton_CM_black_pressed(self):
-        self.RLP.create_shader( [0,0,0],[1,1,1],'BLACK_MATTE',\
+        self.RLP.create_surface_shader( [0,0,0],[1,1,1],'BLACK_MATTE',\
                                       self.checkBox_layerOverride_materiral.isChecked() )
         
     def on_pushButton_CM_blackNoAlpha_pressed(self):
-        #self.RLP.createShader([0,0,0],[0,0,0],'BLACK_NO_ALPHA_MATTE')
-        self.RLP.create_shader( [0,0,0],[0,0,0],'BLACK_NO_ALPHA_MATTE',\
+        self.RLP.create_surface_shader( [0,0,0],[0,0,0],'BLACK_NO_ALPHA_MATTE',\
                                       self.checkBox_layerOverride_materiral.isChecked() )        
                                         
     def on_pushButton_CM_red_pressed(self):
-        #self.RLP.createShader([1,0,0],[1,1,1],'RED_MATTE')
-        self.RLP.create_shader( [1,0,0],[1,1,1],'RED_MATTE',\
+        self.RLP.create_surface_shader( [1,0,0],[1,1,1],'RED_MATTE',\
                                       self.checkBox_layerOverride_materiral.isChecked() )                                          
+        
     def on_pushButton_CM_green_pressed(self):
-        #self.RLP.createShader([0,1,0],[1,1,1],'GREEN_MATTE')
-        self.RLP.create_shader( [0,1,0],[1,1,1],'GREEN_MATTE',\
-                                      self.checkBox_layerOverride_materiral.isChecked() )  
-                                                
+        self.RLP.create_surface_shader( [0,1,0],[1,1,1],'GREEN_MATTE',\
+                                      self.checkBox_layerOverride_materiral.isChecked() )
+          
     def on_pushButton_CM_blue_pressed(self):
-        #self.RLP.createShader([0,0,1],[1,1,1],'BLUE_MATTE')
-        self.RLP.create_shader( [0,0,1],[1,1,1],'BLUE_MATTE',\
+        self.RLP.create_surface_shader( [0,0,1],[1,1,1],'BLUE_MATTE',\
                                       self.checkBox_layerOverride_materiral.isChecked() )  
                                                 
     def on_pushButton_CM_useBackground_pressed(self):
@@ -819,12 +818,12 @@ def getMayaWindow():
     ptr = maya.OpenMayaUI.MQtUtil.mainWindow()
     return sip.wrapinstance(long(ptr), QtCore.QObject)
 
-def main(logLevel='warning'):
+def main(logLevel='warning',debug=True):
     setLog(logLevel)
     global MRRenderLayerPassManager_app
     global MRRenderLayerPassManager_myapp
     MRRenderLayerPassManager_app = QtGui.qApp
-    MRRenderLayerPassManager_myapp = StartMRRenderLayerPassManager(getMayaWindow())
+    MRRenderLayerPassManager_myapp = StartMRRenderLayerPassManager(getMayaWindow(),debug)
     MRRenderLayerPassManager_myapp.show()
 
 if __name__ == "__main__":
