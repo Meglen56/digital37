@@ -2,7 +2,7 @@
 #Description:
 #Author:honglou(hongloull@gmail.com)
 #Create:2011.12.06
-#Update: 
+#Update: 2012.02.01
 #Howto use : 
 import logging 
 import traceback
@@ -226,7 +226,25 @@ class MRRenderLayerPass(object):
             return None
         else :
             return selObj
-    
+        
+    def getLightInScene(self):
+        light_set = set()
+        mel.eval('SelectAllLights')
+        light_set.update( pm.ls(sl=1,l=1) )
+        light_set.update( pm.ls(sl=1,l=1,dag=1,lf=1,\
+                                type=['spotLight','directionalLight',\
+                                      'volumeLight','areaLight','ambientLight','pointLight']) )
+        
+        if self.DEBUG :
+            print light_set
+        return light_set
+            
+    def getLightAndObjInLayer(self,layer):
+        obj_names_list = self.getObjInLayer(layer)
+        light_set = self.getLightInLayer()
+        if obj_names_list and light_set :
+            return (set( obj_names_list ) - light_set)
+        
     # Flatten list with set
     def flattenList(self,inputs):
         for i in inputs :
@@ -589,8 +607,7 @@ class MRRenderLayerPass(object):
         self.getScenePasses()
                 
         if self.PASSES_SCENE :
-            #pNames = [ k for k in PASSES_ALL.keys() if k not in self.PASSES_SCENE ]
-            pNames = [ k for k in self.PASSES_ALL if k not in self.PASSES_SCENE ]
+            pNames = ( k for k in self.PASSES_ALL if k not in self.PASSES_SCENE )
             for pn in pNames :
                 self.PASSES_AVAILABLE.append( pn )
         # If scene has no pass

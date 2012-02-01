@@ -1,12 +1,15 @@
-#import pymel.core as pm
-#from pymel.all import mel
-#from pymel.core.general import PyNode
+import pymel.core as pm
+from pymel.all import mel
+from pymel.core.general import PyNode
 
-import logging
-logger = logging.getLogger('RenderLayerPassManager') 
-logger.setLevel(logging.DEBUG) 
+light_set = set()
+mel.eval('SelectAllLights')
+light_set.update( pm.ls(sl=1,l=1) )
+light_set.update( pm.ls(sl=1,l=1,dag=1,lf=1,\
+                        type=['spotLight','directionalLight',\
+                        'volumeLight','areaLight','ambientLight','pointLight']) )
+print light_set
+return light_set
 
-logger.debug('a')
-logger.critical('b')    
-level = logger.getLevel()
-print level
+
+

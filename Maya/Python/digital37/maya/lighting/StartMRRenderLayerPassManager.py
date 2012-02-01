@@ -1,20 +1,11 @@
 # -*- coding: utf-8 -*-
 #Description:
+# -*- coding: utf-8 -*- 
 #Author:honglou(hongloull@gmail.com)
 #Create:2011.12.06
-#Update: 
+#Update: 2012.02.01
 #How to use : 
 import logging
-
-#from PyQt4.uic.Compiler.qtproxies import QtCore
-#===============================================================================
-# LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
-#              'warning': logging.WARNING, 'error': logging.ERROR,\
-#              'critical': logging.CRITICAL}
-# LOG_LEVEL = LOG_LEVELS.get('debug')
-# logging.basicConfig(level=LOG_LEVEL)
-#===============================================================================
-
 import traceback
 import itertools
 
@@ -139,12 +130,12 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
     def actionHandler_add(self):  
         # function for menu
         logging.debug('action handler_add')
-        self.listWidget_CL_add()
+        self.on_pushButton_CL_add_pressed()
               
     def actionHandler_remove(self):  
         # function for menu
         logging.debug('action handler_remove')
-        self.listWidget_CL_remove()
+        self.on_pushButton_CL_remove_pressed()
 
     # listWidget_SP can only accept listWidget_AVP's drag and drop
     def dragMoveEvent_SP(self,e):
@@ -214,11 +205,16 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 returnItem = widgetItem
         return returnItem
     
-    # add menu cmd for listWidget_CL
-    def listWidget_CL_add(self):
-        self.appendListWidgetItem(self.listWidget_CL, {'layer':'layer'})
-    
-    # add menu cmd for listWidget_CL
+    def delSelItemsInListWidget(self,listWidget):
+        items = listWidget.selectedItems()
+        if items:
+            for item in items :
+                row = listWidget.row( item ) 
+                try:
+                    listWidget.takeItem( row )
+                except:
+                    logging.warning('delSelItemInListWidget error')
+                        
     def listWidget_CL_remove(self):
         listItems = self.listWidget_CL.selectedItems()
         if listItems:
@@ -229,10 +225,21 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 except:
                     traceback.print_exc()
                     logging.warning('can not remove itemWidget')
+             
+    def get_widgetItem_text(self,item):
+        return str(item.text())
+    
+    def get_selected_widgetItem_text(self,listWidget):
+        nodes_set = set()
+        for i in itertools.imap( lambda x:str(x.text()), listWidget.selectedItems() ) :
+            nodes_set.add(i)
+#        items = listWidget.selectedItems()
+#        if items:
+#            for item in items :
+#                # Get item's text
+#                nodes_set.add( str(item.text()) )
+        return nodes_set
         
-    def getLayerDict(self):
-        pass
-                        
     def removeListWidgetItem(self,listWidget,inputStringList):
         # Clear listWidget first
         if inputStringList :
@@ -277,16 +284,25 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
             if inputStr == l.keys() :
                 matchMember = l
         return matchMember
-                 
+
+    def flattenItemsInListWidget(self,listWidget):
+        text_list = set( self.getTextListsFromListWidget(listWidget) )
+        if self.DEBUG:
+            print 'text_list:',text_list
+        listWidget.clear()
+        self.insertListWidgetItem(listWidget, list(text_list))
+                         
     def updateLayerList(self):
         # Get layers first
         self.RLP.getLayers()
         # Get render inputDict
         self.insertListWidgetItem(self.listWidget_SL, self.RLP.LAYERS)
         
+    # update object and light associated list
     def updateAssociatedObjectList(self):
         logging.debug('updateAssociatedObjectList')
         self.listWidget_AO.clear()
+        self.listWidget_AL.clear()
         self.getActiveLayer()
         obj_names_list = None
         if self.MODEL == 'M' :
@@ -345,13 +361,6 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         else:
             if self.RLP.LAYERS_CREATION_SELECTED and listWidgetItems_names_list :
                 self.RLP.updateAssociatedPasses( listWidgetItems_names_list,self.MODEL )
-                        
-    def flattenItemsInListWidget(self,listWidget):
-        text_list = set( self.getTextListsFromListWidget(listWidget) )
-        if self.DEBUG:
-            print 'text_list:',text_list
-        listWidget.clear()
-        self.insertListWidgetItem(listWidget, list(text_list))
                 
     def updateScenePassList(self):
         logging.debug('updateScenePassList')
@@ -595,7 +604,15 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         self.listWidget_CL.clearSelection()
         
         # Get layer name
-        layerName = layerNameExt = str( self.lineEdit_layerName.text() )
+        # Get layer name
+        layerName = str( self.lineEdit_layerName.text() )
+        layerPrefix = self.lineEdit_layerPrefix.text()
+        if layerPrefix:
+            layerName = str(layerPrefix) + '_' + layerName
+        layerSuffix = self.lineEdit_layerSuffix.text()
+        if layerSuffix:
+            layerName += '_' + str(layerSuffix)        
+        layerNameExt = layerName
         # Check layer name is existes or not
         layerNameLists = self.getTextListsFromListWidget( self.listWidget_CL )
         if layerNameExt in layerNameLists :
@@ -711,20 +728,6 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                     self.removeListWidgetItem(self.listWidget_AO, sels_set)
                     # Remove objs from creation layer
                     self.RLP.set_creation_layers_attr('AO', sels_set, 'Remove')
-            
-    def get_widgetItem_text(self,item):
-        return str(item.text())
-    
-    def get_selected_widgetItem_text(self,listWidget):
-        nodes_set = set()
-        for i in itertools.imap( lambda x:str(x.text()), listWidget.selectedItems() ) :
-            nodes_set.add(i)
-#        items = listWidget.selectedItems()
-#        if items:
-#            for item in items :
-#                # Get item's text
-#                nodes_set.add( str(item.text()) )
-        return nodes_set
     
     def on_pushButton_ASP_remove_pressed(self):
         # Get layer active
@@ -792,20 +795,9 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         #self.RLP.createShadowShader('userBackGround',None,1)
         self.RLP.create_shadow_shader('SHADOW_MATTE',\
                                       self.checkBox_layerOverride_materiral.isChecked())
-        
                                         
     def on_pushButton_CM_zDepth_pressed(self):
         self.RLP.createZDepthShader('Z_Depth_MAT')
-    
-    def delSelItemsInListWidget(self,listWidget):
-        items = listWidget.selectedItems()
-        if items:
-            for item in items :
-                row = listWidget.row( item ) 
-                try:
-                    listWidget.takeItem( row )
-                except:
-                    logging.warning('delSelItemInListWidget error')
 
 def setLog(logLevel):
     LOG_LEVELS = {'debug': logging.DEBUG, 'info':logging.INFO, \
