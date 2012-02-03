@@ -13,7 +13,7 @@ from pymel.core.general import PyNode
                    
 class MRRenderLayerPass(object):
     TYPE_LIST = type([])
-    TYPE_STR = type('')
+#    TYPE_STR = type('')
     TYPE_DICT = type({})
     TYPE_SET = type(set())
 
@@ -229,22 +229,22 @@ class MRRenderLayerPass(object):
         
     def getLightInScene(self):
         light_set = set()
-        mel.eval('SelectAllLights')
-        light_set.update( pm.ls(sl=1,l=1) )
+        light_set.update( pm.ls(l=1,dag=1,lf=1,\
+                                type=['spotLight','directionalLight',\
+                                      'volumeLight','areaLight','ambientLight','pointLight']) )
+        if self.DEBUG :
+            print light_set
+        return set(l.getParent().longName() for l in light_set if light_set)
+
+    def getLightInSelection(self):
+        light_set = set()
         light_set.update( pm.ls(sl=1,l=1,dag=1,lf=1,\
                                 type=['spotLight','directionalLight',\
                                       'volumeLight','areaLight','ambientLight','pointLight']) )
-        
         if self.DEBUG :
             print light_set
-        return light_set
+        return set(l.getParent().longName() for l in light_set if light_set)
             
-    def getLightAndObjInLayer(self,layer):
-        obj_names_list = self.getObjInLayer(layer)
-        light_set = self.getLightInLayer()
-        if obj_names_list and light_set :
-            return (set( obj_names_list ) - light_set)
-        
     # Flatten list with set
     def flattenList(self,inputs):
         for i in inputs :
@@ -623,7 +623,18 @@ class MRRenderLayerPass(object):
     # Return set
     def get_obj_in_layer(self,layer):
         return set( pm.editRenderLayerMembers(layer,q=1,fullNames=1) )
-        
+      
+    def get_light_in_layer(self,layer):
+        obj_in_layer = pm.editRenderLayerMembers(layer,q=1,fullNames=1)
+        if obj_in_layer: 
+            light_set = self.getLightInScene()
+            if light_set:
+                return set( obj_in_layer ) & light_set
+            else:
+                return set( obj_in_layer ) 
+        else:
+            return None
+            
     def get_creation_layer_attr(self,layer,attr):
         returnValue = layer_dict = None
         logging.debug('%s ',self.LAYER_CREATION)
@@ -989,7 +1000,7 @@ class MRRenderLayerPass(object):
                 print model
             
     def init_creation_layer_attr(self,layer):
-        self.LAYER_CREATION[layer] = {'AO':[],'AP':[],'O':[],'PRESET':'Normal'}
+        self.LAYER_CREATION[layer] = {'AO':[],'AL':[],'AP':[],'O':[],'PRESET':'Normal'}
         
     def rename_creation_layer(self,newName):
         logging.debug('rename_creation_layer:')
@@ -1019,11 +1030,19 @@ class MRRenderLayerPass(object):
             # Add objects
             obj_list = self.LAYER_CREATION[layerName].get('AO')
             # Get shape of objects
-            obj_list = self.getShapeSelection(obj_list)
+            #obj_list = self.getShapeSelection(obj_list)
             if obj_list :
                 # Add objs to layer
                 self.add_obj_to_layer(layer, obj_list)
-                
+
+            # Add lights
+            light_list = self.LAYER_CREATION[layerName].get('AL')
+            # Get shape of lightects
+            #light_list = self.getShapeSelection(light_list)
+            if light_list :
+                # Add lights to layer
+                self.add_obj_to_layer(layer, light_list)
+                                
             # Add passes
             pass_list = self.LAYER_CREATION[layerName].get('AP')
             if pass_list :

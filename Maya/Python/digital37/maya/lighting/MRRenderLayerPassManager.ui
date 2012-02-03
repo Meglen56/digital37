@@ -233,6 +233,20 @@
           <widget class="QWidget" name="layoutWidget_2">
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
+             <widget class="QPushButton" name="pushButton_AL_add">
+              <property name="text">
+               <string>                      Add                     </string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_AL_remove">
+              <property name="text">
+               <string>Remove</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QLabel" name="label_OBJ">
               <property name="text">
                <string>Associated Objects:</string>
@@ -592,7 +606,7 @@
                  <x>0</x>
                  <y>0</y>
                  <width>136</width>
-                 <height>266</height>
+                 <height>274</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -790,24 +804,6 @@
    </layout>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1246</width>
-     <height>18</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuFIle">
-    <property name="title">
-     <string>Layer</string>
-    </property>
-    <addaction name="actionImport_Layers"/>
-    <addaction name="actionExport_Layers"/>
-   </widget>
-   <addaction name="menuFIle"/>
-  </widget>
   <action name="actionImport_Layers">
    <property name="text">
     <string>Import Layers </string>
@@ -816,6 +812,11 @@
   <action name="actionExport_Layers">
    <property name="text">
     <string>Export Layers</string>
+   </property>
+  </action>
+  <action name="actionRefresh">
+   <property name="text">
+    <string>Refresh</string>
    </property>
   </action>
  </widget>

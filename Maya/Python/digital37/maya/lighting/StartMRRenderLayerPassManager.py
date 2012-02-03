@@ -26,9 +26,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
     def __init__(self, parent=None, debug=True):
         self.DEBUG = debug
         QtGui.QWidget.__init__(self, parent)
-        #self.ui.setupUi(self)
         self.setupUi(self)
-        #self.ui = RLPUI.Ui_root()
         
         self.RLP = RLP.MRRenderLayerPass(self.DEBUG)
         
@@ -67,11 +65,25 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         # init lists
         self.updateAll()
         
+        self.addMenu()
+        
+        # pop menu
         self.createContextMenu()
         self.listWidget_CL.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         #self.listWidget_CL.customContextMenuRequested.connect(self.showContextMenu)
         self.listWidget_CL.customContextMenuRequested.connect(self.showContextMenu)
-
+        
+    def addMenu(self):
+        # refresh menu
+        self.action_refresh = QtGui.QAction(QtGui.QIcon('icons/web.png'), 'Refresh', self)
+        self.action_refresh.setShortcut('F5')
+        self.action_refresh.setStatusTip('refresh application')
+        self.connect(self.action_refresh, QtCore.SIGNAL('triggered()'), self.updateAll)
+        
+        menubar = self.menuBar()
+        edit_menu = menubar.addMenu('&Edit')
+        edit_menu.addAction(self.action_refresh)
+        
     def switchStackedWidget(self):
         # Get combobox selected index
         self.stackedWidget.setCurrentIndex( self.comboBox_L.currentIndex() )
@@ -298,17 +310,15 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         # Get render inputDict
         self.insertListWidgetItem(self.listWidget_SL, self.RLP.LAYERS)
         
-    # update object and light associated list
     def updateAssociatedObjectList(self):
         logging.debug('updateAssociatedObjectList')
         self.listWidget_AO.clear()
-        self.listWidget_AL.clear()
         self.getActiveLayer()
         obj_names_list = None
         if self.MODEL == 'M' :
             if self.RLP.LAYER_MANAGER_ACTIVE :
                 obj_names_list = self.RLP.getObjInLayer( self.RLP.LAYER_MANAGER_ACTIVE )
-                self.insertListWidgetItem(self.listWidget_AO, obj_names_list)            
+                self.insertListWidgetItem(self.listWidget_AO, obj_names_list)
         else:
             if self.RLP.LAYER_CREATION_ACTIVE :
                 if self.DEBUG:
@@ -318,8 +328,28 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 if self.DEBUG:
                     print 'obj_names_list:',
                     print obj_names_list
-                self.insertListWidgetItem(self.listWidget_AO, obj_names_list)            
+                self.insertListWidgetItem(self.listWidget_AO, obj_names_list)
         
+    def updateAssociatedLightList(self):
+        logging.debug('updateAssociatedObjectList')
+        self.listWidget_AL.clear()
+        self.getActiveLayer()
+        obj_names_list = None
+        if self.MODEL == 'M' :
+            if self.RLP.LAYER_MANAGER_ACTIVE :
+                light_names_set = self.RLP.get_light_in_layer( self.RLP.LAYER_MANAGER_ACTIVE )
+                self.insertListWidgetItem(self.listWidget_AL, light_names_set)      
+        else:
+            if self.RLP.LAYER_CREATION_ACTIVE :
+                if self.DEBUG:
+                    print 'self.RLP.LAYER_CREATION_ACTIVE:',
+                    print self.RLP.LAYER_CREATION_ACTIVE
+                light_names_list = self.RLP.get_creation_layer_attr( self.RLP.LAYER_CREATION_ACTIVE,'AL' )
+                if self.DEBUG:
+                    print 'obj_names_list:',
+                    print obj_names_list
+                self.insertListWidgetItem(self.listWidget_AL, light_names_list)
+                
     def updateOverridesList(self):
         logging.debug('updateOverridesList')
         self.listWidget_O.clear()
@@ -392,6 +422,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
     def updateLayerSettings_manager(self):
         self.getSelectedLayers()
         self.updateAssociatedObjectList()
+        self.updateAssociatedLightList()
         self.updateAssociatedPassList()
         self.updateScenePassList()
         self.updateAvailablePassList()
@@ -400,6 +431,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
     def updateLayerSettings_creation(self):
         self.updateLayerPresetCombobox()
         self.updateAssociatedObjectList()
+        self.updateAssociatedLightList()
         self.updateAssociatedPassList()
         self.updateScenePassList()
         self.updateAvailablePassList()
@@ -561,7 +593,6 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
 
     def updateScenePasses(self):
         logging.debug('updateScenePasses')
-        # Get all widgetItems in listWidget_SP
         listWidgetItems = self.getAllItemsInListWidget(self.listWidget_SP)
         if self.DEBUG:
             print listWidgetItems.keys()
@@ -668,8 +699,8 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                 if self.RLP.LAYERS_MANAGER_SELECTED :
                     # Get current obj in list
                     obj_names_set = self.RLP.get_obj_in_layer( self.RLP.LAYER_MANAGER_ACTIVE )
-                    # Remove objs
-                    sels_set = sels_set - obj_names_set
+                    if obj_names_set:
+                        sels_set = sels_set - obj_names_set
                     self.appendListWidgetItem(self.listWidget_AO, sels_set)
                     # Add objs to layer
                     self.RLP.add_obj_to_layers( self.RLP.LAYERS_MANAGER_SELECTED, sels_set )
@@ -681,6 +712,28 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                         print sels_set
                     self.RLP.set_creation_layers_attr( 'AO', sels_set, 'Add' )
 
+    def on_pushButton_AL_add_pressed(self):
+        self.getSelectedLayers()
+        # Get selection obj
+        sels_set = self.RLP.getLightInSelection()
+        if sels_set :
+            if self.MODEL == 'M' :
+                if self.RLP.LAYERS_MANAGER_SELECTED :
+                    # Get current obj in list
+                    obj_names_set = self.RLP.get_light_in_layer( self.RLP.LAYER_MANAGER_ACTIVE )
+                    if obj_names_set :
+                        sels_set = sels_set - obj_names_set
+                    self.appendListWidgetItem(self.listWidget_AL, sels_set)
+                    # Add objs to layer
+                    self.RLP.add_obj_to_layers( self.RLP.LAYERS_MANAGER_SELECTED, sels_set )
+            else:
+                if self.RLP.LAYERS_CREATION_SELECTED :
+                    self.appendListWidgetItem(self.listWidget_AL, sels_set)
+                    if self.DEBUG:
+                        print 'sels_set:',
+                        print sels_set
+                    self.RLP.set_creation_layers_attr( 'AL', sels_set, 'Add' )
+                    
     def on_pushButton_O_remove_pressed(self):
         # Get layer active
         self.getSelectedLayers()
@@ -708,8 +761,9 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
             if self.RLP.LAYERS_MANAGER_SELECTED:
                 # For user select some widgetItems in listWidget
                 sels_set_listWidget = self.get_selected_widgetItem_text(self.listWidget_AO)
-                # add model sel and widget sel
-                sels_set = sels_set | sels_set_listWidget
+                if sels_set_listWidget:
+                    # add model sel and widget sel
+                    sels_set = sels_set | sels_set_listWidget
                 if sels_set:
                     logging.debug('sels_set:')
                     self.RLP.log_list( sels_set )
@@ -720,14 +774,47 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
             if self.RLP.LAYERS_CREATION_SELECTED:
                 # For user select some widgetItems in listWidget
                 sels_set_listWidget = self.get_selected_widgetItem_text(self.listWidget_AO)
-                # add model sel and widget sel
-                sels_set = sels_set | sels_set_listWidget
+                if sels_set_listWidget:
+                    # add model sel and widget sel
+                    sels_set = sels_set | sels_set_listWidget
                 if sels_set:
                     logging.debug('sels_set:')
                     self.RLP.log_list( sels_set )
                     self.removeListWidgetItem(self.listWidget_AO, sels_set)
                     # Remove objs from creation layer
                     self.RLP.set_creation_layers_attr('AO', sels_set, 'Remove')
+                                
+    def on_pushButton_AL_remove_pressed(self):
+        self.getSelectedLayers()
+        # Get selection obj:For user select some objs in model view
+        sels_set = self.RLP.getLightInSelection()
+        
+        if self.MODEL == 'M' :
+            if self.RLP.LAYERS_MANAGER_SELECTED:
+                # For user select some widgetItems in listWidget
+                sels_set_listWidget = self.get_selected_widgetItem_text(self.listWidget_AL)
+                if sels_set_listWidget:
+                    # add model sel and widget sel
+                    sels_set = sels_set | sels_set_listWidget
+                if sels_set:
+                    logging.debug('sels_set:')
+                    self.RLP.log_list( sels_set )
+                    self.removeListWidgetItem(self.listWidget_AL, sels_set)
+                    # Remove objs to layer
+                    self.RLP.remove_obj_from_layers( self.RLP.LAYERS_MANAGER_SELECTED, sels_set )
+        else:
+            if self.RLP.LAYERS_CREATION_SELECTED:
+                # For user select some widgetItems in listWidget
+                sels_set_listWidget = self.get_selected_widgetItem_text(self.listWidget_AL)
+                if sels_set_listWidget:
+                    # add model sel and widget sel
+                    sels_set = sels_set | sels_set_listWidget
+                if sels_set:
+                    logging.debug('sels_set:')
+                    self.RLP.log_list( sels_set )
+                    self.removeListWidgetItem(self.listWidget_AL, sels_set)
+                    # Remove objs from creation layer
+                    self.RLP.set_creation_layers_attr('AL', sels_set, 'Remove')
     
     def on_pushButton_ASP_remove_pressed(self):
         # Get layer active

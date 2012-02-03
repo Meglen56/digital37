@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'MRRenderLayerPassManager.ui'
 #
-# Created: Wed Feb 01 21:37:57 2012
+# Created: Fri Feb 03 23:55:16 2012
 #      by: PyQt4 UI code generator 4.8.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -170,6 +170,14 @@ class Ui_root(object):
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.layoutWidget_2)
         self.verticalLayout_3.setMargin(0)
         self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
+        self.pushButton_AL_add = QtGui.QPushButton(self.layoutWidget_2)
+        self.pushButton_AL_add.setText(QtGui.QApplication.translate("root", "                      Add                     ", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButton_AL_add.setObjectName(_fromUtf8("pushButton_AL_add"))
+        self.verticalLayout_3.addWidget(self.pushButton_AL_add)
+        self.pushButton_AL_remove = QtGui.QPushButton(self.layoutWidget_2)
+        self.pushButton_AL_remove.setText(QtGui.QApplication.translate("root", "Remove", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButton_AL_remove.setObjectName(_fromUtf8("pushButton_AL_remove"))
+        self.verticalLayout_3.addWidget(self.pushButton_AL_remove)
         self.label_OBJ = QtGui.QLabel(self.layoutWidget_2)
         self.label_OBJ.setText(QtGui.QApplication.translate("root", "Associated Objects:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_OBJ.setObjectName(_fromUtf8("label_OBJ"))
@@ -372,7 +380,7 @@ class Ui_root(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName(_fromUtf8("scrollArea"))
         self.scrollAreaWidgetContents = QtGui.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 136, 266))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 136, 274))
         self.scrollAreaWidgetContents.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
         self.verticalLayout_6 = QtGui.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_6.setObjectName(_fromUtf8("verticalLayout_6"))
@@ -479,22 +487,15 @@ class Ui_root(object):
         self.statusbar = QtGui.QStatusBar(root)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
         root.setStatusBar(self.statusbar)
-        self.menuBar = QtGui.QMenuBar(root)
-        self.menuBar.setGeometry(QtCore.QRect(0, 0, 1246, 18))
-        self.menuBar.setObjectName(_fromUtf8("menuBar"))
-        self.menuFIle = QtGui.QMenu(self.menuBar)
-        self.menuFIle.setTitle(QtGui.QApplication.translate("root", "Layer", None, QtGui.QApplication.UnicodeUTF8))
-        self.menuFIle.setObjectName(_fromUtf8("menuFIle"))
-        root.setMenuBar(self.menuBar)
         self.actionImport_Layers = QtGui.QAction(root)
         self.actionImport_Layers.setText(QtGui.QApplication.translate("root", "Import Layers ", None, QtGui.QApplication.UnicodeUTF8))
         self.actionImport_Layers.setObjectName(_fromUtf8("actionImport_Layers"))
         self.actionExport_Layers = QtGui.QAction(root)
         self.actionExport_Layers.setText(QtGui.QApplication.translate("root", "Export Layers", None, QtGui.QApplication.UnicodeUTF8))
         self.actionExport_Layers.setObjectName(_fromUtf8("actionExport_Layers"))
-        self.menuFIle.addAction(self.actionImport_Layers)
-        self.menuFIle.addAction(self.actionExport_Layers)
-        self.menuBar.addAction(self.menuFIle.menuAction())
+        self.actionRefresh = QtGui.QAction(root)
+        self.actionRefresh.setText(QtGui.QApplication.translate("root", "Refresh", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionRefresh.setObjectName(_fromUtf8("actionRefresh"))
 
         self.retranslateUi(root)
         self.stackedWidget.setCurrentIndex(1)
