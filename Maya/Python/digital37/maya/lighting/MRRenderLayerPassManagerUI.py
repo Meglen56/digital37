@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'MRRenderLayerPassManager.ui'
 #
-# Created: Fri Feb 03 23:55:16 2012
+# Created: Sat Feb 04 13:33:49 2012
 #      by: PyQt4 UI code generator 4.8.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -37,6 +37,10 @@ class Ui_root(object):
         self.verticalLayout_L.setObjectName(_fromUtf8("verticalLayout_L"))
         self.verticalLayout_10 = QtGui.QVBoxLayout()
         self.verticalLayout_10.setObjectName(_fromUtf8("verticalLayout_10"))
+        self.pushButton_refresh = QtGui.QPushButton(self.layoutWidget)
+        self.pushButton_refresh.setText(QtGui.QApplication.translate("root", "Refresh", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButton_refresh.setObjectName(_fromUtf8("pushButton_refresh"))
+        self.verticalLayout_10.addWidget(self.pushButton_refresh)
         self.comboBox_L = QtGui.QComboBox(self.layoutWidget)
         self.comboBox_L.setObjectName(_fromUtf8("comboBox_L"))
         self.verticalLayout_10.addWidget(self.comboBox_L)
@@ -134,10 +138,6 @@ class Ui_root(object):
         self.pushButton_CL_apply.setText(QtGui.QApplication.translate("root", "Apply", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_CL_apply.setObjectName(_fromUtf8("pushButton_CL_apply"))
         self.verticalLayout_11.addWidget(self.pushButton_CL_apply)
-        self.pushButton_refresh = QtGui.QPushButton(self.page_CL)
-        self.pushButton_refresh.setText(QtGui.QApplication.translate("root", "Refresh", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButton_refresh.setObjectName(_fromUtf8("pushButton_refresh"))
-        self.verticalLayout_11.addWidget(self.pushButton_refresh)
         self.verticalLayout_12.addLayout(self.verticalLayout_11)
         self.stackedWidget.addWidget(self.page_CL)
         self.verticalLayout_7.addWidget(self.stackedWidget)

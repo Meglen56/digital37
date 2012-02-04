@@ -68,10 +68,7 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         self.addMenu()
         
         # pop menu
-        self.createContextMenu()
-        self.listWidget_CL.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        #self.listWidget_CL.customContextMenuRequested.connect(self.showContextMenu)
-        self.listWidget_CL.customContextMenuRequested.connect(self.showContextMenu)
+        self.createPopupMenu()
         
     def addMenu(self):
         # refresh menu
@@ -118,26 +115,27 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         else :
             self.checkBox_opposite.setEnabled(True)
         
-    def createContextMenu(self):
-        # we do not need set this
-        #self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        # set no contextmenu for default  
-        #self.setContextMenuPolicy(QtCore.Qt.NoContextMenu)
+    def createPopupMenu(self):
+        self.listWidget_CL.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.listWidget_CL.customContextMenuRequested.connect(self.showPopupMenu)
         
-        #self.customContextMenuRequested.connect(self.showContextMenu)  
-      
         self.contextMenu = QtGui.QMenu(self)  
         self.actionA = self.contextMenu.addAction(u'Add')  
         self.actionB = self.contextMenu.addAction(u'Remove')  
-
         self.actionA.triggered.connect(self.actionHandler_add)  
-        self.actionB.triggered.connect(self.actionHandler_remove)  
-      
-    def showContextMenu(self, pos):  
-        # mouse position
-        #self.contextMenu.move(self.pos() + pos)  
-        self.contextMenu.move(self.pos() + pos + self.listWidget_CL.pos() )  
-        self.contextMenu.show()  
+        self.actionB.triggered.connect(self.actionHandler_remove)
+        
+        self.contextMenu.addSeparator()
+        
+        self.presetMenu = QtGui.QMenu(self)
+        self.contextMenu.addMenu(self.presetMenu)
+        
+        
+        self.action_create = self.presetMenu.addAction(u'Create Preset')
+        self.action_create.triggered.connect(self.create_preset_for_layer)
+        
+    def showPopupMenu(self, point):
+        self.contextMenu.exec_(self.listWidget_CL.mapToGlobal(point)) 
 
     def actionHandler_add(self):  
         # function for menu
@@ -148,7 +146,11 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         # function for menu
         logging.debug('action handler_remove')
         self.on_pushButton_CL_remove_pressed()
-
+        
+    def create_preset_for_layer(self,layerName):
+        if self.DEBUG:
+            print 'create_preset_for_layer'
+            
     # listWidget_SP can only accept listWidget_AVP's drag and drop
     def dragMoveEvent_SP(self,e):
         logging.debug('custom dragMoveEvent')
