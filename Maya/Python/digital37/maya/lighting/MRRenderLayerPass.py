@@ -47,7 +47,7 @@ class MRRenderLayerPass(object):
                   'UVPass':'UV', 'worldPosition':'worldPosition'}
     PASSES_COLOR = ['beauty','depth','diffuse','incandescence','indirect','normalWorld',\
                     'reflection','refraction','shadow','specular']
-    LAYER_PRESET = ['Normal','Color','AO','AO_Transparency','Shadow']
+    LAYER_PRESET = ['Normal','AO','AO_Transparency','Shadow']
     LAYER_NAME_DEFAULT = 'layer'
     MODEL = ['Manager Render Layer','Create Render Layer']
     
@@ -159,6 +159,9 @@ class MRRenderLayerPass(object):
             pm.rename(node,name)
         except:
             traceback.print_exc()
+        
+    def select_obj(self,input_set):
+        pm.select(list(input_set),r=True)
         
     def getSelection(self):
         logging.debug('MRRenderLayerPass getSelection')
@@ -745,10 +748,11 @@ class MRRenderLayerPass(object):
                 logging.warning('remove_pass_from_layers: selection is None')
                           
     def remove_overrides_from_layer(self,layer,attr_list):
-        layer=PyNode(layer)
+        #layer=PyNode(layer)
         if layer and attr_list:
             for attr in attr_list :
-                pm.editRenderLayerMembers(layer,attr,remove=1)
+                # Important: use below command will cause maya crash
+                pm.editRenderLayerAdjustment(attr,layer=layer,remove=1)
         else :
             if not layer :
                 logging.warning('remove_overrides_from_layer: layer is None')

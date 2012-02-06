@@ -58,6 +58,8 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         
         self.checkBox_doubleSided.clicked.connect( self.updateCheckBox_opposite )
         
+        self.listWidget_AO.itemSelectionChanged.connect( self.select_obj_from_list )
+        
         self.listWidget_SP.dragMoveEvent = self.dragMoveEvent_SP
         self.listWidget_ASP.dragMoveEvent = self.dragMoveEvent_ASP
         self.listWidget_AVP.dragMoveEvent = self.dragMoveEvent_AVP
@@ -228,7 +230,13 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
                     listWidget.takeItem( row )
                 except:
                     logging.warning('delSelItemInListWidget error')
-                        
+                     
+    def select_obj_from_list(self):
+        sels_set_listWidget = self.get_selected_widgetItem_text(self.listWidget_AO)
+        if sels_set_listWidget:
+            # Remove objs to layer
+            self.RLP.select_obj( sels_set_listWidget )
+           
     def listWidget_CL_remove(self):
         listItems = self.listWidget_CL.selectedItems()
         if listItems:
