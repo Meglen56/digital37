@@ -10,7 +10,9 @@ import itertools
 import pymel.core as pm
 from pymel.all import mel
 from pymel.core.general import PyNode
-                   
+import digital37.XmlParser as XmlParser
+reload(XmlParser)
+
 class MRRenderLayerPass(object):
     TYPE_LIST = type([])
 #    TYPE_STR = type('')
@@ -660,6 +662,37 @@ class MRRenderLayerPass(object):
             logging.debug('get creation layer attr error:')
         return returnValue
 
+    def get_creation_layer_attrs(self,layer):
+        layer_dict = None
+        logging.debug('%s ',self.LAYER_CREATION)
+        if self.DEBUG:
+            print self.LAYER_CREATION
+        if self.LAYER_CREATION.has_key(layer):
+            if self.DEBUG:
+                print 'layer:',
+                print layer
+            layer_dict = self.LAYER_CREATION.get(layer)
+            # Remove empty can not use iter
+            for k,v in layer_dict.items() :
+                if not v:
+                    layer_dict.pop(k)
+            if self.DEBUG:
+                print 'layer_dict:',
+                print layer_dict
+        else:
+            logging.debug('get creation layer attr error:')
+        return layer_dict
+    
+    def save_creation_layer_preset(self,layer):
+        #layer_preset = self.get_creation_layer_attr(layer,'PRESET')
+        layer_dict = self.get_creation_layer_attrs(layer)
+        layer_dict_preset = {'PRESET':layer_dict.pop('PRESET')}
+        if layer_dict:
+            # convert dict to xml
+            xmlContent = XmlParser.MakeXml().createElements(layer,\
+                                                            layer_dict_preset,layer_dict)
+            print xmlContent
+        
     def add_obj_to_layers(self,layers,obj_names_list):
         for layer in layers :
             self.add_obj_to_layer(layer, obj_names_list)

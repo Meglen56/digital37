@@ -150,8 +150,12 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         self.on_pushButton_CL_remove_pressed()
         
     def create_preset_for_layer(self,layerName):
-        if self.DEBUG:
-            print 'create_preset_for_layer'
+        logging.debug('create_preset_for_layer')
+        # Get layer
+        self.getActiveLayer()
+        if self.RLP.LAYER_CREATION_ACTIVE :
+            self.RLP.save_creation_layer_preset(self.RLP.LAYER_CREATION_ACTIVE)
+            
             
     # listWidget_SP can only accept listWidget_AVP's drag and drop
     def dragMoveEvent_SP(self,e):
