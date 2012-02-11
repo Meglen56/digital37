@@ -8,9 +8,14 @@
 import logging
 import traceback
 import itertools
-
+import os
 import sip
 from PyQt4 import QtCore, QtGui
+try:
+    _fromUtf8 = QtCore.QString.fromUtf8
+except AttributeError:
+    _fromUtf8 = lambda s: s
+    
 import maya.OpenMayaUI
 
 # Make MRRenderLayerPassUI by: pyuic4 MRRenderLayerPassManager.ui>RLPUI.py
@@ -21,9 +26,13 @@ reload(RLPUI)
 import digital37.maya.lighting.MRRenderLayerPass as RLP
 # reload only for tests
 reload(RLP)
+ 
+import digital37.qt.Dialog as Dialog
+reload(Dialog)
 
 class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
     def __init__(self, parent=None, debug=True):
+        
         self.DEBUG = debug
         QtGui.QWidget.__init__(self, parent)
         self.setupUi(self)
@@ -72,6 +81,36 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         # pop menu
         self.createPopupMenu()
         
+    def create_dialog(self,title,labelText):
+        # Must use self for display
+        self.Dialog = QtGui.QDialog()
+        self.Dialog.ui = Dialog.Ui_Dialog()
+        self.Dialog.ui.setupUi(self.Dialog)
+        self.Dialog.setWindowTitle(title)
+        self.Dialog.ui.label.setText(labelText)
+        self.Dialog.show()
+        
+    def file_dialog(self):
+        text = None
+        fd = QtGui.QFileDialog(self)
+        filename = fd.getOpenFileName()
+        if os.path.isfile(filename):
+            text = open(filename).read()
+        return text
+                    
+    def create_create_layer_preset_dialog(self,title,labelText):
+        self.create_dialog(title, labelText)
+        QtCore.QObject.connect(self.Dialog.ui.buttonBox, \
+                               QtCore.SIGNAL(_fromUtf8("accepted()")),\
+                               self.create_preset_for_layer)
+        
+    def create_apply_layer_preset_dialog(self,title,labelText):
+        text = self.file_dialog()
+        if text:
+            if self.DEBUG:
+                logging.debug('get from file:')
+                print text
+                
     def addMenu(self):
         # refresh menu
         self.action_refresh = QtGui.QAction(QtGui.QIcon('icons/web.png'), 'Refresh', self)
@@ -129,13 +168,14 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         
         self.contextMenu.addSeparator()
         
-        self.presetMenu = QtGui.QMenu(self)
+        self.presetMenu = QtGui.QMenu('Layer Preset',self)
         self.contextMenu.addMenu(self.presetMenu)
         
-        
-        self.action_create = self.presetMenu.addAction(u'Create Preset')
-        self.action_create.triggered.connect(self.create_preset_for_layer)
-        
+        self.action_create = self.presetMenu.addAction(u'Create')
+        self.action_create.triggered.connect(self.show_create_preset_for_layer_dialog)
+        self.action_create = self.presetMenu.addAction(u'Apply')
+        self.action_create.triggered.connect(self.show_apply_preset_for_layer_dialog)
+                
     def showPopupMenu(self, point):
         self.contextMenu.exec_(self.listWidget_CL.mapToGlobal(point)) 
 
@@ -149,13 +189,25 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         logging.debug('action handler_remove')
         self.on_pushButton_CL_remove_pressed()
         
-    def create_preset_for_layer(self,layerName):
+    def show_create_preset_for_layer_dialog(self):
         logging.debug('create_preset_for_layer')
         # Get layer
         self.getActiveLayer()
         if self.RLP.LAYER_CREATION_ACTIVE :
-            self.RLP.save_creation_layer_preset(self.RLP.LAYER_CREATION_ACTIVE)
-            
+            # show dialog
+            self.create_create_layer_preset_dialog('Create Layer Prest','Preset Name:')
+        
+    def show_apply_preset_for_layer_dialog(self):
+        logging.debug('create_preset_for_layer')
+        # Get layer
+        self.getActiveLayer()
+        if self.RLP.LAYER_CREATION_ACTIVE :
+            # show dialog
+            self.create_apply_layer_preset_dialog('Create Layer Prest','Preset Name:')
+                                
+    def create_preset_for_layer(self):
+        presetName = str(self.Dialog.ui.lineEdit.text())
+        self.RLP.save_creation_layer_preset(presetName,self.RLP.LAYER_CREATION_ACTIVE)
             
     # listWidget_SP can only accept listWidget_AVP's drag and drop
     def dragMoveEvent_SP(self,e):

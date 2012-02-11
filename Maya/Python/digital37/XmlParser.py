@@ -293,7 +293,7 @@ class MakeXml:
         #print ET.tostring( elem )
         #ET.dump( elem )
         return ET.tostring( elem )
-        
+    
     def createElements(self,root,inputData,subElementData=None):
         elem = ET.Element( root )
         if inputData : 
@@ -311,11 +311,10 @@ class MakeXml:
         if subElementData :
             for key,value in subElementData.items() :
                 subElem = ET.SubElement( elem, key )
-                i = 0
                 for v in value:
                     #print 'v:%s' % v 
-                    subElem.attrib[str(i)] = v
-                    i += 1
+                    #subElem.attrib[v] = v
+                    ET.SubElement(subElem, v)
         return ET.tostring( elem )
     
     def createElements2(self,root,inputData,subElementData=None):

@@ -7,6 +7,7 @@
 import logging 
 import traceback
 import itertools
+import os
 import pymel.core as pm
 from pymel.all import mel
 from pymel.core.general import PyNode
@@ -71,6 +72,7 @@ class MRRenderLayerPass(object):
     MI_DEFAULT_FRAME_BUFFER = None
     MENTAL_RAY_ITEMS_LIST = None
     MENTAL_RAY_GLOBALS = None
+    USER_DIR = None
                 
     def __init__(self,debug=True):
         self.DEBUG = debug
@@ -683,15 +685,44 @@ class MRRenderLayerPass(object):
             logging.debug('get creation layer attr error:')
         return layer_dict
     
-    def save_creation_layer_preset(self,layer):
+    def create_user_settings_dir(self):
+        # get user home dir
+        MRRenderLayerPass.USER_DIR = os.path.expanduser('~') + '/RenderLayerManager/' 
+        if not os.path.exists(  MRRenderLayerPass.USER_DIR ):
+            os.makedirs( MRRenderLayerPass.USER_DIR )
+    
+    def writeFile(self,fileName,content):
+        f = None
+        try:
+            f = open(fileName,'w')
+        except IOError:
+            logging.error('save error...',('Could not save to '+fileName) )
+        else:
+            f.write(content)
+            f.close()
+        
+    def save_creation_layer_preset(self,presetName,layer):
         #layer_preset = self.get_creation_layer_attr(layer,'PRESET')
         layer_dict = self.get_creation_layer_attrs(layer)
-        layer_dict_preset = {'PRESET':layer_dict.pop('PRESET')}
+        # convert set value to string value 
+        for k,v in layer_dict.items() :
+            if not v:
+                layer_dict.pop(k)
+            else:
+                if type(v) == self.TYPE_SET :
+                    layer_dict[k] = '***'.join(v)
         if layer_dict:
             # convert dict to xml
             xmlContent = XmlParser.MakeXml().createElements(layer,\
-                                                            layer_dict_preset,layer_dict)
-            print xmlContent
+                                                            layer_dict)
+            if self.DEBUG :
+                print xmlContent
+            # save xml to file
+            self.create_user_settings_dir()
+            fileName = MRRenderLayerPass.USER_DIR+presetName+'.lps'
+            if self.DEBUG :
+                print fileName
+            self.writeFile( fileName, xmlContent)
         
     def add_obj_to_layers(self,layers,obj_names_list):
         for layer in layers :
