@@ -18,26 +18,26 @@ except AttributeError:
     
 import maya.OpenMayaUI
 
-# Make MRRenderLayerPassUI by: pyuic4 MRRenderLayerPassManager.ui>RLPUI.py
-import digital37.maya.lighting.MRRenderLayerPassManagerUI as RLPUI
+# Make RenderLayerPassUI by: pyuic4 RenderLayerPassManager.ui>RLPUI.py
+import digital37.maya.lighting.RenderLayerPassManagerUI as RLPUI
 # reload only for tests
 reload(RLPUI)
 
-import digital37.maya.lighting.MRRenderLayerPass as RLP
+import digital37.maya.lighting.RenderLayerPass as RLP
 # reload only for tests
 reload(RLP)
  
 import digital37.qt.Dialog as Dialog
 reload(Dialog)
 
-class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
+class StartRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
     def __init__(self, parent=None, debug=True):
         
         self.DEBUG = debug
         QtGui.QWidget.__init__(self, parent)
         self.setupUi(self)
         
-        self.RLP = RLP.MRRenderLayerPass(self.DEBUG)
+        self.RLP = RLP.RenderLayerPass(self.DEBUG)
         
         # init model
         self.MODEL = 'C'
@@ -92,7 +92,8 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         
     def file_dialog(self):
         text = None
-        fd = QtGui.QFileDialog(self)
+        self.RLP.create_user_settings_dir()
+        fd = QtGui.QFileDialog(self,'',RLP.RenderLayerPass.USER_DIR,'')
         filename = fd.getOpenFileName()
         if os.path.isfile(filename):
             text = open(filename).read()
@@ -102,14 +103,23 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         self.create_dialog(title, labelText)
         QtCore.QObject.connect(self.Dialog.ui.buttonBox, \
                                QtCore.SIGNAL(_fromUtf8("accepted()")),\
-                               self.create_preset_for_layer)
+                               self.create_preset_from_layer)
         
     def create_apply_layer_preset_dialog(self,title,labelText):
-        text = self.file_dialog()
-        if text:
-            if self.DEBUG:
-                logging.debug('get from file:')
-                print text
+        # get layers selected
+        self.getSelectedLayers()
+        if self.RLP.LAYERS_CREATION_SELECTED :
+            text = self.file_dialog()
+            if text:
+                if self.DEBUG:
+                    logging.debug('get from file:')
+                    print text
+                # convert xml to dictionary
+                self.apply_preset_to_layer(text)
+            else:
+                self.RLP.warning('can not read from selected file.')
+        else:
+            self.RLP.warning('select some layers first.')
                 
     def addMenu(self):
         # refresh menu
@@ -172,9 +182,9 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         self.contextMenu.addMenu(self.presetMenu)
         
         self.action_create = self.presetMenu.addAction(u'Create')
-        self.action_create.triggered.connect(self.show_create_preset_for_layer_dialog)
+        self.action_create.triggered.connect(self.show_create_preset_from_layer_dialog)
         self.action_create = self.presetMenu.addAction(u'Apply')
-        self.action_create.triggered.connect(self.show_apply_preset_for_layer_dialog)
+        self.action_create.triggered.connect(self.show_apply_preset_to_layer_dialog)
                 
     def showPopupMenu(self, point):
         self.contextMenu.exec_(self.listWidget_CL.mapToGlobal(point)) 
@@ -189,26 +199,29 @@ class StartMRRenderLayerPassManager(QtGui.QMainWindow,RLPUI.Ui_root):
         logging.debug('action handler_remove')
         self.on_pushButton_CL_remove_pressed()
         
-    def show_create_preset_for_layer_dialog(self):
-        logging.debug('create_preset_for_layer')
+    def show_create_preset_from_layer_dialog(self):
+        logging.debug('create_preset_from_layer')
         # Get layer
         self.getActiveLayer()
         if self.RLP.LAYER_CREATION_ACTIVE :
             # show dialog
             self.create_create_layer_preset_dialog('Create Layer Prest','Preset Name:')
         
-    def show_apply_preset_for_layer_dialog(self):
-        logging.debug('create_preset_for_layer')
+    def show_apply_preset_to_layer_dialog(self):
+        logging.debug('create_preset_from_layer')
         # Get layer
         self.getActiveLayer()
         if self.RLP.LAYER_CREATION_ACTIVE :
             # show dialog
             self.create_apply_layer_preset_dialog('Create Layer Prest','Preset Name:')
                                 
-    def create_preset_for_layer(self):
+    def create_preset_from_layer(self):
         presetName = str(self.Dialog.ui.lineEdit.text())
         self.RLP.save_creation_layer_preset(presetName,self.RLP.LAYER_CREATION_ACTIVE)
-            
+                                
+    def apply_preset_to_layers(self,text):
+        self.RLP.apply_preset_to_creation_layers(text)
+                    
     # listWidget_SP can only accept listWidget_AVP's drag and drop
     def dragMoveEvent_SP(self,e):
         logging.debug('custom dragMoveEvent')
@@ -965,11 +978,11 @@ def getMayaWindow():
 
 def main(logLevel='warning',debug=True):
     setLog(logLevel)
-    global MRRenderLayerPassManager_app
-    global MRRenderLayerPassManager_myapp
-    MRRenderLayerPassManager_app = QtGui.qApp
-    MRRenderLayerPassManager_myapp = StartMRRenderLayerPassManager(getMayaWindow(),debug)
-    MRRenderLayerPassManager_myapp.show()
+    global RenderLayerPassManager_app
+    global RenderLayerPassManager_myapp
+    RenderLayerPassManager_app = QtGui.qApp
+    RenderLayerPassManager_myapp = StartRenderLayerPassManager(getMayaWindow(),debug)
+    RenderLayerPassManager_myapp.show()
 
 if __name__ == "__main__":
     main()

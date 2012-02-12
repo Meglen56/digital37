@@ -14,7 +14,7 @@ from pymel.core.general import PyNode
 import digital37.XmlParser as XmlParser
 reload(XmlParser)
 
-class MRRenderLayerPass(object):
+class RenderLayerPass(object):
     TYPE_LIST = type([])
 #    TYPE_STR = type('')
     TYPE_DICT = type({})
@@ -76,7 +76,7 @@ class MRRenderLayerPass(object):
                 
     def __init__(self,debug=True):
         self.DEBUG = debug
-        logging.debug('Init MRRenderLayerPass class')
+        logging.debug('Init RenderLayerPass class')
 
         self.PASSES_COLOR_AVAILABLE = [ x for x in self.PASSES_ALL if x not in self.PASSES_COLOR ]
         self.PASSES_SCENE = []
@@ -158,6 +158,9 @@ class MRRenderLayerPass(object):
         else:
             logging.debug('log_list:input is None')
                 
+    def warning(self,warn_str):
+        pm.warning(warn_str)
+        
     def rename(self,node,name):
         try:
             pm.rename(node,name)
@@ -168,7 +171,7 @@ class MRRenderLayerPass(object):
         pm.select(list(input_set),r=True)
         
     def getSelection(self):
-        logging.debug('MRRenderLayerPass getSelection')
+        logging.debug('RenderLayerPass getSelection')
         selObjShort = pm.ls(sl=1,l=1)
         if not selObjShort :
             logging.warning('select some objects first.')
@@ -185,7 +188,7 @@ class MRRenderLayerPass(object):
             return set( itertools.imap(lambda x:x.longName(), sel ) )
     
     def getSelection_dict(self):
-        logging.debug('MRRenderLayerPass getSelection_dict')
+        logging.debug('RenderLayerPass getSelection_dict')
         sels = pm.ls(sl=1,l=1)
         if not sels :
             logging.warning('select some objects first.')
@@ -197,7 +200,7 @@ class MRRenderLayerPass(object):
             return sels_dict
             
     def getDAGSelection(self):
-        logging.debug('MRRenderLayerPass getDAGSelection')
+        logging.debug('RenderLayerPass getDAGSelection')
         selObjShort = pm.ls(sl=1)
         selObj = pm.ls(sl=1,dag=1)
         if not selObjShort :
@@ -207,7 +210,7 @@ class MRRenderLayerPass(object):
             return selObj
     
     def getShapeSelection(self,sels):
-        logging.debug('MRRenderLayerPass get geometry Selection')
+        logging.debug('RenderLayerPass get geometry Selection')
         selObj = pm.ls(sels,dag=1,lf=1,type=['mesh','nurbsSurface','subdiv'])
         if not selObj :
             logging.warning('select some objects first.')
@@ -216,7 +219,7 @@ class MRRenderLayerPass(object):
             return selObj
             
     def getGeometrySelection(self):
-        logging.debug('MRRenderLayerPass get geometry Selection')
+        logging.debug('RenderLayerPass get geometry Selection')
         selObj = pm.ls(sl=1,dag=1,lf=1,type=['mesh','nurbsSurface','subdiv'])
         if not selObj :
             logging.warning('select some objects first.')
@@ -225,7 +228,7 @@ class MRRenderLayerPass(object):
             return selObj
         
     def getLightSelection(self):
-        logging.debug('MRRenderLayerPass getDAGSelection')
+        logging.debug('RenderLayerPass getDAGSelection')
         selObj = pm.ls(sl=1,dag=1,lf=1,type=['spotLight','directionalLight',\
                                              'volumeLight','areaLight','ambientLight','pointLight'])
         if not selObj :
@@ -687,9 +690,9 @@ class MRRenderLayerPass(object):
     
     def create_user_settings_dir(self):
         # get user home dir
-        MRRenderLayerPass.USER_DIR = os.path.expanduser('~') + '/RenderLayerManager/' 
-        if not os.path.exists(  MRRenderLayerPass.USER_DIR ):
-            os.makedirs( MRRenderLayerPass.USER_DIR )
+        RenderLayerPass.USER_DIR = os.path.expanduser('~') + '/RenderLayerManager/' 
+        if not os.path.exists(  RenderLayerPass.USER_DIR ):
+            os.makedirs( RenderLayerPass.USER_DIR )
     
     def writeFile(self,fileName,content):
         f = None
@@ -702,7 +705,6 @@ class MRRenderLayerPass(object):
             f.close()
         
     def save_creation_layer_preset(self,presetName,layer):
-        #layer_preset = self.get_creation_layer_attr(layer,'PRESET')
         layer_dict = self.get_creation_layer_attrs(layer)
         # convert set value to string value 
         for k,v in layer_dict.items() :
@@ -719,10 +721,15 @@ class MRRenderLayerPass(object):
                 print xmlContent
             # save xml to file
             self.create_user_settings_dir()
-            fileName = MRRenderLayerPass.USER_DIR+presetName+'.lps'
+            fileName = RenderLayerPass.USER_DIR+presetName+'.lps'
             if self.DEBUG :
                 print fileName
             self.writeFile( fileName, xmlContent)
+        
+    def apply_preset_to_creation_layers(self,text):
+        for l in self.LAYERS_CREATION_SELECTED :
+            # parse xml
+            pass
         
     def add_obj_to_layers(self,layers,obj_names_list):
         for layer in layers :
