@@ -31,13 +31,14 @@
 	</node>
 	
 	<node type="subMenu" name="Dynamic">
-		<node type="command" name="Create Geometry Cache" comment="Create Geometry Cache" cmd="import digital37.maya.dynamic.makeCache;digital37.maya.dynamic.makeCache.MakeCache()" mode="python"></node>
+		<node type="command" name="Create Hair Cache" comment="Create Hair Cache" cmd="import digital37.maya.dynamic.HairCache;digital37.maya.dynamic.HairCache.HairCache.HairCache().create_hair_cache()" mode="python"></node>
 	</node>
 	
 	<node type="subMenu" name="Lighting">
 		<node type="command" name="File Texture Manager" comment="File Texture Manager" cmd="FileTextureManager()" mode="mel"></node>
 		<node type="command" name="Cleanup Light Links" comment="Cleanup Light Links" cmd="jrLightLinksCleanUp()" mode="mel"></node>
 		<node type="command" name="Submit Job To Deadline" comment="Submit Job To Deadline" cmd="SubmitJobToDeadline" mode="mel"></node>
+		<node type="command" name="Render Layer Pass Manager" comment="Render Layer Pass Manager" cmd="import digital37.maya.lighting.StartRenderLayerPassManager;digital37.maya.lighting.StartRenderLayerPassManager.main()" mode="python"></node>
 	</node>
 			
 	<node type="subMenu" name="TD">
