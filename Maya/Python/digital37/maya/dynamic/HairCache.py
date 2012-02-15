@@ -17,13 +17,13 @@ class General():
 class HairCache(General):
     def __init__(self):
         self.Hairs = None
+        self.DiskCache_Before = None
         
     def get_sel_hair_shapes(self):
-        try:
-            self.Hairs = pm.ls(sl=1,dag=1,lf=1,l=1,type='hairSystem')
-        except:
-            traceback.print_exc()
-    
+        self.Hairs = pm.ls(sl=1,dag=1,lf=1,l=1,type='hairSystem')
+        if not self.Hairs:
+            pm.warning('select some hair system first.')
+            
     def set_cache_name(self):
         for hair in self.Hairs :
             # get cache node
@@ -38,20 +38,23 @@ class HairCache(General):
                         cache_shape.cacheName.set( self.Scene_Name + '/' + nameBefore )
     
     def del_cache(self):
-        for hair in self.Hairs :
-            # get cache node
-            cache_shapes = hair.diskCache.connections(p=0,d=1)
-            if cache_shapes:
-                for cache_shape in cache_shapes:
-                    try:
-                        # delete cache
-                        mel.eval('DeleteHairCache')
-                    except:
-                        traceback.print_exc()
-                    else:
-                        
+        try:
+            # delete cache
+            mel.eval('DeleteHairCache')
+        except:
+            traceback.print_exc()
                                         
-    def set_diskCache_rule(self,dirPath):
+    def get_diskCache_rule(self):
+        try:
+            #workspace -q -fileRuleEntry "diskCache"
+            # get file rule entry
+            self.DiskCache_Before = pm.workspace('diskCache',fileRuleEntry=1,q=1 )
+        except:
+            traceback.print_exc()
+    
+    def set_diskCache_rule(self,dirPath=None):
+        if not dirPath:
+            dirPath = self.DiskCache_Before
         try:
             pm.workspace(fileRule=('diskCache',dirPath) )
         except:
@@ -61,63 +64,56 @@ class HairCache(General):
                 pm.workspace(saveWorkspace=True)
             except:
                 traceback.print_exc()
-            else:
-                # create dir if it not exists
-                # else cache can not be write to dir
-                dirPath = os.path.join( pm.workspace(q=1,rd=1),dirPath )
-                self.create_dir(dirPath)
         
     def create_hair_cache(self):
         returnStr = 'create hair cache error'
-        # 
-        self.get_scene_name()
         # get selection hair shapes
         self.get_sel_hair_shapes()
-        # delete hair cache if it has
-        self.del_cache()
-        # set disk cache file rule
-        self.set_diskCache_rule('data/' + self.Scene_Name)
-                
-        # create hair cache
-        try:
-            #mel.eval('CreateHairCacheOptions')
-            mel.eval('doHairDiskCache 1 { \"2\", 1, 1, 10, 1 } ')
-        except:
-            traceback.print_exc()
-            return returnStr
-
-        # save file
-        try:
-            pm.system.saveFile(force=True)
-        except:
-            traceback.print_exc()
-            return returnStr
+        
+        if self.Hairs :
+            # delete cache first
+            self.del_cache()
             
-        # set hair cache name
-        self.set_cache_name()
-        # re set disk cache file rule to default
-        self.set_diskCache_rule('data')
+            self.get_scene_name()
+            if self.Scene_Name :
+                # 
+                self.get_diskCache_rule()
+                
+                # set disk cache file rule
+                self.set_diskCache_rule(self.DiskCache_Before + '/' + self.Scene_Name)
+                
+                # create dir if it not exists
+                # else cache can not be write to dir
+                dirPath = os.path.join( pm.workspace(q=1,rd=1),\
+                                        self.DiskCache_Before,\
+                                        self.Scene_Name )
+                self.create_dir(dirPath)
+                        
+                # create hair cache
+                try:
+                    #mel.eval('CreateHairCacheOptions')
+                    mel.eval('doHairDiskCache 1 { \"2\", 1, 1, 10, 1 } ')
+                except:
+                    traceback.print_exc()
+                    return returnStr
         
-        return 'create hair cache success'
-        
+                # save file
+                try:
+                    pm.system.saveFile(force=True)
+                except:
+                    traceback.print_exc()
+                    return returnStr
+                    
+                # set hair cache name
+                self.set_cache_name()
+                # re set disk cache file rule to default
+                self.set_diskCache_rule()
+                
+                return 'create hair cache success'
+            
+def main():
+    HairCache().create_hair_cache()
+    
 if __name__ == '__main__' :
-    a = HairCache()
-    a.create_hair_cache()
-    
-#string $p = `file -q -sn -shn`;
-#string $buffer[];
-#$numTokens = `tokenize $p "." $buffer`;
-#$p = "data/" + $buffer[0] ;
-#
-#//workspace -removeFileRuleEntry "diskCache";
-#workspace -fileRule "diskCache" $p;
-#workspace -saveWorkspace;
-#
-#CreateHairCacheOptions;
-#
-#file -save;
-#
-#workspace -fileRule "diskCache" "data";
-#workspace -saveWorkspace;
-    
+    pass
         
