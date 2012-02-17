@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import logging 
+import threading
 import tempfile, subprocess, traceback, time
 import pymel.core as pm
 from pymel.all import mel
@@ -53,6 +54,7 @@ class SvnMaya(General):
         self.Ref_Dir = set()
         self.Cmd_Update = 'svn update '
         self.Window = None
+        self.Reference_File = None
         
     def set_window(self,window):
         self.Window = window
@@ -69,12 +71,14 @@ class SvnMaya(General):
         self.log_list( self.Texture_File )
         
     def get_reference_file(self):
-        # Get reference file
-        self.Reference_File = set( cmds.file(q=True,l=True) )
-        self.log_list( self.Reference_File )
+        # check scene name is not set or not
+        if pm.system.sceneName():
+            # Get reference file
+            self.Reference_File = set( cmds.file(q=True,l=True) )
+            self.log_list( self.Reference_File )
         
     def get_associated_file(self):
-        self.get_reference_file()
+        #self.get_reference_file()
         if self.Reference_File:
             self.get_texture_file()
             
@@ -117,11 +121,17 @@ class SvnMaya(General):
         logging.debug( 'logDir:%s',logDir )
         
         # use subprocess to start command
-        p = subprocess.Popen(data, shell=False, bufsize=512,
+        p = subprocess.Popen(data, shell=True, bufsize=512,
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
-        i = 0
+        self.writeMessage(f,p)
+        
+        threadName = threading.Thread( target=self.writeMessage,args=( f,p ) )
+        threadName.setDaemon(1)
+        threadName.start()
+                    
+    def writeMessage(self,f,p):
         while True :
             #subprocess is not complete
             if p.poll() == None :
@@ -139,7 +149,6 @@ class SvnMaya(General):
                             if self.Window:
                                 output = unicode(output,'gbk','ignore')
                                 self.Window.insertPlainText( output )
-                    i += 1
             #subprocess is complete
             else :
                 if(p.returncode==0):

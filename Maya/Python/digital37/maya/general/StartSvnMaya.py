@@ -29,9 +29,11 @@ def main():
     global SvnMaya_myapp
     SvnMaya_app = QtGui.qApp
     SvnMaya_myapp = StartSvnMaya(getMayaWindow())
-    SvnMaya_myapp.show()
-    SvnMaya_myapp.set_window(SvnMaya_myapp.textBrowser)
-    SvnMaya_myapp.get_associated_file()
+    SvnMaya_myapp.get_reference_file()
+    if SvnMaya_myapp.Reference_File :
+        SvnMaya_myapp.show()
+        SvnMaya_myapp.set_window(SvnMaya_myapp.textBrowser)
+        SvnMaya_myapp.get_associated_file()
 
 if __name__ == "__main__":
     main()
