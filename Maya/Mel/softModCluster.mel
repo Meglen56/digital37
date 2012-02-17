@@ -1,0 +1,51 @@
+global proc softModCluster (string $softMod, string $cluster, string $vtxs[])
+{
+float $mag,$xRadius,$yRadius,$vecX,$vecY;
+float $posA[3],$posB[3],$posSoftMod[3],$posBX[3],$posBY[3],$v0[3];
+string $tempString[]=`listConnections ($softMod+".matrix")`;
+string $softModHandle=$tempString[0];
+string $deformSet;
+$tempString=`listConnections ($cluster+".message")`;
+for ($y=0;$y<size($tempString);$y++)
+	if ($tempString[$y]!="FaceAllSet")
+		$deformSet=$tempString[$y];
+select $vtxs;
+sets -add $deformSet;
+
+$posSoftMod=`xform -q -ws -piv $softModHandle`;
+move -r -ws 1 0 0 $softModHandle;
+for ($i=0;$i<size($vtxs);$i++)
+	{
+	setAttr ($softMod+".envelope") 0;
+	$posA=`xform -q -ws -t $vtxs[$i]`;
+	setAttr ($softMod+".envelope") 1;
+
+		if ($posA[0]<$posSoftMod[0])
+			$xRadius=`getAttr ($softMod+".falloffRadius")`;
+		else
+			$xRadius=`getAttr ($softMod+".falloffRadius")`;
+		if ($posA[1]>$posSoftMod[1])
+			$yRadius=`getAttr ($softMod+".falloffRadius")`;
+		else
+			$yRadius=`getAttr ($softMod+".falloffRadius")`;
+
+		//setAttr ($softMod+".falloffRadius") $xRadius;
+		$posBX=`xform -q -ws -t $vtxs[$i]`;
+		//setAttr ($softMod+".falloffRadius") $yRadius;
+		$posBY=`xform -q -ws -t $vtxs[$i]`;
+
+		$vecX=$posA[0]-$posSoftMod[0];
+		$vecY=$posA[1]-$posSoftMod[1];
+
+		$magX=$posBX[0]-$posA[0];
+		$magY=$posBY[0]-$posA[0];
+		//$mag=(($magX-abs($vecY*(1.0/($yRadius*2.0))))	+ ($magY-abs($vecX*(1.0/($xRadius*2.0))))) / 2;
+		$mag=(($magX-abs($vecY*(1.0/($yRadius*2.0))))	+ ($magY-abs($vecX*(1.0/($xRadius*2.0)))));
+		if ($mag<0)
+			$mag=0;
+
+
+	percent -v $mag $cluster $vtxs[$i];
+	}
+move -r -ws -1 0 0 $softModHandle;
+}
