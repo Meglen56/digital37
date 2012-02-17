@@ -1,0 +1,35 @@
+global proc convertControlToSoftMod (string $geometry,string $fitJoint)
+{
+string $sel[]=`ls -sl`;
+
+float $falloffRadius=`getAttr ($fitJoint+".falloffRadius")`;
+float $falloffMode=`getAttr ($fitJoint+".falloffMode")`;
+
+float $t[3]=`xform -q -ws -t $sel[0]`;
+float $r[3]=`xform -q -ws -ro $sel[0]`;
+float $s[3]=`xform -q -r -s $sel[0]`;
+
+setAttr -type float3 ($sel[0]+".t") 0 0 0;
+setAttr -type float3 ($sel[0]+".r") 0 0 0;
+setAttr -type float3 ($sel[0]+".s") 1 1 1;
+
+float $pos[3]=`xform -q -ws -t $sel[0]`;
+
+select -r $geometry;
+string $tempString[]=`softMod -falloffMode 1 -falloffAroundSelection 0`;
+string $softMod=`rename $tempString[0] ("convertedSoftMod_"+$sel[0])`;
+string $softModHandle=`rename $tempString[1] ("convertedSoftModHandle_"+$sel[0])`;
+setAttr ($softMod+".falloffRadius") $falloffRadius;
+setAttr ($softMod+".falloffMode") $falloffMode;
+setAttr -type float3 ($softModHandle+"Shape.origin") ($pos[0]) $pos[1] $pos[2];
+setAttr ($softMod+".falloffCenter") ($pos[0]) $pos[1] $pos[2];
+xform -piv ($pos[0]) $pos[1] $pos[2] $softModHandle;
+xform -ws -t ($t[0]-$pos[0]) ($t[1]-$pos[1]) ($t[2]-$pos[2]) -ro $r[0] $r[1] $r[2] -s $s[0] $s[1] $s[2] $softModHandle;
+
+float $radiusUp,$radiusLeft,$radiusRight,$radiusDown;
+
+$radiusUp=$radiusLeft=$radiusRight=$radiusDown=$falloffRadius;
+
+
+select $softModHandle;
+}

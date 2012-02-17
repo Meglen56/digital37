@@ -43,9 +43,10 @@ for ($i=0;$i<size($vtxs);$i++)
 		$mag=(($magX-abs($vecY*(1.0/($yRadius*2.0))))	+ ($magY-abs($vecX*(1.0/($xRadius*2.0)))));
 		if ($mag<0)
 			$mag=0;
-
-
+		print "mag: ";
+		print $mag ;
 	percent -v $mag $cluster $vtxs[$i];
 	}
+	print $softModHandle ;
 move -r -ws -1 0 0 $softModHandle;
 }
