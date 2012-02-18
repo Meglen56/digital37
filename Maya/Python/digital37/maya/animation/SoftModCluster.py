@@ -9,7 +9,25 @@ class SoftModCluster():
         self.Radius = None
         self.Cluster = None
         
-    def soft_to_cluster(self):
+    def add_fallOff_attr(self):
+        sels = pm.ls(sl=1,l=1)
+        if sels:
+            for sel in sels:
+                try :
+                    pm.PyNode(sel.falloffRadius)
+                except :
+                    pm.addAttr(sel,ln='falloffRadius',at='double')
+                    sel.falloffRadius.set(keyable=True)
+                sel.falloffRadius.set(1)
+                
+                try :
+                    pm.PyNode(sel.falloffMode)
+                except :
+                    pm.addAttr(sel,ln='falloffMode',at='enum',en='volume:surface')
+                    sel.falloffMode.set(keyable=True)
+                sel.falloffMode.set('volume')
+        
+    def softMod_to_cluster(self):
         #
         sel = pm.ls(sl=1)
         softMod_handle_shapes = pm.ls(sl=1,dag=1,lf=1,type='softModHandle')
@@ -117,7 +135,44 @@ class SoftModCluster():
                             
                             print softMod_handle
                             pm.move(-1,0,0,softMod_handle,r=1,ws=1)
+                            
+    def control_to_softMod(self):
+        sels = pm.ls(sl=1)
+        if len(sels) == 2 :
+            control = sels[0]
+            geometry = sels[1]
+            falloff_radius = control.falloffRadius.get()
+            falloff_mode = control.falloffMode.get()
             
+            pos = t = pm.xform(control,q=1,ws=1,t=1)
+            r = pm.xform(control,q=1,ws=1,ro=1)
+            s = pm.xform(control,q=1,r=1,s=1)
+            
+            pm.select(geometry,r=1)
+            #softMod -falloffMode 1 -falloffAroundSelection 0
+            (softMod,softMod_handle) = pm.softMod(falloffMode=1, falloffAroundSelection=0)
+            #rename $tempString[0] ("convertedSoftMod_"+$sel[0])
+            pm.rename(softMod, ( 'convertedSoftMod_'+control.name() ) )
+            pm.rename(softMod_handle, ( 'convertedSoftModHandle_'+control.name() ) )
+            
+            softMod.falloffRadius.set( falloff_radius )
+            softMod.falloffMode.set( falloff_mode )
+            #setAttr -type float3 ($softModHandle+"Shape.origin") ($pos[0]) $pos[1] $pos[2];
+            softMod_handle.getShape().origin.set(pos)
+            #setAttr ($softMod+".falloffCenter") ($pos[0]) $pos[1] $pos[2];
+            softMod.falloffCenter.set(pos)
+            
+            #xform -piv ($pos[0]) $pos[1] $pos[2] $softModHandle;
+            pm.xform(softMod_handle,piv=pos)
+            #xform -ws -t ($t[0]-$pos[0]) ($t[1]-$pos[1]) ($t[2]-$pos[2]) -ro $r[0] $r[1] $r[2] -s $s[0] $s[1] $s[2] $softModHandle;
+            pm.xform(softMod_handle,ws=1,t=((t[0]-pos[0]),(t[1]-pos[1]),(t[2]-pos[2])),ro=r,s=s)
+            
+            pm.select(softMod_handle)
+            
+        else:
+            pm.warning('control_to_softMod:please select one control and one geometry first')
+        
+        
 #    def set_cluster_weight_mel(self):
 #        n1 = str( pm.PyNode(self.SoftMod).name() )
 #        n2 = str( pm.PyNode(self.Cluster).name() )
@@ -137,7 +192,9 @@ class SoftModCluster():
         
 def main():
     a = SoftModCluster()
-    a.soft_to_cluster()
+    #a.softMod_to_cluster()
+    #a.add_fallOff_attr()
+    a.control_to_softMod()
 
 if __name__ == '__main__' :
     main()
