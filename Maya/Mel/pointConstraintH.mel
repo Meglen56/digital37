@@ -1,0 +1,147 @@
+//Description:constraint objects to selected vtx of mesh or nurbs surface and nurbs curve
+//thanks bazhutkin (rivet1.0) and nick 
+//Version:1.0
+//Author:honglou (hongloull@hotmail.com) 
+//Create:2003.12.07
+//Update:2005.04.08
+
+//proc performPointConstraintH
+proc performPointConstraintH(int $vtxType,string $mesh){
+//declare var
+int $i,$j,$vtxStyle;
+string $selTransform[];
+//list sel vertex
+int $vtxStyle=$vtxType;
+string $listVtx[]=`filterExpand -sm $vtxStyle`;
+for($i=0;$i<size($listVtx);$i++){
+    //create spaceLocator
+    string $nameLocator = `createNode transform -n "pointConstraint"`;
+    createNode locator -n ($nameLocator + "Shape") -p $nameLocator;
+    select -r $listVtx[$i];
+    //create emitter
+    string $emit[]=`emitter -rate 0 -n conEmitter`;
+    string $emit[]=`ls -sl -long`;
+    setAttr ($emit[0]+".v") 0;
+    //disconnectAttr
+    disconnectAttr ("time1.outTime") ($emit[0]+".currentTime");
+    //make attr nokeyAble
+    select -r $emit[0];
+    string $attrKey[]=`listAttr -keyable `;
+    for($j=0;$j<size($attrKey);$j++){
+    setAttr -k 0 ($emit[0]+"."+$attrKey[$j]);
+    }
+    //point Constraint
+    select -add  $nameLocator;
+    pointConstraint -offset 0 0 0 -weight 1;
+    //
+    select -r $mesh;
+    select -add  $nameLocator;
+    normalConstraint -weight 1 -aimVector 1 0 0 -upVector 0 1 0 -worldUpType "vector" -worldUpVector 0 1 0;
+    
+ }
+ 
+}
+//end proc performPointConstraintH
+
+//proc rivetNurbs
+proc rivetNurbs(){
+//declare var
+string $nameObject;
+string $namePOSI;
+string $parts[];
+//list selected Surface Parameter Points
+string $list[] = `filterExpand -sm 41`;
+	int $i;
+	for($i=0;$i<size($list);$i++){
+		//get parameterU and parameterV
+		tokenize($list[$i],".",$parts);
+		$nameObject = $parts[0];
+		tokenize($list[$i],"[]",$parts);		
+		float $u = $parts[1];
+		float $v = $parts[2];
+		//create pointOnSurfaceInfo node
+		$namePOSI = `createNode pointOnSurfaceInfo -n "rivetPointOnSurfaceInfo1"`;
+				setAttr ".turnOnPercentage" 0;
+				//set parameterU and parameterV
+				setAttr ".parameterU" $u;
+				setAttr ".parameterV" $v;
+	        //connect $nameObject.worldSpace[0] to pointOnSurfaceInfo.inputSurface
+		connectAttr -f ($nameObject + ".ws") ($namePOSI + ".is");
+                //create spaceLocator
+                string $nameLocator = `createNode transform -n "rivet1"`;
+                createNode locator -n ($nameLocator + "Shape") -p $nameLocator;
+               //create aimConstraint node
+               string $nameAC = `createNode aimConstraint -p $nameLocator -n ($nameLocator + "_rivetAimConstraint1")`;
+               //set target[0] weight
+	       setAttr ".tg[0].tw" 1;
+	       //set aim vector
+	       setAttr ".a" -type "double3" 0 1 0;
+	       //set up vector
+	       setAttr ".u" -type "double3" 0 0 1;
+	       //remove attr from channel
+	       setAttr -k off ".v";
+	       setAttr -k off ".tx";
+	       setAttr -k off ".ty";
+	       setAttr -k off ".tz";
+	       setAttr -k off ".rx";
+	       setAttr -k off ".ry";
+	       setAttr -k off ".rz";
+	       setAttr -k off ".sx";
+	       setAttr -k off ".sy";
+	       setAttr -k off ".sz";
+              //pointOnSurfaceInfo.position>>$nameLocator.translate
+              connectAttr ($namePOSI + ".position") ($nameLocator + ".translate");
+              //pointOnSurfaceInfo.normal>>aimConstraint.target[0].targetTranslate
+              connectAttr ($namePOSI + ".n") ($nameAC + ".tg[0].tt");
+              //pointOnSurfaceInfo.tangentV>>aimConstraint.worldUpVector
+              connectAttr ($namePOSI + ".tv") ($nameAC + ".wu");
+              //aimConstraint.constratintRotate>>$nameLocator.rotate
+              connectAttr ($nameAC + ".crx") ($nameLocator + ".rx");
+              connectAttr ($nameAC + ".cry") ($nameLocator + ".ry");
+              connectAttr ($nameAC + ".crz") ($nameLocator + ".rz");
+              }          
+}
+//end proc rivetNurbs
+
+//proc pointConstraintH
+global proc pointConstraintH(){
+string $sel[]=`ls -sl`;
+string $selShape[]=`ls -sl -dag -lf -l -type mesh`;
+//condition: nurbs curve edit points
+//list nurbs curve edit points
+string $list0[] = `filterExpand -sm 30`;
+if (size($list0) > 0){			
+     performPointConstraintH(30,$selShape[0]);
+}
+
+//condition:  Polygon Vertices       
+//list polygon Vertices
+select -r $sel;
+string $list2[] = `filterExpand -sm 31`;
+if (size($list2) > 0){			
+    performPointConstraintH(31,$selShape[0]);
+}
+	
+//condition: Surface Parameter Points 
+//list Surface Parameter Points 
+select -r $sel;
+string $list1[] = `filterExpand -sm 41`;
+if (size($list1) > 0){			
+     rivetNurbs;
+}   
+  
+if(size($list0) + size($list1) + size($list2) == 0){
+   error("please select some vertices first.");
+}     
+
+}
+//end main proc 
+   
+
+
+
+
+
+
+
+
