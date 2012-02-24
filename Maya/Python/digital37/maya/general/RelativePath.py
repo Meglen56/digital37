@@ -32,22 +32,24 @@ class RelativePath(object):
                         file_name = ''
                         # Get reference node's file name
                         try:
-                            file_name= pm.system.referenceQuery(ref_node,filename=1)
+                            # use unresolvedName flag to get unresolvedName name
+                            file_name= pm.system.referenceQuery(ref_node,filename=1,unresolvedName=1)
                         except:
                             traceback.print_exc()
                         else:
                             if file_name:
                                 #print file_name
                                 #self.Reference_File_Names.add(file_name)
-                                file_name_after = self.convert_to_relative('scenes', file_name)
-                                if file_name_after != file_name :
+                                self.RuleEntry_Scenes = 'scenes'
+                                if not self.check_relative(self.RuleEntry_Scenes, file_name):
+                                    file_name_after = self.convert_to_relative(self.RuleEntry_Scenes, file_name)
                                     ext = os.path.splitext(file_name)[1]
                                     if ext=='.mb':
                                         ext = 'mayaBinary'
                                     else:
                                         ext = 'mayaAscii'
                                     #file -loadReference $ref -type $ext -options "v=0;p=17" $file
-                                    pm.system.loadReference(file_name,type=ext,options='v=0;p=17')
+                                    pm.system.loadReference(file_name_after,type=ext,options='v=0;p=17')
                                 
     def convert_texture_to_relative(self):
         self.Texture_Files = set()
@@ -62,6 +64,7 @@ class RelativePath(object):
     def get_workspace(self):
         #self.WorkSpace_RootDir = pm.workspace(q=1,rd=1)
         self.RuleEntry_SourceImages = pm.workspace('sourceImages',fileRuleEntry=1,q=1 )
+        self.RuleEntry_Scenes = pm.workspace('scenes',fileRuleEntry=1,q=1 )
         
     def convert_to_relative(self,parten,inputStr):
         '''
@@ -69,20 +72,23 @@ class RelativePath(object):
         result: 'sourceimages/maya.exe'
         '''
         #p = re.compile('^.*/sourceimages')
-        if not self.check_relative(parten, inputStr):
-            inputStr = str(inputStr).replace('\\','/')
-            returnStr = re.sub( ('^.*/(' + parten + ')'), parten, inputStr )
-            print inputStr,'\t',returnStr
-            return returnStr
-        else:
-            return inputStr
-       
-    def check_relative(self,parten,inputStr):
         inputStr = str(inputStr).replace('\\','/')
+        returnStr = re.sub( ('^.*/(' + parten + ')'), parten, inputStr )
+        print inputStr,'\t',returnStr
+        return returnStr
+
+    def check_relative(self,parten,inputStr):
+        print 'inputStr',inputStr
+        #inputStr = str(inputStr).replace('\\','/')
         p = re.compile('^.*//(' + parten + ')')
+        # start with '//' is false
+        p_0 = re.compile('^//(' + parten + ')')
         if p.search(inputStr) :
-            print '//',inputStr
-            return True
+            if p_0.match(inputStr):
+                return False
+            else:
+                print '//',inputStr
+                return True
         else:
             p = re.compile('^(' + parten + ')')
             if p.search(inputStr) :
