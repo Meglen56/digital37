@@ -8,6 +8,7 @@
 	
 	<node type="subMenu" name="Modeling">
 		<node type="command" name="Check Model" comment="Check Model" cmd="import digital37.maya.modeling.checkModel;digital37.maya.modeling.checkModel.checkModel()" mode="python"></node>
+		<node type="command" name="Base Check Model" comment="Base Check Model" cmd="from digital37.maya.modeling.baseCheckToolsChild import *" mode="python"></node>
 	</node>
 		
 	<node type="subMenu" name="Animation">

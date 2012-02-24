@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 import logging 
 import threading
 import tempfile, subprocess, traceback, time
 import pymel.core as pm
-from pymel.all import mel
 import maya.cmds as cmds
 
 class General():
@@ -50,25 +50,58 @@ class SvnMaya(General):
         # set logger
         self.setLog('debug')
         self.Maya_Ref_File = set()
-        self.Texture_File = set()
+        self.Texture_Files = set()
         self.Ref_Dir = set()
         self.Cmd_Update = 'svn update '
         self.Window = None
         self.Reference_File = None
+        self.Texture_Files_Expand = set()
+        self.get_workspace()
         
     def set_window(self,window):
         self.Window = window
         
+    def expand_names_for_sourceimages(self):
+        print 'self.WorkSpace_RootDir:',self.WorkSpace_RootDir
+        print 'self.RuleEntry_SourceImages:',self.RuleEntry_SourceImages
+        print 'self.RuleEntry_3dPaintTextures:',self.RuleEntry_3dPaintTextures
+        for f in self.Texture_Files :
+            # convert to expand name
+            for partten in [self.RuleEntry_SourceImages,self.RuleEntry_3dPaintTextures] :
+                f = self.convert_to_relative(partten, f)
+            
+            self.Texture_Files_Expand.add( os.path.join( self.WorkSpace_RootDir,\
+                                                         f) )
+        print 'self.Texture_Files_Expand:'
+        self.log_list(self.Texture_Files_Expand)
+    
+    def convert_to_relative(self,parten,inputStr):
+        '''
+        example: convertToRelative('sourceimages','C:/AW/Maya5.0/sourceimages/maya.exe')
+        result: 'sourceimages/maya.exe'
+        '''
+        #p = re.compile('^.*/sourceimages')
+        inputStr = inputStr.replace('\\','/')
+        returnStr = re.sub( ('^.*/' + parten), parten, inputStr )
+        print inputStr,'\t',returnStr
+        return returnStr
+        
+    def get_workspace(self):
+        self.WorkSpace_RootDir = pm.workspace(q=1,rd=1)
+        self.RuleEntry_SourceImages = pm.workspace('sourceImages',fileRuleEntry=1,q=1 )
+        self.RuleEntry_3dPaintTextures = pm.workspace('3dPaintTextures',fileRuleEntry=1,q=1 )
+        
     def get_texture_file(self):
-        self.Texture_File = set()
+        self.Texture_Files = set()
         # Get texture file
         texturesList = cmds.ls(textures=True)
         if texturesList :
             for tex in texturesList:
                 if cmds.attributeQuery( 'fileTextureName',node=tex,exists=1 ):
                     texFile = cmds.getAttr( (tex+'.fileTextureName') )
-                    self.Texture_File.add(texFile)
-        self.log_list( self.Texture_File )
+                    print 'texFile:',texFile
+                    self.Texture_Files.add(texFile)
+        self.log_list( self.Texture_Files )
         
     def get_reference_file(self):
         # check scene name is not set or not
@@ -77,26 +110,29 @@ class SvnMaya(General):
             self.Reference_File = set( cmds.file(q=True,l=True) )
             self.log_list( self.Reference_File )
         
-    def get_associated_file(self):
-        #self.get_reference_file()
-        if self.Reference_File:
-            self.get_texture_file()
+    def update_associated_file(self):
+        self.get_reference_file()
+        self.get_texture_file()
+        # get file texture's expand name
+        self.expand_names_for_sourceimages()
             
-            dirs = set( os.path.dirname(f) for f in ( self.Reference_File | self.Texture_File ) )
-            
-            for d in dirs :
+        dirs = set( os.path.dirname(f) for f in ( self.Reference_File | self.Texture_Files_Expand ) )
+        print 'dirs:',dirs    
+        for d in dirs :
+            i = 0
+            # TODO : loop will not more than 15
+            while True and i < 15 :
+                if not os.path.exists(d) :
+                    # Get parent dir
+                    d = os.path.dirname(d)
+                    #logging.debug('dir:',str(d))
+                    #print 'dir:',d 
+                i += 1
                 
-                while True :
-                    if not os.path.exists(d) :
-                        # Get parent dir
-                        d = os.path.dirname(d)
-                    else:
-                        break
-                
-                self.Ref_Dir.add(d)
+            self.Ref_Dir.add(d)
                     
-            cmd = self.Cmd_Update + ' '.join(self.Ref_Dir)
-            self.svn_update(cmd)
+        cmd = self.Cmd_Update + ' '.join(self.Ref_Dir)
+        self.svn_update(cmd)
                  
     def svn_update(self, data):        
         logging.debug( 'data:%s', data )
@@ -158,7 +194,7 @@ class SvnMaya(General):
                 break
             
 def main():
-    SvnMaya().get_associated_file()
+    SvnMaya().update_associated_file()
     
 if __name__ == '__main__' :
     pass
