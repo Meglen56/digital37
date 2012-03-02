@@ -164,3 +164,4 @@ def main():
 if __name__ == '__main__' :
     #pass
     main()
+# deadlinequicktimegenerator.exe -CreateMovie d:/temp/test.0001.jpg d:/temp/quicktime_export_settings.xml "QuickTime Movie" 1 25 25 d:/temp/test3.mov
