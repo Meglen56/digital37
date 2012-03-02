@@ -1,0 +1,2 @@
+//optionVar -stringValue "nclothCacheDirName" "Q:/data/ncloth";
+//print `optionVar -q "nclothCacheDirName"`;
