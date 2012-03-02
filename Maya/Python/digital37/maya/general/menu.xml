@@ -21,6 +21,7 @@
 		<node type="command" name="Motion Trail" cmd="michelMotionTrail();" comment='Motiontrail' mode="mel"></node>
 		<node type="command" name="Auto Tangent" cmd="autoTangent();" comment='autotangent' mode="mel"></node>
 		<node type="command" name="Multi Scaler" cmd="keyScalerButtons();" comment='Multiscaler' mode="mel"></node>
+		<node type="command" name="Create Playblaset Movie" comment="Create Playblaset Movie" cmd="import digital37.maya.animation.PlayBlast;digital37.maya.animation.PlayBlast.PlayBlast().playBlast()" mode="python"></node>
 	</node>
 	
 	<node type="subMenu" name="Utils">
@@ -32,7 +33,8 @@
 	</node>
 	
 	<node type="subMenu" name="Dynamic">
-		<node type="command" name="Create Hair Cache" comment="Create Hair Cache" cmd="import digital37.maya.dynamic.HairCache;digital37.maya.dynamic.HairCache.HairCache.HairCache().create_hair_cache()" mode="python"></node>
+		<node type="command" name="Create Hair Cache" comment="Create Hair Cache" cmd="import digital37.maya.dynamic.HairCache;digital37.maya.dynamic.HairCache.HairCache().create_hair_cache()" mode="python"></node>
+		<node type="command" name="Create Cloth Cache" comment="Create Cloth Cache" cmd="import digital37.maya.dynamic.ClothCache;digital37.maya.dynamic.ClothCache.ClothCache().create_cloth_cache()" mode="python"></node>
 	</node>
 	
 	<node type="subMenu" name="Lighting">

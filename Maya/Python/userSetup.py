@@ -11,6 +11,8 @@ pm.mel.eval('source InitDeadlineSubmitter.mel')
 print 'source InitDeadlineSubmitter.mel'
 # load needed plugin
 
+#dirmap
+#import digital37.maya.general.dirMap
 
 #import digital37.maya.AEgNodeTemplate
 
