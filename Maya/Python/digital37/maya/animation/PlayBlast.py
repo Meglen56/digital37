@@ -13,6 +13,8 @@ class General():
         self.Scene_Name = None
         self.PB_Name = None
         self.Scene_Full_Name = None
+        self.Min = 1
+        self.Max = 1
     
     def get_scene_name(self):
         self.Scene_Name = os.path.splitext( os.path.basename( pm.system.sceneName() ) )[0]
@@ -36,7 +38,7 @@ class General():
                 traceback.print_exc()
                 print 'create dirs error'
                     
-    def move(self,src,dst):
+    def copy(self,src,dst):
         shutil.copy(src, dst)
 
 class PlayBlast(General):
@@ -62,30 +64,25 @@ class PlayBlast(General):
                          forceOverwrite=1,quality=100,filename=self.Images)
             print self.PB_Name
             
-            # convert sequence start with 1
-            self.rename_sequence()
+            # convert sequence info for start and end
+            self.get_frames_info()
             # make movie
             self.make_mov()
         
-    def rename_sequence(self):
+    def get_frames_info(self):
         # rename sequence from 1
         # get sequence
-        min = pm.playbackOptions(q=1,min=1)
-        max = pm.playbackOptions(q=1,max=1)
-        j = 0 
-        for i in xrange(min,max) :
-            shutil.move( (self.Images +'.'+ str(i) + '.jpeg'),(self.Images +'.' + str(j) + '.jpeg') )
-            j += 1
+        self.Min = str(int(pm.playbackOptions(q=1,min=1)))
+        self.Max = str(int(pm.playbackOptions(q=1,max=1)))
         
     def make_mov(self):
+        ## deadlinequicktimegenerator.exe -CreateMovie d:/temp/test.0001.jpg d:/temp/quicktime_export_settings.xml "QuickTime Movie" 1 25 25 d:/temp/test3.mov
         #cmd = 'ffmpeg -i '
-        cmd = 'C:/Progra~1/ffmpeg/bin/ffmpeg -y -r 25 -vb 90M -sameq -aspect 16:9 -vf scale=720:-3 -qscale 4 -b 30000 -i '
-        cmd += self.Images + '.%1d.jpeg '
-        #cmd += '-mbd rd -trellis 2 -cmp 2 -subcmp 2 -g 1800 -bf 2 -flags qprd '
-        #cmd += '-mbd rd -trellis 2 -cmp 2 -subcmp 2 -g 1800 -bf 2 -flags qprd '
-        cmd += self.Images + '.mpg '
-        
-        print cmd
+        cmd = 'deadlinequicktimegenerator -CreateMovie '
+        cmd += self.Images + '.' + self.Min + '.jpeg '
+        cmd += 'q:/mhxy/quicktime_export_settings.xml '
+        cmd += '"QuickTime Movie" ' + self.Min + ' ' + self.Max + ' 25 '
+        cmd += self.Images + '.mov'
         
         logging.debug( 'cmd:%s', cmd )
         #write received cmd to temp file
@@ -144,24 +141,22 @@ class PlayBlast(General):
                     logging.debug( 'PlayBlast:Success\r\n' )
                     # copy movie
                     # check folder exists or not
-                    self.create_dir( os.path.dirname(self.PB_Name + '.mpg') )
-                    self.move( (self.Images + '.mpg'), (self.PB_Name + '.mpg') )
+                    self.create_dir( os.path.dirname(self.PB_Name + '.mov') )
+                    self.copy( (self.Images + '.mov'), (self.PB_Name + '.mov') )
                     cmd = 'start '
-                    cmd += self.PB_Name + '.mpg'
+                    cmd += self.PB_Name + '.mov'
                     try:
                         os.system(cmd)
                     except:
                         traceback.print_exc()
-                    logging.debug("PlayBlast: %s",(self.PB_Name + '.mpg') )
+                    logging.debug("PlayBlast: %s",(self.PB_Name + '.mov') )
                 else:
                     logging.debug("ReturnCode: %s",str(p.returncode) )
                 break                    
-    
     
 def main():
     PlayBlast().playBlast()
     
 if __name__ == '__main__' :
-    #pass
-    main()
-# deadlinequicktimegenerator.exe -CreateMovie d:/temp/test.0001.jpg d:/temp/quicktime_export_settings.xml "QuickTime Movie" 1 25 25 d:/temp/test3.mov
+    pass
+    #main()
