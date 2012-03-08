@@ -121,6 +121,10 @@ class HairCache(General):
                                         self.Scene_Name )
                 try:
                     self.create_dir(dirPath)
+                except KeyboardInterrupt:
+                    print 'user cancel create dir'
+                    self.set_diskCache_rule()
+                    return returnStr
                 except:
                     self.set_diskCache_rule()
                     traceback.print_exc()
@@ -130,6 +134,10 @@ class HairCache(General):
                 try:
                     #mel.eval('CreateHairCacheOptions')
                     mel.eval('doHairDiskCache 1 { \"2\", 1, 1, 10, 1 } ')
+                except KeyboardInterrupt:
+                    print 'user cancel'
+                    self.set_diskCache_rule()
+                    return returnStr
                 except:
                     self.set_diskCache_rule()
                     traceback.print_exc()

@@ -106,6 +106,9 @@ class ClothCache(General):
                 dirPath = dirPath.replace('\\','/')
                 try:
                     self.create_dir(dirPath)
+                except KeyboardInterrupt:
+                    print 'user cancel create dir'
+                    return returnStr
                 except:
                     traceback.print_exc()
                     return returnStr
@@ -124,6 +127,9 @@ class ClothCache(General):
                 print cmd
                 try:
                     pm.mel.eval(cmd)
+                except KeyboardInterrupt:
+                    print 'user cancel cloth simulation'
+                    return returnStr
                 except:
                     traceback.print_exc()
                     return returnStr

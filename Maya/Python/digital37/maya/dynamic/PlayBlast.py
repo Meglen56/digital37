@@ -22,7 +22,7 @@ class General():
     
     def get_pb_name(self):
         try:
-            self.PB_Name = self.Scene_Full_Name.replace('/anim/','/playblast/')
+            self.PB_Name = self.Scene_Full_Name.replace('/anim/','/simPlayblast/')
         except :
             traceback.print_exc()
             print 'get pb name error'
@@ -61,7 +61,6 @@ class PlayBlast(General):
             #playblast  -format iff -filename "D:/mhxy/scenes/shot/seq001/shot053a/simPlayblast/mhxy_seq001_shot053a_anim_fin" -sequenceTime 0 -clearCache 1 -viewer 1 -showOrnaments 1 -fp 4 -percent 50 -compression "jpg" -quality 100;
             pm.playblast(format='iff',sequenceTime=0,clearCache=1,viewer=0,\
                          showOrnaments=1,fp=1,percent=100,compression="jpg",\
-                         widthHeight=(1280,720),\
                          forceOverwrite=1,quality=100,filename=self.Images)
             print self.PB_Name
             

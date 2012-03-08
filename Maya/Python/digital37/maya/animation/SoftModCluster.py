@@ -39,7 +39,7 @@ class SoftModCluster():
                 pm.select(l,r=1)
                 pos_locator = pm.xform(q=1,ws=1,t=1)
             
-                softMod_handle = sel.connections(p=0,d=1)[0].constraintTranslateX.connections(p=0,d=1)[0]
+                softMod_handle = sel.translate.connections(p=0,d=1)[0].constraintTranslateX.connections(p=0,d=1)[0]
                 print softMod_handle
                 # get handle shape
                 softMod_handle_shape = pm.PyNode(softMod_handle).getShape()
