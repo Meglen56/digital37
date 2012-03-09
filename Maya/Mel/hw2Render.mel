@@ -1,0 +1,38 @@
+global proc hw2Render()
+{
+setAttr "hardwareRenderingGlobals.gammaCorrectionEnable" 1;
+setAttr "hardwareRenderingGlobals.multiSampleEnable" 1;
+}
+
+
+proc hw2Render_modelPanel()
+{
+//displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+//subdivDisplaySmoothness -smoothness 3;
+
+string $cams_all[] =`ls -cameras` ;
+string $cams_standard[] = {"perspShape","frontShape","sideShape","topShape"};
+string $cams[] = stringArrayRemove($cams_standard,$cams_all);
+print $cams[0];
+camera -e -displayFilmGate off -displayResolution off -overscan 1.0 $cams[0];
+
+string $currentPanel = `getPanel -withFocus`; 
+
+lookThroughModelPanel $cams[0] $currentPanel;
+modelEditor -e -udm false $currentPanel;
+modelEditor -e -allObjects 0 $currentPanel;
+modelEditor -e -polymeshes true $currentPanel;
+
+select -r `ls -dag -lf -type softModHandle -type clusterHandle` ;
+string $layer = `createDisplayLayer -name "softHandle_layer" -number 1 -nr`;
+layerEditorLayerButtonVisibilityChange $layer;
+
+setAttr "hardwareRenderingGlobals.gammaCorrectionEnable" 1;
+setAttr "hardwareRenderingGlobals.multiSampleEnable" 1;
+
+DisplayShadedAndTextured;
+{  string $currentPanel = `getPanel -withFocus`;   string $panelType = `getPanel -to $currentPanel`;  if ($panelType ==  "modelPanel") {      setRendererInModelPanel "ogsRenderer" $currentPanel;  } else if ($panelType ==  "scriptedPanel") { 	string $cmd = "setRendererInModelPanel \"ogsRenderer\" "; 
+	scriptedPanelRunTimeCmd( $cmd, $currentPanel ); 
+  }};
+
+}
