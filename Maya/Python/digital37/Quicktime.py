@@ -71,7 +71,7 @@ class Quicktime():
         
         return pluginInfoFilename
     
-    def run(self,start, end, inputFilePath, outputFilePath, taskName):
+    def run(self,start, end, inputFilePath, outputFilePath, movieSettingsFile,taskName):
         '''
         Build the info and the job file and submit to deadline.
         
@@ -91,11 +91,14 @@ class Quicktime():
         deadlineCmd += 'DeadlineCommand.exe '
         deadlineCmd += jobInfoFilename + ' '
         deadlineCmd += pluginInfoFilename + ' '
+        # Important:must add movie settings file
+        deadlineCmd += movieSettingsFile + ' '
         deadlineCmd.replace('/','\\')
         
         print 'Deadline Command :', deadlineCmd
         os.system(deadlineCmd)
 
 if __name__ == '__main__' :
-    Quicktime().run(1, 25, 'd:/temp2/quicktime/colorBar.0001.tga', 'd:/temp2/quicktime/colorBar.mov', 'quicktime_test')
+    #Quicktime().run(1, 25, 'd:/temp2/quicktime/colorBar.0001.tga', 'd:/temp2/quicktime/colorBar.mov', 'quicktime_test')
+    Quicktime().run(1, 25, 'd:/project/nukeProject/output/makeQuicktime.0001.jpg', 'd:/project/nukeProject/colorBar.mov', 'D:/project/nukeProject/quicktime_export_settings.xml','quicktime_test')
     
