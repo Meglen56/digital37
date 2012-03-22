@@ -28,11 +28,13 @@ class Quicktime():
         
         txt = '\n'.join(txtList)
         
-        #infoFilePath = 'H:/Streamline_Quest_Featurette_11/Tools/Submitter/createQuicktime_info.job'
-        jobInfoFilename = tempfile.mkstemp(prefix='Quicktime_job_',suffix='.job')[1]
-        fObj = open(jobInfoFilename,'w')
+        #mkstemp returns both the OS file handle to and the filename of the temporary file. 
+        #When you re-open the temp file, the original returned file handle is still open 
+        #(no-one stops you from opening twice or more the same file in your program)
+        fd,jobInfoFilename = tempfile.mkstemp(prefix='Quicktime_job_',suffix='.job')
+        #fObj = open(jobInfoFilename,'w')
+        fObj = os.fdopen(fd,'w')
         fObj.write( txt )
-        fObj.flush()
         fObj.close()
             
         return jobInfoFilename
@@ -62,11 +64,13 @@ class Quicktime():
         
         txt = '\n'.join(txtList)
         
-        #jobFilePath = '//server-cgi/RND/temp/createQuicktime_job.job'
-        pluginInfoFilename = tempfile.mkstemp(prefix='Quicktime_plugin_',suffix='.job')[1]
-        fObj = open(pluginInfoFilename,'w')
+        #mkstemp returns both the OS file handle to and the filename of the temporary file. 
+        #When you re-open the temp file, the original returned file handle is still open 
+        #(no-one stops you from opening twice or more the same file in your program)
+        fd,pluginInfoFilename = tempfile.mkstemp(prefix='Quicktime_plugin_',suffix='.job')
+        #fObj = open(pluginInfoFilename,'w')
+        fObj = os.fdopen(fd,'w')
         fObj.write( txt )
-        fObj.flush()
         fObj.close()
         
         return pluginInfoFilename
@@ -74,7 +78,6 @@ class Quicktime():
     def run(self,start, end, inputFilePath, outputFilePath, movieSettingsFile,taskName):
         '''
         Build the info and the job file and submit to deadline.
-        
         param :
         start
         end
@@ -83,7 +86,6 @@ class Quicktime():
         taskName
         fullRes
         '''
-        
         jobInfoFilename = self.buildJobInfoFile(start, end, outputFilePath,taskName)
         pluginInfoFilename = self.buildPluginInfoFile (inputFilePath, outputFilePath)
         
@@ -97,8 +99,9 @@ class Quicktime():
         
         print 'Deadline Command :', deadlineCmd
         os.system(deadlineCmd)
+        #os.popen(deadlineCmd)
 
 if __name__ == '__main__' :
     #Quicktime().run(1, 25, 'd:/temp2/quicktime/colorBar.0001.tga', 'd:/temp2/quicktime/colorBar.mov', 'quicktime_test')
-    Quicktime().run(1, 25, 'd:/project/nukeProject/output/makeQuicktime.0001.jpg', 'd:/project/nukeProject/colorBar.mov', 'D:/project/nukeProject/quicktime_export_settings.xml','quicktime_test')
+    Quicktime().run(1, 25, 'd:/temp2/quicktime/colorBar.0001.tga', 'd:/temp2/quicktime/colorBar.mov', 'Q:/mhxy/quicktime_export_settings.xml','quicktime_test')
     
