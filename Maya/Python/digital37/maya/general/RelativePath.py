@@ -114,6 +114,7 @@ class RelativePath(object):
 def main():
     a = RelativePath()
     a.convert_reference_to_relative()
+    #a.convert_texture_to_relative()
     
 if __name__ == '__main__' :
     main()
