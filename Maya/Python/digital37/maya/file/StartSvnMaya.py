@@ -11,7 +11,7 @@ import maya.OpenMayaUI
 import digital37.qt.TextView as TextView
 reload(TextView)
 
-import digital37.maya.general.SvnMaya as SvnMaya
+import digital37.maya.file.SvnMaya as SvnMaya
 reload(SvnMaya)
 
 class StartSvnMaya(QtGui.QMainWindow,TextView.Ui_TextView, SvnMaya.SvnMaya):
@@ -24,15 +24,23 @@ def getMayaWindow():
     ptr = maya.OpenMayaUI.MQtUtil.mainWindow()
     return sip.wrapinstance(long(ptr), QtCore.QObject)
 
-def main():
-    global SvnMaya_app
-    global SvnMaya_myapp
-    SvnMaya_app = QtGui.qApp
-    SvnMaya_myapp = StartSvnMaya(getMayaWindow())
-    SvnMaya_myapp.show()
-    #SvnMaya_myapp.set_window(SvnMaya_myapp.textBrowser)
-    #SvnMaya_myapp.update_associated_file()
-    SvnMaya_myapp.svn_commit()
+def commit():
+    global SvnMaya_com
+    global SvnMaya_commit
+    SvnMaya_com = QtGui.qApp
+    SvnMaya_commit = StartSvnMaya(getMayaWindow())
+    SvnMaya_commit.show()
+    SvnMaya_commit.set_window(SvnMaya_commit.textBrowser)
+    SvnMaya_commit.svn_commit()
+    
+def update():
+    global SvnMaya_upd
+    global SvnMaya_update
+    SvnMaya_upd = QtGui.qApp
+    SvnMaya_update = StartSvnMaya(getMayaWindow())
+    SvnMaya_update.show()
+    SvnMaya_update.set_window(SvnMaya_update.textBrowser)
+    SvnMaya_update.update_associated_file()
 
 if __name__ == "__main__":
-    main()
+    pass

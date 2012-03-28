@@ -66,13 +66,25 @@ def loadMenu_recursive(menuXml, menuName):
             commandExe  = menuXml.attributes["cmd"].value
             mode        = menuXml.attributes["mode"].value
             
-            cmd = commandExe.encode('latin-1', 'replace')
-            if mode == 'mel':
+            option      = menuXml.attributes["option"].value
+            if option == 'False' :
+                option = False
+            else :
+                option = True
+                cmd_option = menuXml.attributes["cmd_option"].value
+                
+            cmd = commandExe.encode('latin-1', 'replace') 
+            if mode == 'mel': 
                 commandExe  = ('pm.mel.eval(\'' +  cmd + '\')')
                 pm.menuItem(label=name, command=commandExe, annotation=commandExe)
+                if option :
+                    pm.menuItem(label=name, command=commandExe, annotation=commandExe, optionBox=option)
                 
             if mode == 'python':
                 pm.menuItem(label=name, command=commandExe, annotation=commandExe)
+                if option :
+                    pm.menuItem(label=name, command=cmd_option, annotation=commandExe, optionBox=option)
+                
                             
         if nodetype == 'separator' :
             pm.menuItem( divider=True)

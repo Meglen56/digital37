@@ -47,7 +47,33 @@ class General():
             
     def get_scene_name(self):
         self.Scene_Name = os.path.splitext( os.path.basename( pm.system.sceneName() ) )[0]
-            
+                        
+    def writeMessage(self,f,p):
+        while True :
+            #subprocess is not complete
+            if p.poll() == None :
+                if p.stdout :
+                    try:
+                        output = p.stdout.readline()
+                    except:
+                        traceback.print_exc()
+                        break
+                    else:
+                        if output :
+                            f.write( output )
+                            f.flush()
+                            # 
+                            if self.Window:
+                                output = unicode(output,'gbk','ignore')
+                                self.Window.insertPlainText( output )
+                                    
+            #subprocess is complete
+            else :
+                if(p.returncode==0):
+                    logging.debug( 'SvnMaya:Success\r\n' )
+                else:
+                    logging.debug("ReturnCode: %s",str(p.returncode) )
+                break
             
 class SvnMaya(General):
     def __init__(self):
@@ -138,7 +164,7 @@ class SvnMaya(General):
         cmd = self.Cmd_Update + ' '.join(self.Ref_Dir)
         self.svn_update(cmd)
                  
-    def svn_commit(self):
+    def svn_commit(self,lock=True):
         # get full path scene name
         scene_name = pm.system.sceneName()
         #cmd = 'svn add \"' + scene_name + '\"\n'
@@ -147,26 +173,26 @@ class SvnMaya(General):
         print cmd
         
         # write cmd output to log file
-        self.Log = 'SvnMaya.commit' + str(int(time.time())) + '.log'
-        f = None
-        logDir = tempfile.tempdir
-        if not os.path.exists( logDir ):
-            os.mkdir( logDir )
-        try:
-            f = open( ( logDir + '/' + self.Log ),'a' )
-        except:
-            raise('SvnMaya:Can not write logs file.')
-        logging.debug( 'logDir:%s',logDir )
+        fd,self.Log = tempfile.mkstemp(suffix='.log',prefix='SvnMaya_commit')
+        os.close(fd)
+        fObj = open(self.Log,'w')
+        fObj.write( cmd )
+        fObj.flush()
+        fObj.close()
+        logging.debug( 'log:\t%s',self.Log )
+        
+        fd,self.Log = tempfile.mkstemp(suffix='.log',prefix='SvnMaya_commit')
+        os.close(fd)
+        fObj = open(self.Log,'a')
                 
-        # use subprocess to start command
         p = subprocess.Popen(cmd, shell=True, bufsize=512,
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
         
-#        threadName = threading.Thread( target=self.writeMessage,args=( f,p ) )
-#        threadName.setDaemon(1)
-#        threadName.start()
+        threadName = threading.Thread( target=self.writeMessage,args=( fObj,p ) )
+        threadName.setDaemon(1)
+        threadName.start()
 
     def svn_update(self, data):        
         logging.debug( 'data:%s', data )
@@ -190,7 +216,6 @@ class SvnMaya(General):
             raise('SvnMaya:Can not write logs file.')
         logging.debug( 'logDir:%s',logDir )
         
-        # use subprocess to start command
         p = subprocess.Popen(data, shell=True, bufsize=512,
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
@@ -199,33 +224,6 @@ class SvnMaya(General):
         threadName = threading.Thread( target=self.writeMessage,args=( f,p ) )
         threadName.setDaemon(1)
         threadName.start()
-                    
-    def writeMessage(self,f,p):
-        while True :
-            #subprocess is not complete
-            if p.poll() == None :
-                if p.stdout :
-                    try:
-                        output = p.stdout.readline()
-                    except:
-                        traceback.print_exc()
-                        break
-                    else:
-                        if output :
-                            f.write( output )
-                            f.flush()
-                            # 
-                            if self.Window:
-                                output = unicode(output,'gbk','ignore')
-                                self.Window.insertPlainText( output )
-                                    
-            #subprocess is complete
-            else :
-                if(p.returncode==0):
-                    logging.debug( 'SvnMaya:Success\r\n' )
-                else:
-                    logging.debug("ReturnCode: %s",str(p.returncode) )
-                break
             
 def main():
     #SvnMaya().update_associated_file()
