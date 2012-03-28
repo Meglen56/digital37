@@ -45,6 +45,10 @@ class General():
         else:
             logging.debug('log_list:input is None')
             
+    def get_scene_name(self):
+        self.Scene_Name = os.path.splitext( os.path.basename( pm.system.sceneName() ) )[0]
+            
+            
 class SvnMaya(General):
     def __init__(self):
         # set logger
@@ -134,6 +138,36 @@ class SvnMaya(General):
         cmd = self.Cmd_Update + ' '.join(self.Ref_Dir)
         self.svn_update(cmd)
                  
+    def svn_commit(self):
+        # get full path scene name
+        scene_name = pm.system.sceneName()
+        #cmd = 'svn add \"' + scene_name + '\"\n'
+        #write received cmd to temp file
+        cmd = 'svn commit -m \"\" \"' + str(scene_name) + '\"'
+        print cmd
+        
+        # write cmd output to log file
+        self.Log = 'SvnMaya.commit' + str(int(time.time())) + '.log'
+        f = None
+        logDir = tempfile.tempdir
+        if not os.path.exists( logDir ):
+            os.mkdir( logDir )
+        try:
+            f = open( ( logDir + '/' + self.Log ),'a' )
+        except:
+            raise('SvnMaya:Can not write logs file.')
+        logging.debug( 'logDir:%s',logDir )
+                
+        # use subprocess to start command
+        p = subprocess.Popen(cmd, shell=True, bufsize=512,
+                             stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT)
+        
+#        threadName = threading.Thread( target=self.writeMessage,args=( f,p ) )
+#        threadName.setDaemon(1)
+#        threadName.start()
+
     def svn_update(self, data):        
         logging.debug( 'data:%s', data )
         #write received cmd to temp file
@@ -145,7 +179,7 @@ class SvnMaya(General):
         fObj.close()
 
         # write cmd output to log file
-        self.Log = 'SvnMaya.' + str(int(time.time())) + '.log'
+        self.Log = 'SvnMaya.update' + str(int(time.time())) + '.log'
         f = None
         logDir = tempfile.tempdir
         if not os.path.exists( logDir ):
@@ -161,7 +195,6 @@ class SvnMaya(General):
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
-        self.writeMessage(f,p)
         
         threadName = threading.Thread( target=self.writeMessage,args=( f,p ) )
         threadName.setDaemon(1)
@@ -185,6 +218,7 @@ class SvnMaya(General):
                             if self.Window:
                                 output = unicode(output,'gbk','ignore')
                                 self.Window.insertPlainText( output )
+                                    
             #subprocess is complete
             else :
                 if(p.returncode==0):
@@ -194,9 +228,9 @@ class SvnMaya(General):
                 break
             
 def main():
-    SvnMaya().update_associated_file()
+    #SvnMaya().update_associated_file()
+    SvnMaya().svn_commit()
     
 if __name__ == '__main__' :
     pass
-    #main()
     

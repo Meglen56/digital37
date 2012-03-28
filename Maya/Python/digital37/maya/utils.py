@@ -7,7 +7,8 @@ import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
 import sip
 
-import grid.path
+import digital37.path
+import traceback
 
 def snapTrans (parent=[],child=None):
     '''
@@ -119,7 +120,15 @@ def deleteUnknownNode ():
             pm.delete(unknownNode)
             print 'Delete :', deletedNodeName
         except :
-            pass
+            try:
+                pm.lockNode(l=False)
+                deletedNodeName = str(unknownNode)
+                pm.delete(unknownNode)
+                print 'Delete :', deletedNodeName
+            except:
+                traceback.print_exc()
+            else:
+                pass
         
 def getTopGNodeList ():
     '''

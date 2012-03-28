@@ -30,8 +30,9 @@ def main():
     SvnMaya_app = QtGui.qApp
     SvnMaya_myapp = StartSvnMaya(getMayaWindow())
     SvnMaya_myapp.show()
-    SvnMaya_myapp.set_window(SvnMaya_myapp.textBrowser)
-    SvnMaya_myapp.update_associated_file()
+    #SvnMaya_myapp.set_window(SvnMaya_myapp.textBrowser)
+    #SvnMaya_myapp.update_associated_file()
+    SvnMaya_myapp.svn_commit()
 
 if __name__ == "__main__":
     main()

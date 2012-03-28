@@ -28,6 +28,7 @@ class RelativePath(object):
                 for ref_node in ref_nodes_top:
                     # Check reference node is loaded or not
                     print ref_node
+                    # if reference file is not load
                     if pm.system.referenceQuery(ref_node,isLoaded=1) :
                         file_name = ''
                         # Get reference node's file name
@@ -43,13 +44,54 @@ class RelativePath(object):
                                 self.RuleEntry_Scenes = 'scenes'
                                 if not self.check_relative(self.RuleEntry_Scenes, file_name):
                                     file_name_after = self.convert_to_relative(self.RuleEntry_Scenes, file_name)
+                                    print 'file_name_after:',file_name_after
                                     ext = os.path.splitext(file_name)[1]
                                     if ext=='.mb':
                                         ext = 'mayaBinary'
                                     else:
                                         ext = 'mayaAscii'
+                                    
+                                    #TODO use mel command to reload reference node , pm.system will be error.
+                                    #pm.system.loadReference(file_name_after,type=ext,options='v=0;p=17')
                                     #file -loadReference $ref -type $ext -options "v=0;p=17" $file
-                                    pm.system.loadReference(file_name_after,type=ext,options='v=0;p=17')
+                                    cmd = 'file -loadReference ' + ref_node + ' -type ' + ext + ' -options ' + '\"v=0;p=17\" \"' + file_name_after + '\"'
+                                    print cmd
+                                    pm.mel.eval( cmd )
+                    else:
+                        file_name = ''
+                        # Get reference node's file name
+                        try:
+                            # use unresolvedName flag to get unresolvedName name
+                            file_name= pm.system.referenceQuery(ref_node,filename=1,unresolvedName=1)
+                        except:
+                            traceback.print_exc()
+                        else:
+                            if file_name:
+                                #print file_name
+                                #self.Reference_File_Names.add(file_name)
+                                self.RuleEntry_Scenes = 'scenes'
+                                if not self.check_relative(self.RuleEntry_Scenes, file_name):
+                                    file_name_after = self.convert_to_relative(self.RuleEntry_Scenes, file_name)
+                                    print 'file_name_after:',file_name_after
+                                    ext = os.path.splitext(file_name)[1]
+                                    if ext=='.mb':
+                                        ext = 'mayaBinary'
+                                    else:
+                                        ext = 'mayaAscii'
+                                    
+                                    #TODO use mel command to reload reference node , pm.system will be error.
+                                    #pm.system.loadReference(file_name_after,type=ext,options='v=0;p=17')
+                                    #file -loadReference $ref -type $ext -options "v=0;p=17" $file
+                                    cmd = 'file -loadReference ' + ref_node + ' -type ' + ext + ' -options ' + '\"v=0;p=17\" \"' + file_name_after + '\"'
+                                    print cmd
+                                    pm.mel.eval( cmd )
+                                    
+                                    # unload file
+                                    cmd = 'file -unloadReference ' + ref_node + ' \"' + file_name_after + '\"'
+                                    print cmd
+                                    pm.mel.eval(cmd)
+                            
+                        
                                 
     def convert_texture_to_relative(self):
         self.Texture_Files = set()
@@ -64,7 +106,11 @@ class RelativePath(object):
     def get_workspace(self):
         #self.WorkSpace_RootDir = pm.workspace(q=1,rd=1)
         self.RuleEntry_SourceImages = pm.workspace('sourceImages',fileRuleEntry=1,q=1 )
+        if not self.RuleEntry_SourceImages :
+            self.RuleEntry_SourceImages = 'sourceimages'
         self.RuleEntry_Scenes = pm.workspace('scenes',fileRuleEntry=1,q=1 )
+        if not self.RuleEntry_Scenes :
+            self.RuleEntry_Scenes = 'scenes'
         
     def convert_to_relative(self,parten,inputStr):
         '''
@@ -78,6 +124,13 @@ class RelativePath(object):
         return returnStr
 
     def check_relative(self,parten,inputStr):
+        print 'inputStr',inputStr
+        if inputStr.startswith( parten ) :
+            return True
+        else:
+            return False
+
+    def check_relative_backup(self,parten,inputStr):
         print 'inputStr',inputStr
         #inputStr = str(inputStr).replace('\\','/')
         p = re.compile('^.*//(' + parten + ')')
@@ -96,7 +149,7 @@ class RelativePath(object):
                 return True
             else:
                 return False
-             
+                         
     #def test():
     #    '''
     #    C:/AW/Maya5.0/sourceimages/maya.exe     sourceimages/maya.exe
@@ -114,7 +167,7 @@ class RelativePath(object):
 def main():
     a = RelativePath()
     a.convert_reference_to_relative()
-    #a.convert_texture_to_relative()
+    a.convert_texture_to_relative()
     
 if __name__ == '__main__' :
     main()

@@ -23,10 +23,16 @@ class HairCache(General):
         self.Hairs = None
         self.DiskCache_Before = None
         
+    # if user select no hair system,then select all hair system in scene    
     def get_sel_hair_shapes(self):
         self.Hairs = pm.ls(sl=1,dag=1,lf=1,l=1,type='hairSystem')
         if not self.Hairs:
+            # select all hair system in scenes
+            self.Hairs = pm.ls(dag=1,lf=1,l=1,type='hairSystem')
+        if not self.Hairs:
             pm.warning('select some hair system first.')
+        else:
+            pm.select(self.Hairs,r=1)
             
     def set_cache_name(self):
         for hair in self.Hairs :
