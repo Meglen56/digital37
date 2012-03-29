@@ -1,44 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>TextView</class>
- <widget class="QMainWindow" name="TextView">
+ <class>OptionWindow</class>
+ <widget class="QMainWindow" name="OptionWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>802</width>
-    <height>280</height>
+    <width>184</width>
+    <height>127</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>TextView</string>
+   <string>Commit Options</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout">
+   <layout class="QFormLayout" name="formLayout">
+    <property name="fieldGrowthPolicy">
+     <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+    </property>
     <item row="0" column="0">
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QTextBrowser" name="textBrowser">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+       <widget class="QCheckBox" name="checkBox_save">
+        <property name="text">
+         <string>Save Before Commit</string>
         </property>
-        <property name="minimumSize">
-         <size>
-          <width>200</width>
-          <height>100</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <family>Adobe Arabic</family>
-          <pointsize>16</pointsize>
-         </font>
-        </property>
-        <property name="locale">
-         <locale language="English" country="UnitedStates"/>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBox_lock">
+        <property name="text">
+         <string>Lock After Commit</string>
         </property>
        </widget>
       </item>
@@ -70,7 +62,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>802</width>
+     <width>184</width>
      <height>18</height>
     </rect>
    </property>
@@ -100,41 +92,41 @@
  <resources/>
  <connections>
   <connection>
-   <sender>pushButton_ok</sender>
+   <sender>pushButton_close</sender>
    <signal>pressed()</signal>
-   <receiver>TextView</receiver>
+   <receiver>OptionWindow</receiver>
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>204</x>
-     <y>239</y>
+     <x>129</x>
+     <y>63</y>
     </hint>
     <hint type="destinationlabel">
-     <x>400</x>
-     <y>139</y>
+     <x>91</x>
+     <y>51</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>pushButton_close</sender>
+   <sender>pushButton_ok</sender>
    <signal>pressed()</signal>
-   <receiver>TextView</receiver>
+   <receiver>OptionWindow</receiver>
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>597</x>
-     <y>239</y>
+     <x>48</x>
+     <y>63</y>
     </hint>
     <hint type="destinationlabel">
-     <x>400</x>
-     <y>139</y>
+     <x>91</x>
+     <y>51</y>
     </hint>
    </hints>
   </connection>
   <connection>
    <sender>actionExit</sender>
    <signal>triggered()</signal>
-   <receiver>TextView</receiver>
+   <receiver>OptionWindow</receiver>
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -142,8 +134,8 @@
      <y>-1</y>
     </hint>
     <hint type="destinationlabel">
-     <x>400</x>
-     <y>139</y>
+     <x>91</x>
+     <y>51</y>
     </hint>
    </hints>
   </connection>

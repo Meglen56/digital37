@@ -97,7 +97,9 @@ class HairCache(General):
         returnStr = 'create hair cache error'
         # save file
         try:
-            pm.system.saveFile(force=True)
+            #pm.system.saveFile(force=True)
+            #TODO 2011 error
+            mel.eval('file -s -f')
         except:
             self.set_diskCache_rule()
             traceback.print_exc()

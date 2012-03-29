@@ -1,8 +1,16 @@
 <?xml version="1.0" ?>
 <menu name="digital37">
 	<node type="subMenu" name="File">
-		<node type="command" name="Update" comment="Commit" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.update()" mode="python" option="False"></node>
-		<node type="command" name="Commit" comment="Commit" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.commit()" cmd_option="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.commit(option=1)" mode="python" option="True"></node>
+		<node type="command" name="Update" comment="Update" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.update()" mode="python" option="False"></node>
+		<node type="separator"></node>
+		<node type="command" name="Commit" comment="Commit" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.commit()" cmd_option="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.commit_option()" mode="python" option="True"></node>
+		<node type="separator"></node>
+		<node type="command" name="Update Asset" comment="Update Asset" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.update_path('asset')" mode="python" option="False"></node>
+		<node type="command" name="Update Sourceimages" comment="Update Sourceimages" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.update_path('sourceimages')" mode="python" option="False"></node>
+		<node type="command" name="Update Custom Path" comment="Update Custom Path" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.update_custom_path()" mode="python" option="False"></node>
+		<node type="command" name="Update Associated" comment="Update Associated" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.update_associated()" mode="python" option="False"></node>
+		<node type="separator"></node>
+		<node type="command" name="CleanUp Custom Path" comment="CleanUp Custom Path" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.cleanup_custom_path()" mode="python" option="False"></node>
 	</node>
 	
 	<node type="subMenu" name="Commons">
