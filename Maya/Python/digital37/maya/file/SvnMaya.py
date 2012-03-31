@@ -50,9 +50,12 @@ class General():
         
     def get_workspace(self):
         self.WorkSpace_RootDir = pm.workspace(q=1,rd=1)
+        logging.debug('self.WorkSpace_RootDir:\t%s',self.WorkSpace_RootDir)
         self.RuleEntry_SourceImages = pm.workspace('sourceImages',fileRuleEntry=1,q=1 )
+        logging.debug('self.RuleEntry_SourceImages:\t%s',self.RuleEntry_SourceImages)
         self.RuleEntry_3dPaintTextures = pm.workspace('3dPaintTextures',fileRuleEntry=1,q=1 )
-        self.RuleEntry_Scenes = pm.workspace('scenes',fileRuleEntry=1,q=1 )
+        self.RuleEntry_Scenes = pm.workspace('scene',fileRuleEntry=1,q=1 )
+        logging.debug('self.RuleEntry_Scenes:\t%s',self.RuleEntry_Scenes)
         
     def get_texture_file(self):
         self.Texture_Files = set()
@@ -105,6 +108,9 @@ class General():
                 if p.stdout :
                     try:
                         output = p.stdout.readline()
+                    except KeyboardInterrupt:
+                        logging.debug( 'user canceled.\r\n' )
+                        break
                     except:
                         traceback.print_exc()
                         break
@@ -114,8 +120,14 @@ class General():
                             f.flush()
                             # 
                             if self.Window:
-                                output = unicode(output,'gbk','ignore')
-                                self.Window.insertPlainText( output )
+                                try:
+                                    output = unicode(output,'gbk','ignore')
+                                    self.Window.insertPlainText( output )
+                                except KeyboardInterrupt:
+                                    logging.debug( 'user canceled.\r\n' )
+                                except:
+                                    traceback.print_exc()
+                                    break
                                     
             #subprocess is complete
             else :
@@ -209,6 +221,12 @@ class SvnMaya(General):
                 cmdList.append('svn unlock \"%s\"'%scene_name)
         elif cmdType == 'update' :
             cmdList.append('svn update \"%s\"'%scene_name)
+        elif cmdType == 'lock' :
+            cmdList.append('svn lock \"%s\"'%scene_name)
+        elif cmdType == 'unlock' :
+            cmdList.append('svn unlock \"%s\"'%scene_name)
+        elif cmdType == 'log' :
+            cmdList.append('svn log \"%s\"'%scene_name)      
             # reload current opened scene
         else:
             logging.error('svn_cmd:can not find match command type %s',cmdType)
@@ -238,7 +256,7 @@ class SvnMaya(General):
             path = os.path.join(self.WorkSpace_RootDir,self.RuleEntry_Scenes,'asset')
         elif ruleEntry == 'sourceimages':
             path = os.path.join(self.WorkSpace_RootDir,self.RuleEntry_SourceImages)
-        logging.debug('path of %s:\t%s',(path,path))
+        logging.debug('path of %s:\t%s',path,path)
         self.svn_update_path(path)
                         
     def svn_update_associated(self):

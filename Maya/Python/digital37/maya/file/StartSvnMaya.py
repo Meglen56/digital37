@@ -84,6 +84,33 @@ def update():
     SvnMaya_update.set_window(SvnMaya_update.textBrowser)
     SvnMaya_update.svn_cmd('update')
         
+def lock():
+    global SvnMaya_upd
+    global SvnMaya_update
+    SvnMaya_upd = QtGui.qApp
+    SvnMaya_update = StartSvnMaya(getMayaWindow())
+    SvnMaya_update.show()
+    SvnMaya_update.set_window(SvnMaya_update.textBrowser)
+    SvnMaya_update.svn_cmd('lock')
+        
+def unlock():
+    global SvnMaya_upd
+    global SvnMaya_update
+    SvnMaya_upd = QtGui.qApp
+    SvnMaya_update = StartSvnMaya(getMayaWindow())
+    SvnMaya_update.show()
+    SvnMaya_update.set_window(SvnMaya_update.textBrowser)
+    SvnMaya_update.svn_cmd('unlock')
+        
+def log():
+    global SvnMaya_upd
+    global SvnMaya_update
+    SvnMaya_upd = QtGui.qApp
+    SvnMaya_update = StartSvnMaya(getMayaWindow())
+    SvnMaya_update.show()
+    SvnMaya_update.set_window(SvnMaya_update.textBrowser)
+    SvnMaya_update.svn_cmd('log')
+                    
 def update_path(path):
     global SvnMaya_upd
     global SvnMaya_update
