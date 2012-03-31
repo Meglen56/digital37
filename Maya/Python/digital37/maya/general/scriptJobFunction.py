@@ -6,5 +6,5 @@ def open():
     # get current project
     if 'mhxy' in pm.workspace(q=1,rd=1) :
         # SVN update
-        import digital37.maya.general.StartSvnMaya
-        digital37.maya.general.StartSvnMaya.main()
+        import digital37.maya.file.StartSvnMaya
+        digital37.maya.file.StartSvnMaya.update()

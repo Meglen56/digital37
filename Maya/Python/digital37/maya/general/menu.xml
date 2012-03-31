@@ -10,6 +10,11 @@
 		<node type="command" name="Update Custom Path" comment="Update Custom Path" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.update_custom_path()" mode="python" option="False"></node>
 		<node type="command" name="Update Associated" comment="Update Associated" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.update_associated()" mode="python" option="False"></node>
 		<node type="separator"></node>
+		<node type="command" name="Get Lock" comment="Get Lock" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.lock()" mode="python" option="False"></node>
+		<node type="command" name="Release Lock" comment="Release Lock" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.unlock()" mode="python" option="False"></node>
+		<node type="separator"></node>
+		<node type="command" name="Show Log" comment="Show Log" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.log()" mode="python" option="False"></node>
+		<node type="separator"></node>
 		<node type="command" name="CleanUp Custom Path" comment="CleanUp Custom Path" cmd="import digital37.maya.file.StartSvnMaya;digital37.maya.file.StartSvnMaya.cleanup_custom_path()" mode="python" option="False"></node>
 	</node>
 	

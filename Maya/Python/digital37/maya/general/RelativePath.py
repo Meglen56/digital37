@@ -2,6 +2,7 @@ import re
 import os.path
 import traceback
 import pymel.core as pm
+import maya.cmds as cmds
 
 class RelativePath(object):
     def __init__(self):
@@ -102,6 +103,8 @@ class RelativePath(object):
                 if pm.attributeQuery( 'fileTextureName',node=tex,exists=1 ):
                     texFile = tex.fileTextureName.get()
                     tex.fileTextureName.set( self.convert_to_relative(self.RuleEntry_SourceImages, texFile) )
+                    #setAttr -type "string" Shoulder_file5.fileTextureName "sourceimages/character/ailixun/L/ailixun_mai_bump_L.jpg";
+
         
     def get_workspace(self):
         #self.WorkSpace_RootDir = pm.workspace(q=1,rd=1)
