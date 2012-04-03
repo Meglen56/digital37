@@ -228,12 +228,15 @@ class SvnMaya(General):
         elif cmdType == 'log' :
             cmdList.append('svn log \"%s\"'%scene_name)      
             # reload current opened scene
+        elif cmdType == 'getLockStatus' :
+            cmdList.append('svn status \"%s\"'%scene_name) 
         else:
             logging.error('svn_cmd:can not find match command type %s',cmdType)
         cmd = '\n'.join(cmdList)
         logging.debug( 'cmd:%s',cmd )
         # using subprocess to execute command and write log
-        self.execute_cmd(cmd,cmdType)
+        if cmdType != 'getLockStatus' :
+            self.execute_cmd(cmd,cmdType)
         
     def svn_cleanup_path(self,fullPath):
         cmdList = list()

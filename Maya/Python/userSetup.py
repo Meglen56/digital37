@@ -16,9 +16,9 @@ print 'source InitDeadlineSubmitter.mel'
 
 #import digital37.maya.AEgNodeTemplate
 
-#import digital37.maya.general.scriptJobFunction
-#pm.scriptJob(event=["SceneOpened",digital37.maya.general.scriptJobFunction.open],permanent=True)
-#print 'activate open script job'
+import digital37.maya.general.scriptJobFunction
+pm.scriptJob(event=["SceneOpened",digital37.maya.general.scriptJobFunction.open],permanent=True)
+print 'activate open script job'
 
 #print 'login'
 #import digital37.maya.general.login

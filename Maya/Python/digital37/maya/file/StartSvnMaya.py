@@ -110,7 +110,16 @@ def log():
     SvnMaya_update.show()
     SvnMaya_update.set_window(SvnMaya_update.textBrowser)
     SvnMaya_update.svn_cmd('log')
-                    
+        
+def getLockStatus():
+    global SvnMaya_upd
+    global SvnMaya_update
+    SvnMaya_upd = QtGui.qApp
+    SvnMaya_update = StartSvnMaya(getMayaWindow())
+    SvnMaya_update.show()
+    SvnMaya_update.set_window(SvnMaya_update.textBrowser)
+    SvnMaya_update.svn_cmd('getLockStatus')
+                        
 def update_path(path):
     global SvnMaya_upd
     global SvnMaya_update
