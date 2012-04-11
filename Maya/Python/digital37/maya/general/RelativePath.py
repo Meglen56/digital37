@@ -2,7 +2,6 @@ import re
 import os.path
 import traceback
 import pymel.core as pm
-import maya.cmds as cmds
 
 class RelativePath(object):
     def __init__(self):
@@ -174,4 +173,5 @@ def main():
     
 if __name__ == '__main__' :
     main()
+    
     

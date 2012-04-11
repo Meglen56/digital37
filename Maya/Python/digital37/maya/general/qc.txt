@@ -1,0 +1,2 @@
+defaultResolution.w:2048
+defaultResolution.h:1156

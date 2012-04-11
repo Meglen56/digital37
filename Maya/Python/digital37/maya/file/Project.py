@@ -35,12 +35,24 @@ class Project():
                         if not os.path.exists(fileName):
                             fd = open(fileName,'w')
                             fd.close()
-                            
-                        
-                    
-                    
-        
-        
+            
+    def create_directory2(self):
+        # create ep directory
+        for eposide in self.Eposides:
+            for shot in self.Shots:
+                for shot_type,shot_type_name in self.Shot_Types.iteritems():
+                    #d = os.path.join(self.Root_Directory,'scenes/shot',eposide,(eposide+'_'+shot),shot_type)
+                    d = os.path.join(self.Root_Directory,eposide,(eposide+'_'+shot))
+                    if not os.path.exists(d):
+                        os.makedirs(d)
+#                        f = 'seer_'+shot_type_name+'_'+eposide+'_'+shot+'.mb'
+#                        if shot_type == 'comp' :
+#                            f = 'seer_'+shot_type_name+'_'+eposide+'_'+shot+'.nk'
+#                        fileName = os.path.join(d,f)
+#                        if not os.path.exists(fileName):
+#                            fd = open(fileName,'w')
+#                            fd.close()
+                                    
 def main():
     #a = Project('d:/seer','ep01','sc0010 sc0011 sc0012 sc0013 sc0020 sc0021 sc0030 sc0031 sc0040 sc0041 sc0050 sc0060 sc0070 sc0080 sc0081 sc0090 sc0100 sc0110 sc0120 sc0130 sc0131 sc0140 sc0150 sc0160 sc0170 sc0180 sc0190 sc0200 sc0220 sc0230 sc0240 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0340 sc0350 sc0370 sc0380 sc0390 sc0400 sc0410 sc0420 sc0440 sc0450 sc0460 sc0480 sc0490 sc0510 sc0520 sc0530 sc0540 sc0550 sc0560 sc0570 sc0580 sc0590 sc0600 sc0610 sc0620 sc0630 sc0640 sc0650 sc0660 sc0661 sc0662 sc0663 sc0670 sc0680 sc0690 sc0700 sc0710 sc0720 sc0730 sc0731 sc0740 sc0750 sc0760 sc0770 sc0780 sc0790 sc0820 sc0830 sc0840 sc0850 sc0870 sc0880 sc0890 sc0891 sc0892 sc0893 sc0894 sc0895 sc0910 sc0920 sc0930 sc0940 sc0950 sc0951')
     #a = Project('d:/seer','ep02','sc0010 sc0020 sc0030 sc0040 sc0050 sc0060 sc0070 sc0080 sc0090 sc0100 sc0110 sc0120 sc0130 sc0140 sc0150 sc0160 sc0170 sc0180 sc0190 sc0210 sc0230 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0302 sc0310 sc0330 sc0340 sc0350 sc0360 sc0380 sc0400 sc0420 sc0430 sc0450 sc0460 sc0470 sc0480 sc0490 sc0530 sc0540')
@@ -73,8 +85,15 @@ def main():
     #a = Project('d:/seer','ep29','sc0010 sc0020 sc0030 sc0040 sc0050 sc0060 sc0070 sc0100 sc0101 sc0110 sc0120 sc0130 sc0140 sc0150 sc0151 sc0160 sc0170 sc0190 sc0200 sc0201 sc0220 sc0230 sc0240 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0330 sc0350 sc0360 sc0370 sc0380 sc0390 sc0400 sc0410 sc0420 sc0430 sc0440 sc0450 sc0460 sc0470 sc0480 sc0490 sc0500 sc0520 sc0530 sc0540 sc0550 sc0560 sc0570 sc0580 sc0590 sc0600 sc0610 sc0620 sc0630 sc0640 sc0660 sc0680 sc0690 sc0700 sc0710 sc0720 sc0730 sc0740 sc0750 sc0760 sc0770 sc0790 sc0820 sc0830 sc0840 sc0850 sc0860 sc0870 sc0880 sc0890 sc0900 sc0910')
     #a = Project('d:/seer','ep30','sc0010 sc0020 sc0030 sc0040 sc0050 sc0060 sc0070 sc0080 sc0090 sc0100 sc0110 sc0120 sc0130 sc0140 sc0150 sc0160 sc0170 sc0180 sc0190 sc0200 sc0210 sc0220 sc0230 sc0240 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0330 sc0340 sc0350 sc0360 sc0370 sc0380 sc0390 sc0400 sc0410 sc0420 sc0430 sc0440 sc0450 sc0460 sc0470 sc0480 sc0490 sc0500 sc0510 sc0520 sc0530 sc0540 sc0550 sc0560 sc0570 sc0580 sc0590 sc0600 sc0610 sc0620 sc0630 sc0640 sc0650 sc0660 sc0670 sc0680 sc0690 sc0700 sc0710 sc0720 sc0730 sc0740 sc0750 sc0760 sc0770 sc0780 sc0790 sc0800 sc0810 sc0820 sc0830 sc0840 sc0850 sc0860 sc0870 sc0880 sc0890 sc0900 sc0910 sc0920 sc0930 sc0940 sc0950 sc0960 sc0970 sc0980 sc0990 sc1000 sc1010 sc1020 sc1030 sc1040 sc1050 sc1060 sc1070 sc1080 sc1090 sc1100 sc1110 sc1120 sc1130 sc1140 sc1150 sc1160 sc1170 sc1180 sc1190 sc1200 sc1210 sc1220 sc1230 sc1240 sc1250 sc1260 sc1270 sc1280 sc1290 sc1300 sc1310 sc1320 sc1330 sc1340 sc1350 sc1360 sc1370 sc1380 sc1390 sc1400 sc1410 sc1420 sc1430 sc1440 sc1450 sc1460 sc1470 sc1480 sc1490 sc1500 sc1510 sc1520 sc1530 sc1540 sc1550 sc1560 sc1570 sc1580 sc1590 sc1600 sc1610 sc1620 sc1630 sc1640 sc1650 sc1660 sc1670 sc1680 sc1690 sc1700 sc1710 sc1720 sc1730 sc1740 sc1750 sc1760 sc1770 sc1780 sc1790 sc1800 sc1810 sc1820 sc1830 sc1840 sc1850 sc1860 sc1870 sc1880 sc1890 sc1900 sc1910 sc1920 sc1930 sc1940 sc1950 sc1960 sc1970 sc1980 sc1990 sc2000 sc2010 sc2020 sc2030 sc2040 sc2050 sc2060 sc2070 sc2080 sc2090 sc2100 sc2110 sc2120 sc2130 sc2140 sc2150 sc2160 sc2170 sc2180 sc2190 sc2200 sc2210 sc2220 sc2230 sc2240 sc2250 sc2260 sc2270 sc2280 sc2290 sc2300 sc2310 sc2320 sc2330 sc2340 sc2350 sc2360 sc2370 sc2380 sc2390 sc2400 sc2410 sc2420 sc2430 sc2440 sc2450 sc2460 sc2470 sc2480 sc2490 sc2500 sc2510 sc2520 sc2530 sc2540 sc2550 sc2560 sc2570 sc2580 sc2590 sc2600 sc2610 sc2620 sc2630 sc2640 sc2650 sc2660 sc2670 sc2680 sc2690 sc2700 sc2710')
     #a = Project('d:/seer','ep31','sc0010')
-    a = Project('d:/seer','ep32','sc0010 sc0020 sc0030 sc0031 sc0040 sc0050 sc0060 sc0070 sc0080 sc0090 sc0100 sc0110 sc0120 sc0130 sc0140 sc0150 sc0160 sc0170 sc0180 sc0190 sc0200 sc0210 sc0220 sc0240 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0330 sc0340 sc0350 sc0360 sc0380 sc0390 sc0400 sc0410 sc0420 sc0430 sc0440 sc0450 sc0460 sc0470 sc0480 sc0490 sc0500 sc0510 sc0520 sc0530 sc0540 sc0541 sc0550 sc0560 sc0570 sc0580 sc0590 sc0600 sc0610 sc0620')
-    a.create_directory()
+    #a = Project('d:/seer','ep32','sc0010 sc0020 sc0030 sc0031 sc0040 sc0050 sc0060 sc0070 sc0080 sc0090 sc0100 sc0110 sc0120 sc0130 sc0140 sc0150 sc0160 sc0170 sc0180 sc0190 sc0200 sc0210 sc0220 sc0240 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0330 sc0340 sc0350 sc0360 sc0380 sc0390 sc0400 sc0410 sc0420 sc0430 sc0440 sc0450 sc0460 sc0470 sc0480 sc0490 sc0500 sc0510 sc0520 sc0530 sc0540 sc0541 sc0550 sc0560 sc0570 sc0580 sc0590 sc0600 sc0610 sc0620')
+    #a.create_directory()
+    #a = Project('d:/rovio','ep01','sc0020 sc0040')
+    #a.create_directory()
+    
+    # Create image sequence
+    #a=Project('Z:/seerSequence','ep01','sc0010 sc0011 sc0012 sc0013 sc0020 sc0021 sc0030 sc0031 sc0040 sc0041 sc0050 sc0060 sc0070 sc0080 sc0081 sc0090 sc0100 sc0110 sc0120 sc0130 sc0131 sc0140 sc0150 sc0160 sc0170 sc0180 sc0190 sc0200 sc0220 sc0230 sc0240 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0340 sc0350 sc0370 sc0380 sc0390 sc0400 sc0410 sc0420 sc0440 sc0450 sc0460 sc0480 sc0490 sc0510 sc0520 sc0530 sc0540 sc0550 sc0560 sc0570 sc0580 sc0590 sc0600 sc0610 sc0620 sc0630 sc0640 sc0650 sc0660 sc0661 sc0662 sc0663 sc0670 sc0680 sc0690 sc0700 sc0710 sc0720 sc0730 sc0731 sc0740 sc0750 sc0760 sc0770 sc0780 sc0790 sc0820 sc0830 sc0840 sc0850 sc0870 sc0880 sc0890 sc0891 sc0892 sc0893 sc0894 sc0895 sc0910 sc0920 sc0930 sc0940 sc0950 sc0951')
+    a=Project('Z:/seerSequence','ep29','sc0010 sc0020 sc0030 sc0040 sc0050 sc0060 sc0070 sc0100 sc0101 sc0110 sc0120 sc0130 sc0140 sc0150 sc0151 sc0160 sc0170 sc0190 sc0200 sc0201 sc0220 sc0230 sc0240 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0330 sc0350 sc0360 sc0370 sc0380 sc0390 sc0400 sc0410 sc0420 sc0430 sc0440 sc0450 sc0460 sc0470 sc0480 sc0490 sc0500 sc0520 sc0530 sc0540 sc0550 sc0560 sc0570 sc0580 sc0590 sc0600 sc0610 sc0620 sc0630 sc0640 sc0660 sc0680 sc0690 sc0700 sc0710 sc0720 sc0730 sc0740 sc0750 sc0760 sc0770 sc0790 sc0820 sc0830 sc0840 sc0850 sc0860 sc0870 sc0880 sc0890 sc0900 sc0910')
+    a.create_directory2()
         
 if __name__ == '__main__' :
     main()
