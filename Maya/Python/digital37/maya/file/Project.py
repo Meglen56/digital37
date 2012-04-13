@@ -2,8 +2,11 @@ import os
 import tempfile
 
 class Project():
-    def __init__(self,root_directory,eposides,shots):
+    def __init__(self,root_directory):
         self.get_root(root_directory)
+        
+        
+    def init_shot(self,eposides,shots):
         self.get_eposide(eposides)
         self.get_shot(shots)
         self.get_shot_types()
@@ -20,7 +23,7 @@ class Project():
     def get_shot_types(self):
         self.Shot_Types = {'anim':'an','layout':'ly','vfx':'vfx','comp':'comp','cam':'cam','light':'light'}
             
-    def create_directory(self):
+    def create_directory_shot(self):
         # create ep directory
         for eposide in self.Eposides:
             for shot in self.Shots:
@@ -36,6 +39,26 @@ class Project():
                             fd = open(fileName,'w')
                             fd.close()
             
+    def create_directory_asset(self,asset_type,assets):
+        # create ep directory
+        for asset in assets.split():
+            for asset_folder in ['high','shading','rig','blendShape','low']:
+                d = os.path.join(self.Root_Directory,'scenes','asset',asset_type,asset,asset_folder)
+                if not os.path.exists(d):
+                    os.makedirs(d)
+                    f = asset+'_'+asset_folder+'.mb'
+                    fileName = os.path.join(d,f)
+                    if not os.path.exists(fileName):
+                        fd = open(fileName,'w')
+                        fd.close()
+            
+    def create_directory_sourceimages(self,asset_type,assets):
+        # create ep directory
+        for asset in assets.split():
+                d = os.path.join(self.Root_Directory,'sourceimages',asset_type,asset)
+                if not os.path.exists(d):
+                    os.makedirs(d)
+                                                                
     def create_directory2(self):
         # create ep directory
         for eposide in self.Eposides:
@@ -92,8 +115,16 @@ def main():
     
     # Create image sequence
     #a=Project('Z:/seerSequence','ep01','sc0010 sc0011 sc0012 sc0013 sc0020 sc0021 sc0030 sc0031 sc0040 sc0041 sc0050 sc0060 sc0070 sc0080 sc0081 sc0090 sc0100 sc0110 sc0120 sc0130 sc0131 sc0140 sc0150 sc0160 sc0170 sc0180 sc0190 sc0200 sc0220 sc0230 sc0240 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0340 sc0350 sc0370 sc0380 sc0390 sc0400 sc0410 sc0420 sc0440 sc0450 sc0460 sc0480 sc0490 sc0510 sc0520 sc0530 sc0540 sc0550 sc0560 sc0570 sc0580 sc0590 sc0600 sc0610 sc0620 sc0630 sc0640 sc0650 sc0660 sc0661 sc0662 sc0663 sc0670 sc0680 sc0690 sc0700 sc0710 sc0720 sc0730 sc0731 sc0740 sc0750 sc0760 sc0770 sc0780 sc0790 sc0820 sc0830 sc0840 sc0850 sc0870 sc0880 sc0890 sc0891 sc0892 sc0893 sc0894 sc0895 sc0910 sc0920 sc0930 sc0940 sc0950 sc0951')
-    a=Project('Z:/seerSequence','ep29','sc0010 sc0020 sc0030 sc0040 sc0050 sc0060 sc0070 sc0100 sc0101 sc0110 sc0120 sc0130 sc0140 sc0150 sc0151 sc0160 sc0170 sc0190 sc0200 sc0201 sc0220 sc0230 sc0240 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0330 sc0350 sc0360 sc0370 sc0380 sc0390 sc0400 sc0410 sc0420 sc0430 sc0440 sc0450 sc0460 sc0470 sc0480 sc0490 sc0500 sc0520 sc0530 sc0540 sc0550 sc0560 sc0570 sc0580 sc0590 sc0600 sc0610 sc0620 sc0630 sc0640 sc0660 sc0680 sc0690 sc0700 sc0710 sc0720 sc0730 sc0740 sc0750 sc0760 sc0770 sc0790 sc0820 sc0830 sc0840 sc0850 sc0860 sc0870 sc0880 sc0890 sc0900 sc0910')
-    a.create_directory2()
+    #a=Project('Z:/seerSequence','ep29','sc0010 sc0020 sc0030 sc0040 sc0050 sc0060 sc0070 sc0100 sc0101 sc0110 sc0120 sc0130 sc0140 sc0150 sc0151 sc0160 sc0170 sc0190 sc0200 sc0201 sc0220 sc0230 sc0240 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0330 sc0350 sc0360 sc0370 sc0380 sc0390 sc0400 sc0410 sc0420 sc0430 sc0440 sc0450 sc0460 sc0470 sc0480 sc0490 sc0500 sc0520 sc0530 sc0540 sc0550 sc0560 sc0570 sc0580 sc0590 sc0600 sc0610 sc0620 sc0630 sc0640 sc0660 sc0680 sc0690 sc0700 sc0710 sc0720 sc0730 sc0740 sc0750 sc0760 sc0770 sc0790 sc0820 sc0830 sc0840 sc0850 sc0860 sc0870 sc0880 sc0890 sc0900 sc0910')
+    #a.create_directory2()
+    a=Project('d:/rovio')
+    a.create_directory_sourceimages('prop','egg cap')
+    a.create_directory_sourceimages('set','set01')
+    a.create_directory_sourceimages('character','blue_a blue_b blue_c red_s red_b black yellow')
+#    a.create_directory_asset('character','blue_a blue_b blue_c red_s red_b black yellow')
+#    a.create_directory_asset('set','set01')
+#    a.create_directory_asset('prop','egg cap')
+
         
 if __name__ == '__main__' :
     main()
