@@ -1,0 +1,691 @@
+/*
+ * Crowd Plugin for Maya UI mel code (C)opyright hongloull
+ * Many thanks joe alter's shave and haircut UI
+ */
+
+global proc int[] crowd_getMayaVersion()
+{
+	string	$mayaVersion = `about -version`;
+	string	$parts[];
+	int		$result[3];
+
+	//
+	// Sometimes Alias will give customers patched releases which have
+	// letters at the end of the version name.  E.g. "5.0a" or "5.0cotd"
+	// (cut of the day).
+	//
+	// We only want the numeric portion.
+	//
+	$mayaVersion = match("^[0-9.]*", $mayaVersion);
+
+	//
+	// Split out the parts of the version number and convert them to
+	// integers.
+	//
+	tokenize($mayaVersion, ".", $parts);
+
+	$result[0] = $parts[0];
+	$result[1] = 0;
+	$result[2] = 0;
+
+	if ((size($parts) > 0) && ($parts[1] != ""))
+	{
+		$result[1] = $parts[1];
+
+		if ((size($parts) > 1) && ($parts[2] != "")) $result[2] = $parts[2];
+	}
+
+	return $result;
+}
+
+
+global proc string crowd_getCurrentNode()
+{
+	string	$nodes[];
+
+	if (`selectMode -q -co`)
+		$nodes = `ls -hilite -dag -type crowdShape`;
+	else
+		$nodes = `ls -sl -dag -type crowdShape`;
+
+	if (size($nodes) > 0) return $nodes[0];
+
+	return "";
+}
+
+
+
+global proc crowdDeleteCurrent()
+{
+	string $crowdShape = crowd_getCurrentNode();
+
+	select -r $crowdShape;
+
+	if (!`about -batch`)
+	{
+		string $message = "You are about to delete " + $crowdShape
+						+ " and all associated nodes.";
+		string $answer = `confirmDialog -title "Delete Confirmation"
+					-message $message -button "Continue" -button "Cancel"`;
+
+		if ($answer != "Continue") return;
+	}
+
+	deleteCrowdNode($crowdShape);
+
+	crowd_enableMenus;
+//	crowd_refreshGlobalsAE();
+}
+
+
+proc string crowdGetParent(string $node)
+{
+	string	$temp[] = `listRelatives -parent -fullPath $node`;
+
+	if (size($temp) == 0) return "";
+
+	return $temp[0];
+}
+
+
+proc int isNodeReferenced(string $node)
+{
+	//
+	// In Maya 7.0 the 'reference' command was replaced by the
+	// 'referenceQuery' command.
+	//
+	global int	$gShaveMayaVersion[];
+
+	if ($gShaveMayaVersion[0] < 7)
+		return eval("reference -q -inr " + $node);
+
+	return eval("referenceQuery -inr " + $node);
+}
+
+
+//
+// Try to delete a node without getting any errors.
+//
+proc int crowdDeleteNode(string $node)
+{
+	if (($node == "") || !objExists($node)) return true;
+
+	if (isNodeReferenced($node)) return false;
+
+	//
+	// A bug in the lockNode command means that a set cannot be locked or
+	// unlocked: any attempt to do so actually operates on all of the set's
+	// members instead.
+	//
+	if (objectType($node) != "objectSet")
+		catch(`lockNode -l off $node`);
+
+	return !catch(`delete $node`);
+}
+
+
+global proc deleteCrowdNode(string $crowdShape)
+{
+	//	Make sure that this is a crowdShape node and not a transform, then
+	//	get its parent transform.
+	string	$shapeTransform;
+
+	if (nodeType($crowdShape) == "crowdShape")
+		$shapeTransform = crowdGetParent($crowdShape);
+
+	if (!crowdDeleteNode($crowdShape))
+		warning("Could not delete crowdShape node '" + $crowdShape + "'.");
+
+	//	If the crowd shape's transform no longer has any children, delete it
+	//	too.
+	if (objExists($shapeTransform))
+	{
+		string	$children[] = `listRelatives -children $shapeTransform`;
+
+		if (size($children) == 0) crowdDeleteNode($shapeTransform);
+	}
+}
+
+
+global proc crowdAboutUs ()
+{
+	string $message = "Crowd for Maya\n";
+	$message += "(c)2010-2015 ShangHai ZhangJiang Animation & Technology Co., Ltd.\n";
+	$message += "Version: 1.0";
+	$message += "\n\nMaya port by:\n Hongloull\nhttp://www.animationsp.com";
+	confirmDialog -title "Crowd For Maya"  -message $message -button "OK" ;
+}
+
+
+/*
+ * In our UI we have the concept of a "current" crowd node. This because
+ * we can have more than one, and by setting a current, it makes the other
+ * menu options easier (ie the user doesn't have to pick which node every
+ * time he/she wants to do a particular operation).
+ */
+global proc crowdSetCurrentNode(string $newNode)
+{
+	//
+	// Make sure that we have the crowdShape node itself and not its
+	// transform.
+	//
+	string	$tmp[] = `ls -dag -type crowdShape $newNode`;
+
+	if (size($tmp) == 0)
+	{
+		error("Crowd: attempt to assign '" + $newNode + "' as current crowdShape node.");
+		return;
+	}
+
+	$newNode = $tmp[0];
+
+	//
+	// If we're in component selection mode then hilite the crowdNode,
+	// otherwise select it.
+	//
+	if (`selectMode -q -co`)
+	{
+		select -cl;
+		hilite -r $newNode;
+	}
+	else
+		select -r $newNode;
+}
+
+
+global proc crowdInit()
+{
+	//
+	// We no longer support Maya versions prior to 6.0
+	//
+	global	int	$gCrowdMayaVersion[];
+
+	$gCrowdMayaVersion = crowd_getMayaVersion();
+
+//	crowdPrefs();
+
+	//
+	// Create runTimeCommands.
+	//
+//	crowdRunTimeCommands;
+
+	//
+	// If we're running interactively then set up the Crowd menus and
+	// heads-up displays.
+	//
+	if(!`about -batch`)
+	{
+		crowdMenu;
+
+//		crowd_doAEOverrides();
+
+//		crowdBrush();
+//		crowdShelf();
+	}
+}
+
+
+global proc crowdCleanup()
+{
+	if (!`about -batch`)
+	{
+		if (`menu -exists crowdSelectMenu`)
+			deleteUI crowdSelectMenu;
+
+		if (`menu -exists crowdMenu`)
+			deleteUI crowdMenu;
+
+// 		crowdBrush_cleanup();
+// 		crowdRunTimeCommands_cleanup();
+	}
+
+}
+
+
+/*
+ * Create the Crowd menus in Maya. In the toplevel menubar
+ */
+global proc crowdMenu()
+{
+
+	// The global string variable gMainWindow contains the name of top
+	// Level Maya window.  Using this as the parent in a menu command
+	// will create a new menu at the same level as "File", "Edit", etc.
+
+	global string $gMainWindow;
+
+	// Create a top level menu called "crowd".  Its only menu item
+	// is called "Move in crowd", and when invoked by the user, it
+	// will call the createSphereAndAttachcrowdShape node procedure shown above.
+	//
+	menu -label "Crowd"
+		-parent $gMainWindow
+		-tearOff false
+		-allowOptionBoxes true
+		-postMenuCommand "crowd_rebuildMenu"
+		crowdMenu;
+
+	menu -label "Crowd Select"
+		-parent $gMainWindow
+		-tearOff false
+		-enable true
+		-postMenuCommand "crowd_rebuildNodeMenu(\"crowdSelectMenu\",\"crowdSetCurrentNode\",1,0)"
+		crowdSelectMenu;
+
+	//
+	// As of Maya 8.0, we now have separate menu sets.  We want our
+	// menus to show up for all.
+	//
+	global int	$gCrowdMayaVersion[];
+
+	if ($gCrowdMayaVersion[0] >= 8)
+	{
+		menuSet -e -addMenu crowdMenu commonMenuSet;
+		menuSet -e -addMenu crowdSelectMenu commonMenuSet;
+	}
+
+	//
+	// Set the enabled/disabled state of the menu items appropriately.
+	//
+	crowd_enableMenus();
+}
+
+
+global proc crowd_enableMenus()
+{
+	//
+	// The plugin sometimes calls this proc on a deferred basis.  This
+	// means that it is possible for the plugin to be unloaded before this
+	// proc gets round to being run.  So we need to be sure that the plugin
+	// is still loaded before doing anything.
+	//
+	if (`pluginInfo -q -l mayaCrowd` && !`about -batch`)
+	{
+ 		string	$crowdShapes[] = `ls -type crowdShape`;
+		int		$haveCrowdNodes = (size($crowdShapes) > 0);
+
+		//
+		// Under Windows, there's a bug such that the Crowd Select menu
+		// item doesn't redraw if it's just been enabled or disabled, until
+		// the user rolls the pointer over it.
+		//
+		// So we force an update by toggling the visibility.  Note that
+		// since making a menu visible automatically enables it, we have
+		// to do the toggle first, *then* the enable/disable.
+		//
+		if (`about -nt`)
+		{
+			menu -e -visible false crowdSelectMenu;
+			menu -e -visible true crowdSelectMenu;
+		}
+
+		menu -e -enable $haveCrowdNodes crowdSelectMenu;
+	}
+}
+
+
+global proc crowd_rebuildMenu()
+{
+ 	string	$crowdShapes[] = `ls -type crowdShape`;
+	string	$currentNode = crowd_getCurrentNode();
+	int		$haveCrowdNodes = (size($crowdShapes) > 0);
+	int		$haveCurrent = ($currentNode != "");
+	int		$isOSX = `about -mac`;
+	int		$isSplineLocked = false;
+
+	//
+	// Clear out any old items.
+	//
+	menu -e -deleteAllItems crowdMenu;
+
+	//
+	// Create the menu.
+	//
+	setParent -menu crowdMenu;
+	{
+		menuItem -label "Crowd"
+				-subMenu true ;
+		{
+			menuItem -label "Create From Particle"
+					-c "cwd -type create" ;
+			setParent -menu ..;
+		}	
+		menuItem -d 1;
+		
+		menuItem -label "Particle"
+				-subMenu true ;
+		{
+			menuItem -label "Create From Locators"
+					-c "cwd -type createParticleFromLocators" ;
+			setParent -menu ..;
+		}	
+		menuItem -d 1;
+							
+		menuItem -label "Brush Tool"
+				-subMenu true
+				crowdBrushToolItem;
+		{
+			menuItem -label "Paint Agent"
+					-c "cwdLocPaintCmd"
+					crowdPaintAgentMenuItem;
+			setParent -menu ..;
+		}
+		menuItem -d 1;
+		
+		menuItem -label "Edit Current"
+				-subMenu true
+				-enable $haveCurrent
+				crowdMenuMenuItem2;
+		{
+			menuItem -label "Set Particle"
+					-c "evalEcho crowd(\"setParticle\")" ;	
+			menuItem -d 1;
+					
+			menuItem -label "Add Seek"
+					-c "evalEcho crowd(\"addSeek\")" ;
+			menuItem -label "Remove Seek"
+					-c "evalEcho crowd(\"removeSeek\")" ;
+			menuItem -d 1;		
+					
+			menuItem -label "Add Flee"
+					-c "evalEcho crowd(\"addFlee\")" ;
+			menuItem -label "Remove Flee"
+					-c "evalEcho crowd(\"removeFlee\")" ;
+			menuItem -d 1;		
+					
+			menuItem -label "Add Path"
+					-c "evalEcho crowd(\"addPath\")" ;
+			menuItem -label "Remove Path"
+					-c "evalEcho crowd(\"removePath\")" ;	
+			menuItem -d 1;						
+					
+			menuItem -label "Add Obstacle"
+					-c "evalEcho crowd(\"addObstacle\")" ;
+			menuItem -label "Remove Obstacle"
+					-c "evalEcho crowd(\"removeObstacle\")" ;
+			menuItem -d 1;		
+										
+			menuItem -label "Delete"
+					-c "evalEcho crowdDeleteCurrent" ;
+
+			setParent -menu ..;
+		}
+
+//		menuItem -d 1;
+//		menuItem -label "Crowd Globals..."
+//				-enable true
+//				-c "evalEcho crowdGlobalsEditor"
+//				crowdMenuItem7;
+				
+		menuItem -d 1;
+		menuItem -label "About..."
+				-c "crowdAboutUs"
+				crowdMenuItem8;
+
+		setParent -menu ..;
+	}
+}
+
+
+global proc crowd_rebuildNodeMenu(
+	string $menu, string $cmd, int $markCurrent, int $disableCurrent
+)
+{
+	string	$currentCrowdNode = crowd_getCurrentNode();
+
+	//
+	// Clear out any old items.
+	//
+	menu -e -deleteAllItems $menu;
+
+	//
+	// Add all of the crowdShape nodes as menu items.
+	//
+	string	$nodes[] = `ls -type crowdShape`;
+	string	$node;
+
+	for ($node in $nodes)
+	{
+		int	$isCurrent = ($node == $currentCrowdNode);
+		int	$enabled = !($disableCurrent && $isCurrent);
+
+		if ($markCurrent)
+		{
+			menuItem -label $node -parent $menu -checkBox $isCurrent
+				-enable $enabled
+				-command ("evalEcho " + $cmd + "(\"" + $node + "\")");
+		}
+		else
+		{
+			menuItem -label $node -parent $menu
+				-enable $enabled
+				-command ("evalEcho " + $cmd + "(\"" + $node + "\")");
+		}
+	}
+}
+
+
+global proc string crowd_getCurveShape()
+{
+	string	$nodes[];
+
+	if (`selectMode -q -co`)
+		$nodes = `ls -hilite -dag -type nurbsCurve`;
+	else
+		$nodes = `ls -sl -dag -type nurbsCurve`;
+
+	if (size($nodes) > 0) return $nodes[0];
+
+	return "";
+}
+
+
+global proc string crowd_getSurfaceShape()
+{
+	string	$nodes[];
+
+	if (`selectMode -q -co`)
+		$nodes = `ls -hilite -dag -type nurbsSurface`;
+	else
+		$nodes = `ls -sl -dag -type nurbsSurface`;
+
+	if (size($nodes) > 0) return $nodes[0];
+
+	return "";
+}
+
+
+global proc string crowd_getParticleShape()
+{
+	string	$nodes[];
+
+	if (`selectMode -q -co`)
+		$nodes = `ls -hilite -dag -type particle`;
+	else
+		$nodes = `ls -sl -dag -type particle`;
+
+	if (size($nodes) > 0) return $nodes[0];
+
+	return "";
+}
+
+
+global proc string crowd_getCurveShape()
+{
+	string	$nodes[];
+
+	if (`selectMode -q -co`)
+		$nodes = `ls -hilite -dag -type nurbsCurve`;
+	else
+		$nodes = `ls -sl -dag -type nurbsCurve`;
+
+	if (size($nodes) > 0) return $nodes[0];
+
+	return "";
+}
+
+
+global proc string crowd_getMeshShape()
+{
+	string	$nodes[];
+
+	if (`selectMode -q -co`)
+		$nodes = `ls -hilite -dag -type mesh`;
+	else
+		$nodes = `ls -sl -dag -type mesh`;
+
+	if (size($nodes) > 0) return $nodes[0];
+
+	return "";
+}
+
+
+//disconnect array attr
+global proc crowd_disconnectAttr(string $sourceNode,string $destNode,string $sourceAttr){
+	string $attrs[] = `listConnections -s 1 -p 1 ($sourceNode + "." + $sourceAttr)` ;
+	for($attr in $attrs){
+		string $buffer[];
+		string $numTokens = `tokenize $attr "." $buffer`;
+		if($buffer[0] ==  $destNode ) {
+			disconnectAttr ( $sourceNode + "." + $sourceAttr) $attr ;
+			AEremoveMultiElement $attr ;
+		}
+	}
+}
+
+
+//connect array attr
+global proc crowd_connectAttr(string $sourceNode,string $destNode,string $sourceAttr,string $destAttr){
+	string $attrs[] = `listConnections -d 1 -sh 1 ( $destNode + "." + $destAttr )` ;
+	int $size = size($attrs) ;
+	int $i= 0 ;
+	print $sourceNode ;
+	for($attr in $attrs){
+		print $attr ;
+ 		if( $attr ==  $sourceNode ) {
+			$i = 1 ;
+		}
+ 	}
+	if($i==0){
+ 		connectAttr -f ( $sourceNode + "." + $sourceAttr ) ( $destNode + "." + $destAttr + "[" + $size + "]") ;
+	}
+}
+
+
+// Crowd command 
+global proc crowd(string $type) {
+	// Get current crowd shape
+	string $crowdShape = `crowd_getCurrentNode` ;
+	
+	switch ($type) {
+				
+		case "setParticle" :
+			string $particleShape = `crowd_getParticleShape` ;
+			
+			// Add attr to particleShape
+			if (!`attributeExists "instancerSpeed" $particleShape`){	
+				addAttr -ln "instancerSpeed" -at double  $particleShape;
+				setAttr -e -keyable true ($particleShape + ".instancerSpeed");
+				setAttr ($particleShape + ".instancerSpeed") 1;
+			}
+			if (!`attributeExists "particleSpeed" $particleShape`){	
+				addAttr -ln "particleSpeed" -at double  $particleShape;
+				setAttr -e -keyable true ($particleShape + ".particleSpeed");
+				setAttr ($particleShape + ".particleSpeed") 1;
+			}
+			
+			//
+			string $dtPPList,$dtPPLists[] = {"goalU","goalV",
+				"parentU","parentV","cw_rotationTypePP","cw_rotationTypePP0",
+				"cw_scalePP","cw_scalePP0","cw_objectIndexPP","cw_objectIndexPP0",
+				"cw_cyclePP","cw_cyclePP0","cw_cycleInitPP","cw_cycleInitPP0",
+				"cw_birthFramePP","cw_birthFramePP0","cw_lastFramePP","cw_lastFramePP0",
+				"cw_goalUMultPP","cw_goalUMultPP0","cw_goalVMultPP","cw_goalVMultPP0",
+				"cw_modifyCyclePP","cw_modifyCyclePP0","cw_goalUMultInitPP","cw_goalUMultInitPP0",
+				"cw_goalVMultInitPP","cw_goalVMultInitPP0","cw_radiusPP","cw_radiusPP0"
+			} ;
+			for($dtPPList in $dtPPLists){
+				if (!`attributeExists $dtPPList $particleShape`){	                         	
+					addAttr -ln $dtPPList -dt doubleArray $particleShape ;
+					setAttr -e -keyable true ($particleShape + "." + $dtPPList);
+				}			
+			}
+			
+			//
+			string $vtPPList,$vtPPLists[] = {"cw_rotationPP","cw_rotationPP0","cw_scalePP","cw_scalePP0",
+				"cw_normalPP","cw_normalPP0","cw_forwardPP","cw_forwardPP0"
+				} ;
+			for($vtPPList in $vtPPLists){
+				if (!`attributeExists $vtPPList $particleShape`){	                         	
+					addAttr -ln $vtPPList -dt vectorArray $particleShape ;
+					setAttr -e -keyable true ($particleShape + "." + $vtPPList);
+	            }			
+			}
+                                    
+			// Connect attr
+			connectAttr -f ( $particleShape + ".message" ) ( $crowdShape + ".particle" ) ;
+			connectAttr -f ( $particleShape + ".count" ) ( $crowdShape + ".count" ) ;
+			connectAttr -f ( $crowdShape + ".particleSpeed" ) ( $particleShape + ".particleSpeed" )  ;
+			connectAttr -f ( $crowdShape + ".instancerSpeed" )  ($particleShape + ".instancerSpeed" )  ;
+			connectAttr -f ( $particleShape + ".goalU" ) ( $crowdShape + ".inputUPP" ) ;
+			connectAttr -f ( $particleShape + ".goalV" ) ( $crowdShape + ".inputVPP" ) ;
+			connectAttr -f ( $particleShape + ".position" ) ( $crowdShape + ".inputPosition" ) ;
+			connectAttr -f ( $particleShape + ".velocity" ) ( $crowdShape + ".inputVelocity" ) ;
+			connectAttr -f ( $particleShape + ".cw_forwardPP" ) ( $crowdShape + ".inputForward" ) ;
+			connectAttr -f ( $particleShape + ".cw_RadiusPP" ) ( $crowdShape + ".inputRadius" ) ;
+			break ;
+			
+		case "setTerrain" :
+			string $surfaceShape = `crowd_getSurfaceShape` ;
+			// Connect attr
+			connectAttr -f ( $surfaceShape + ".worldSpace" ) ( $crowdShape + ".terrain" ) ;
+			break ;
+						
+		case "addSeek" :
+			string $curveShape = `crowd_getCurveShape` ;
+			// Connect attr
+			connectAttr -f ( $curveShape + ".worldSpace" ) ( $crowdShape + ".seek" ) ;
+			break ;
+		case "removeSeek" :
+			string $curveShape = `crowd_getCurveShape` ;
+			// Connect attr
+			disconnectAttr  ( $curveShape + ".worldSpace" ) ( $crowdShape + ".seek" ) ;
+			break ;	
+			
+		case "addFlee" :
+			string $curveShape = `crowd_getCurveShape` ;
+			// Connect attr
+			connectAttr -f ( $curveShape + ".worldSpace" ) ( $crowdShape + ".flee" ) ;
+			break ;
+		case "removeFlee" :
+			string $curveShape = `crowd_getCurveShape` ;
+			// Connect attr
+			disconnectAttr  ( $curveShape + ".worldSpace" ) ( $crowdShape + ".flee" ) ;
+			break ;	
+			
+		case "addPath" :
+			string $curveShape = `crowd_getCurveShape` ;
+			// Connect attr
+			crowd_connectAttr( $curveShape, $crowdShape, "worldSpace", "path" ) ;
+			break ;
+		case "removePath" :
+			string $curveShape = `crowd_getCurveShape` ;
+			// Connect attr
+			crowd_disconnectAttr( $curveShape, $crowdShape, "worldSpace" ) ;
+			break ;			
+			
+		case "addObstacle" :
+			string $meshShape = `crowd_getMeshShape` ;
+			// Connect attr
+			crowd_connectAttr( $meshShape, $crowdShape, "outMesh", "obstacle" ) ;
+			break ;
+		case "removeObstacle" :
+			string $meshShape = `crowd_getMeshShape` ;
+			// disconnect attr
+			crowd_disconnectAttr( $meshShape, $crowdShape, "outMesh" ) ;
+			break ;				
+		
+		default :
+			break ;			
+	}
+}

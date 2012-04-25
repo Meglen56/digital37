@@ -1,0 +1,16 @@
+//  Procedure Name:
+//	crowdCommand
+//
+//  Description:
+//	Creates the commands for crowd plugin
+// 
+
+// Script Paint Command: cwdLocPaint 
+global proc cwdLocPaintCmd() {
+	ScriptPaintToolOptions;
+	artUserPaintCtx -e -tsc "cwdLocPaint" `currentCtx`;
+	cwdLocPaint artUserPaintContext;
+}
+
+
+

@@ -1,0 +1,326 @@
+// PLUGIN NAME: crowdShape v1.0
+// FILE: AEcrowdShapeTemplate.mel
+// DESCRIPTION: -Defines the attribute template for the "crowdShape" node.
+
+
+global proc AEcrowdShapeTemplate(string $nodeName)
+{
+    string $inputParticleLabel = "Particle" ;
+    
+    string $steerLabel = "Steer Behavior" ;
+    string $wanderLabel = "Wander" ;
+    string $seekLabel = "Seek" ;
+    string $fleeLabel = "Flee" ;
+    string $separationLabel = "Separation" ;
+    string $cohesionLabel = "Cohesion" ;
+    string $alignmentLabel = "Alignment" ;
+    string $obstacleLabel = "Obstacles" ;
+    string $pathLabel = "Paths" ;
+    
+    string $terrainLabel = "Terrain" ;
+
+    string $timeLabel = "CurrentTime" ;
+    string $resultLabel = "Results" ;
+	
+    
+	editorTemplate -beginScrollLayout;
+
+		editorTemplate -beginLayout "Particle" -collapse 0;
+			editorTemplate -callCustom ( "AEinputNew \""+$inputParticleLabel +"\"" ) 
+                                    ( "AEinputReplace \"" + $inputParticleLabel + "\"" )
+                                     "particle";
+			editorTemplate -addControl "count";                                     
+			editorTemplate -addControl "particleSpeed";
+
+        editorTemplate -endLayout;
+
+
+		editorTemplate -beginLayout "Terrain" -collapse 0;
+			editorTemplate -callCustom ( "AEinputNew \""+ $terrainLabel + "\"" ) 
+                                    ( "AEinputReplace \"" + $terrainLabel + "\"" )
+                                     "terrain";
+			
+			//editorTemplate -addControl "pathMap";
+			editorTemplate -callCustom "AEpathMapNew" "AEpathMapReplace" "pathMap";
+
+        editorTemplate -endLayout;
+        
+        
+        // Steer Behavior
+		editorTemplate -beginLayout "Steer Behavior" -collapse 0;
+			
+			//editorTemplate -beginLayout "general" -collapse 0;
+            editorTemplate -addControl "maxSpeed" ;                    		
+			//editorTemplate -endLayout;
+				
+			editorTemplate -beginLayout $wanderLabel -collapse 0;
+				editorTemplate -callCustom "crowdShapeGWanderSwitchNew" "crowdShapeGWanderSwitchReplace"
+                                     		"wanderSwitch";
+                editorTemplate -addControl "wanderSpeed" ;                    		
+			editorTemplate -endLayout;
+			
+			editorTemplate -beginLayout $seekLabel -collapse 0;
+				editorTemplate -callCustom "crowdShapeGSeekSwitchNew" "crowdShapeGSeekSwitchReplace"
+                                     		"seekSwitch";
+				editorTemplate -callCustom ( "AEinputNew \""+ $seekLabel + "\"" ) 
+                                    		( "AEinputReplace \"" + $seekLabel + "\"" )
+                                     		"seek";
+                editorTemplate -addControl "maxSeekSpeed" ;                     		
+			editorTemplate -endLayout;
+			
+			editorTemplate -beginLayout $fleeLabel -collapse 0;
+				editorTemplate -callCustom "crowdShapeGFleeSwitchNew" "crowdShapeGFleeSwitchReplace"
+                                     		"fleeSwitch";
+				editorTemplate -callCustom ( "AEinputNew \""+ $fleeLabel + "\"" ) 
+                                    		( "AEinputReplace \"" + $fleeLabel + "\"" )
+                                     		"flee";
+                editorTemplate -addControl "maxFleeSpeed" ;
+			editorTemplate -endLayout;
+			
+			editorTemplate -beginLayout $separationLabel -collapse 0;
+				editorTemplate -callCustom "crowdShapeGSeparationSwitchNew" "crowdShapeGSeparationSwitchReplace"
+                                     		"separationSwitch";
+                editorTemplate -addControl "separationWeight" ;                     		
+                editorTemplate -addControl "separationMinRadius" ;
+                editorTemplate -addControl "separationMaxRadius" ;
+                editorTemplate -addControl "separationAngle" ;
+			editorTemplate -endLayout;
+						
+			editorTemplate -beginLayout $cohesionLabel -collapse 0;
+				editorTemplate -callCustom "crowdShapeGCohesionSwitchNew" "crowdShapeGCohesionSwitchReplace"
+                                     		"cohesionSwitch";
+                editorTemplate -addControl "cohesionWeight" ;                     		
+                editorTemplate -addControl "cohesionMinRadius" ;
+                editorTemplate -addControl "cohesionMaxRadius" ;
+                editorTemplate -addControl "cohesionAngle" ;
+			editorTemplate -endLayout;
+									
+			editorTemplate -beginLayout $alignmentLabel -collapse 0;
+				editorTemplate -callCustom "crowdShapeGAlignmentSwitchNew" "crowdShapeGAlignmentSwitchReplace"
+                                     		"alignmentSwitch";
+                editorTemplate -addControl "alignmentWeight" ;                     		
+                editorTemplate -addControl "alignmentMinRadius" ;
+                editorTemplate -addControl "alignmentMaxRadius" ;
+                editorTemplate -addControl "alignmentAngle" ;
+			editorTemplate -endLayout;
+									
+			editorTemplate -beginLayout $obstacleLabel -collapse 0;
+				editorTemplate -callCustom "crowdShapeGObstacleSwitchNew" "crowdShapeGObstacleSwitchReplace"
+                                     		"obstacleSwitch";
+				editorTemplate -addControl "obstacleDistance" ;                                  		
+                editorTemplate -addControl "obstacle" ;                     		
+			editorTemplate -endLayout;
+									
+			editorTemplate -beginLayout $pathLabel -collapse 0;
+				editorTemplate -callCustom "crowdShapeGPathSwitchNew" "crowdShapeGPathSwitchReplace"
+                                     		"pathSwitch";
+				editorTemplate -addControl "pathRadius" ;                                  		
+				editorTemplate -addControl "pathSpeed" ;                                  		
+                editorTemplate -addControl "path" ;                     		
+			editorTemplate -endLayout;
+															
+        editorTemplate -endLayout;
+ 
+		editorTemplate -beginLayout "Instancer" -collapse 0;
+			
+			editorTemplate -addControl "instancerSpeed";
+			//editorTemplate -addControl "instancerRotation";
+
+        editorTemplate -endLayout;
+         
+        
+		editorTemplate -beginLayout "Time" -collapse 0;
+			editorTemplate -callCustom ( "AEinputNew \""+ $timeLabel + "\"" ) 
+                                    ( "AEinputReplace \"" + $timeLabel + "\"" )
+                                     "currentTime";
+			
+        editorTemplate -endLayout;
+               
+	AEabstractBaseCreateTemplate $nodeName;
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}
+
+
+global proc crowdShapeGWanderSwitchNew( string $attrName )
+{
+	// Maya the "quick set" control for the scale attribute
+	checkBox
+		-label "Enable Wander"
+		wanderCheckBox;
+	connectControl wanderCheckBox $attrName;
+}
+
+global proc crowdShapeGWanderSwitchReplace( string $attrName )
+{
+   	// Install the connection between the checkBox and the
+   	// actual gWanderSwitch attribute
+	connectControl wanderCheckBox $attrName;
+}
+
+
+global proc crowdShapeGSeekSwitchNew( string $attrName )
+{
+	// Maya the "quick set" control for the scale attribute
+	checkBox
+		-label "Enable Seek"
+		seekCheckBox;
+	connectControl seekCheckBox $attrName;
+}
+
+
+global proc crowdShapeGSeekSwitchReplace( string $attrName )
+{
+   	// Install the connection between the checkBox and the
+   	// actual gSeekSwitch attribute
+	connectControl seekCheckBox $attrName;
+}
+
+
+global proc crowdShapeGFleeSwitchNew( string $attrName )
+{
+	// Maya the "quick set" control for the scale attribute
+	checkBox
+		-label "Enable Flee"
+		fleeCheckBox;
+	connectControl fleeCheckBox $attrName;
+}
+
+
+global proc crowdShapeGFleeSwitchReplace( string $attrName )
+{
+   	// Install the connection between the checkBox and the
+   	// actual gFleeSwitch attribute
+	connectControl fleeCheckBox $attrName;
+}
+
+
+global proc crowdShapeGSeparationSwitchNew( string $attrName )
+{
+	checkBox -label "Enable Separation" separationCheckBox;
+	connectControl separationCheckBox $attrName;
+}
+global proc crowdShapeGSeparationSwitchReplace( string $attrName )
+{
+	connectControl separationCheckBox $attrName;
+}
+
+
+global proc crowdShapeGCohesionSwitchNew( string $attrName )
+{
+	checkBox -label "Enable Cohesion" cohesionCheckBox;
+	connectControl cohesionCheckBox $attrName;
+}
+global proc crowdShapeGCohesionSwitchReplace( string $attrName )
+{
+	connectControl cohesionCheckBox $attrName;
+}
+
+
+global proc crowdShapeGAlignmentSwitchNew( string $attrName )
+{
+	checkBox -label "Enable Alignment" alignmentCheckBox;
+	connectControl alignmentCheckBox $attrName;
+}
+global proc crowdShapeGAlignmentSwitchReplace( string $attrName )
+{
+	connectControl alignmentCheckBox $attrName;
+}
+
+
+global proc crowdShapeGObstacleSwitchNew( string $attrName )
+{
+	checkBox -label "Enable Obstacle" obstacleCheckBox;
+	connectControl obstacleCheckBox $attrName;
+}
+global proc crowdShapeGObstacleSwitchReplace( string $attrName )
+{
+	connectControl obstacleCheckBox $attrName;
+}
+
+
+global proc crowdShapeGPathSwitchNew( string $attrName )
+{
+	checkBox -label "Enable Path" pathCheckBox;
+	connectControl pathCheckBox $attrName;
+}
+global proc crowdShapeGPathSwitchReplace( string $attrName )
+{
+	connectControl pathCheckBox $attrName;
+}
+
+//
+//  Procedure Name:
+//	AEcwdAssignTextureCB
+//
+global proc int AEcwdAssignTextureCB( string $fileAttribute,
+                                 string $filename,
+                                 string $fileType )
+{
+	//
+	// Description:
+	//	This procedure is called when the user changes the file texture name in
+	//	the edit box in the file texture attribute editor (whether by manually
+	//	typing it in, or by using the file browser to choose a new file).
+	//
+	//	This procedure updates the file texture node file name attribute and
+	//	calls AEcwdFileTextureNameChanged to do some special case handling for 
+	//	files with alpha channels. 
+	//
+
+	setAttr $fileAttribute -type "string" $filename;
+
+	string $currentDir = `workspace -q -dir`;
+    retainWorkingDirectory ($currentDir);
+
+	// Extract the name of the node from the node.attribute name
+	//
+	string $tokenArray[];
+	tokenize($fileAttribute, ".", $tokenArray);
+
+	return true;
+}
+
+//
+//  Procedure Name:
+//	AEcwdFileTextureBrowser
+//
+
+global proc AEcwdFileTextureBrowser( string $cmd )
+{
+    string  $workspace = `workspace -q -fn`;
+    setWorkingDirectory $workspace "image" "sourceImages";
+	
+	fileBrowser ($cmd, "Open", "image", 0);
+}
+
+//
+//  Procedure Name:
+//	AEpathMapNew 
+//
+global proc AEpathMapNew (string $fileAttribute)
+{
+	setUITemplate -pst attributeEditorTemplate;
+	rowLayout -nc 3 textureNameLayout;
+		text -label (uiRes("m_AEfileTemplate.kImageName"));
+		textField textureNameField;
+			symbolButton -image "navButtonBrowse.xpm" browser;
+	setParent ..;
+	setUITemplate -ppt;
+	
+    AEpathMapReplace $fileAttribute;
+}
+
+//
+//  Procedure Name:
+//	AEpathMapReplace
+//
+global proc AEpathMapReplace (string $fileAttribute)
+{
+	connectControl -fileName textureNameField $fileAttribute;
+
+    string $command = "AEcwdAssignTextureCB "+" "+$fileAttribute;
+
+    button -e -c
+		("AEcwdFileTextureBrowser \"" + $command + "\"" ) browser;
+}

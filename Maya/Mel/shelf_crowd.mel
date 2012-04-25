@@ -1,0 +1,52 @@
+global proc shelf_crowd () {
+    global string $gBuffStr;
+    global string $gBuffStr0;
+    global string $gBuffStr1;
+
+
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -align "center" 
+        -label "Load Plugin" 
+        -labelOffset 0
+        -font "tinyBoldLabelFont" 
+        -image "crowd_plugin.xpm" 
+        -image1 "crowd_plugin.xpm" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "{\nstring $plugin = \"mayaCrowd\" ;\nif(!`pluginInfo -q -l $plugin`) {\nloadPlugin $plugin;\n} \nelse{\nunloadPlugin -f $plugin;\nloadPlugin $plugin;\n}\n}" 
+        -sourceType "mel" 
+        -actionIsSubstitute 0
+        -commandRepeatable 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -align "center" 
+        -label "Load Menu" 
+        -labelOffset 0
+        -font "tinyBoldLabelFont" 
+        -image "crowd_mel.xpm" 
+        -image1 "crowd_mel.xpm" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "source crowdUI.mel;\nsource crowdCommand.mel;\ncrowdInit;" 
+        -sourceType "mel" 
+        -actionIsSubstitute 0
+        -commandRepeatable 1
+    ;
+
+} 

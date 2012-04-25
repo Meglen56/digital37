@@ -1,0 +1,552 @@
+//
+//  Creation Date:  Mar 1997
+//
+//  Description:
+//     This is an example script for the Maya Artisan Script
+//     Paint tool. It will paint particle cwdLocs onto a
+//     NURBS surface as well as painting various parameters of
+//     any painted particle cwdLocs.
+//
+// Usage:
+// 1) Place this script into your scripts directory (usually the
+//    maya/scripts directory in your home directory
+// 2) Select the Script Paint Tool (Modify->Script Paint Tool)
+//    and bring up the Tool Settings window
+// 3) Go to the Setup tab and enter "cwdLocPaint" into the
+//    "Tool Setup Cmd" field and hit enter
+// 4) Paint cwdLocs
+//
+// Tips:
+// Once you have the cwdLoc Paint Tool setup you may want to drag
+// it from the minibar to the shelf so that it is always accessible
+//
+
+// These are global variables used to keep track of multiple
+// surfaces and various names associated with each surface
+//
+global string $cwdLocNamePrefix[];
+global string $cwdLocParentName[];
+global string $cwdLocParticles[];
+global string $cwdLocGroupName[];
+global int $cwdLocSrfType[];			// 0 - NURBS surface, 1 - mesh surface, 2 - subd surface
+global int $cwdLocPaintFreeSlot = 0;
+global int $cwdLocPaintSlots = 0;
+
+// These are global variables used to control what will happen
+// during painting. These globals are modified using a separate
+// UI window created when this tool becomes active.
+//
+global int $gridSizeU = 25;
+global int $gridSizeV = 25;
+global string $modifyAttr = ".rate";
+global string $modifyAttrCheck = "";
+global string $modifyAttrType = "";
+
+// what mode are we in:
+// 1 - create cwdLocs
+// 2 - remove cwdLocs
+// 3 - modify cwdLoc attributes
+// 4 - modify particles attributes
+// 5 - change particle render type
+//
+global int $cwdLocOp = 1;
+
+global int $jitterGrid = 1;
+global int $ditherGrid = 1;
+global int $createType = 2;
+
+
+// This is an internal procedure which changes which attribute
+// on existing cwdLocs/particles is to be painted.
+// 
+proc updateModifyAttr(
+	string $attr,
+	string $attrCheck,
+	string $attrType,
+	float $offset,
+	float $mult,
+	string $context
+)
+{
+	global string $modifyAttr;
+	global string $modifyAttrCheck;
+	global string $modifyAttrType;
+
+	$modifyAttr = $attr;
+	$modifyAttrCheck = $attrCheck;
+	$modifyAttrType = $attrType;
+	
+	//userPaintCtx -e -offset $offset -mult $mult $context;
+	
+	float $minValue = `artUserPaintCtx -q -minvalue $context` ;
+	float $maxValue = `artUserPaintCtx -q -maxvalue $context` ;
+	float $value = `artUserPaintCtx -q -value  $context` ;
+	
+	$minValue += $offset ;
+	$maxValue += $offset ;
+	$value += $offset ;
+	
+	$minValue = $minValue * $mult ;
+	$maxValue = $maxValue * $mult ;
+	$value = $value * $mult ;
+	
+	artUserPaintCtx -e -minvalue $minValue -maxvalue $maxValue -value $value $context;
+}
+
+// cwdLoc attribute info
+//
+// global string $cwdLocAttrName[] = {
+// 	"Rate", "Spread", "Speed", "Min Dist", "Max Dist"
+// };
+// global string $cwdLocAttr[] = {
+// 	".rate", ".spr", ".spd", ".min", ".max"
+// };
+// global float $cwdLocAttrOffset[] = {
+// 	0.0, 0.0, 0.0, 0.0, 0.0
+// };
+// global float $cwdLocAttrMult[] = {
+// 	10.0, 1.0, 5.0, 10.0, 10.0
+// };
+// global int $curcwdLocAttr = 0;
+
+// global proc updatecwdLocAttr(
+// 	string $name,
+// 	string $context
+// )
+// {
+// 	global string $cwdLocAttrName[];
+// 	global int $curcwdLocAttr;
+// 	global int $cwdLocOp;
+
+// 	int $opt;
+// 	int $numOpt = size( $cwdLocAttrName );
+
+// 	for ( $opt = 0; $opt < $numOpt; ++$opt ) {
+// 		if ( $cwdLocAttrName[$opt] == $name ) {
+// 			$curcwdLocAttr = $opt;
+
+// 			break;
+// 		}
+// 	}
+// }
+
+// This is an internal procedure which adjusts the "Set Value Cmd"
+// and "Get Value Cmd", based on the current operation
+// 
+global proc changecwdLocOp( int $op, string $context )
+{
+	global int $cwdLocOp;
+
+	string $getval;
+	string $setval;
+
+	$cwdLocOp = $op;
+	if ( $cwdLocOp == 1 ) {
+		$getval = "";
+		$setval = "createcwdLoc";
+	} else if ( $cwdLocOp == 2 ) {
+		$getval = "";
+		$setval = "deletecwdLoc";
+	}
+	artUserPaintCtx -e
+//		-svc $setval -gvc $getval -offset 0 -mult 1
+		-svc $setval -gvc $getval -minvalue 0 -maxvalue 1
+		$context;
+
+}
+
+// This procedure creates the dialog box used to control various
+// parameters that control what happens when painting.
+// NOTE: This is in no way meant to be an example of good UI
+// design!
+//
+proc cwdLocPaintUI( string $context ) 
+{
+	global int $gridSizeU;
+	global int $gridSizeV;
+	global int $cwdLocOp;
+	global int $jitterGrid;
+	global int $ditherGrid;
+	global string $modifyAttr;
+	global int $createType;
+
+	int $opt, $numOpt;
+
+	if ( `window -ex cwdLocPaintWindow` )
+	{
+		showWindow cwdLocPaintWindow ;
+		return ;
+	}
+	
+	string	$winName=`window cwdLocPaintWindow`;
+	setUITemplate -pushTemplate DefaultTemplate;
+	columnLayout -adj false -cal left
+		column;
+
+		intSliderGrp -field true -l (uiRes("m_cwdLocPaint.kcwdLocPaintUGridSize")) -min 2 -max 100
+					 -v $gridSizeU
+					 -cc "$gridSizeU = #1"
+					 uGrid; 
+		intSliderGrp -field true -l (uiRes("m_cwdLocPaint.kcwdLocPaintVGridSize")) -min 2 -max 100
+					 -v $gridSizeV
+					 -cc "$gridSizeV = #1"
+					 vGrid;
+		checkBoxGrp -ncb 2 -l (uiRes("m_cwdLocPaint.kcwdLocPaintGridOptions"))
+					-l1 (uiRes("m_cwdLocPaint.kcwdLocPaintJitter"))
+					-v1 $jitterGrid
+					-cc1 "$jitterGrid = #1"
+					-l2 (uiRes("m_cwdLocPaint.kcwdLocPaintDither"))
+					-v2 $ditherGrid
+					-cc2 "$ditherGrid = #1"
+					options;
+
+		radioButtonGrp -l (uiRes("m_cwdLocPaint.kcwdLocPaintOperation"))
+			-nrb 2
+			-l1 (uiRes("m_cwdLocPaint.kcwdLocPaintCreate"))
+			-on1 ("changecwdLocOp 1 " + $context)
+			-l2 (uiRes("m_cwdLocPaint.kcwdLocPaintRemove"))
+			-on2 ("changecwdLocOp 2 " + $context)
+			operation0;
+		radioButtonGrp -l "" -nrb 1
+			-scl operation0
+			-l1 (uiRes("m_cwdLocPaint.kcwdLocPaintModify"))
+			-on1 ("changecwdLocOp 3 " + $context)
+			operation1;
+
+		if ( $cwdLocOp < 3 ) {
+			radioButtonGrp -e -sl $cwdLocOp operation0;
+		}
+
+// 		frameLayout -l (uiRes("m_cwdLocPaint.kcwdLocPaintCreationOptions"))
+// 			 -bs "etchedIn" -collapse false
+// 			 -collapsable false;
+// 		columnLayout;
+// 		radioButtonGrp -l (uiRes("m_cwdLocPaint.kcwdLocPaintType")) -nrb 2
+// 			-l1 (uiRes("m_cwdLocPaint.kcwdLocPaintOmniDirectional"))
+// 			-on1 "$createType = 1"
+// 			-l2 (uiRes("m_cwdLocPaint.kcwdLocPaintDirectional"))
+// 			-on2 "$createType = 2"
+// 			-sl $createType
+// 			createType;
+
+		setParent ..;
+		setParent ..;
+
+		setParent ..;
+	setUITemplate -popTemplate;
+	showWindow $winName;
+}
+
+// This procedure should be set as the "Tool Setup Cmd" in the 
+// Setup tab of the Maya Artisan Script Paint tool's tool settings
+// window. The tool context is supplied as an argument.
+//
+global proc cwdLocPaint( string $context )
+{
+	global int $cwdLocOp;
+
+	// initialize all the other commands in this scriptable 
+	// paint tool context.
+	// 
+	artUserPaintCtx -e
+		-ic "initcwdLocPaint"
+		-fc "finishcwdLocPaint"
+		-tcc "cleanupcwdLocPaint"
+		-gsc ""
+		-cc ""
+		-gac ""
+		$context;
+		
+	// create the dialog box to control various parameters
+	//
+	cwdLocPaintUI( $context );
+
+	// this will setup the "Set Value Cmd" and "Get Value Cmd"
+	// commands depending on what the current operation is
+	//
+	changecwdLocOp( $cwdLocOp, $context );
+
+	// We force the tool to use texture paint
+	// mode (as opposed to projection paint mode)
+	//
+	//artUserPaintCtx -e -painttype "forceTexture" $context;
+}
+
+// This is the "Tool Cleanup Cmd". It is called when the tool is
+// exited. In this case, the special dialog window that was created
+// is deleted
+//
+global proc cleanupcwdLocPaint( string $context )
+{
+	deleteUI cwdLocPaintWindow;
+}
+
+// This is the "Initialize Cmd". This procedure is called once
+// for every selected surface when an intial click is received
+// on any surface. The argument is the name of the surface. This
+// procedure returns a string which indicates to the scriptable
+// tool how to behave for the duration of the stroke. 
+//
+global proc string initcwdLocPaint( string $name )
+{
+	global string $cwdLocNamePrefix[];
+	global string $cwdLocParentName[];
+	global string $cwdLocParticles[];
+	global string $cwdLocGroupName[];
+	global int $cwdLocSrfType[];			// 0 - NURBS surface, 1 - mesh surface, 2 - subd surface
+	global int $cwdLocPaintFreeSlot;
+	global int $cwdLocPaintSlots;
+	global int $gridSizeU;
+	global int $gridSizeV;
+	global int $jitterGrid;
+	global int $ditherGrid;
+	global int $cwdLocOp;
+
+	int $slot;
+
+	// find a free slot for this surface in the global arrays
+	//
+	for ( $slot = $cwdLocPaintFreeSlot; $slot < $cwdLocPaintSlots; $slot++ ) {
+		if ( $cwdLocNamePrefix[$slot] == "" ) {
+			break;
+		}
+	}  
+
+	if ( $slot == $cwdLocPaintSlots ) {
+		$cwdLocPaintSlots++;
+		$cwdLocPaintFreeSlot = $cwdLocPaintSlots;
+	}
+
+	if ( `nodeType $name` == "nurbsSurface" ) {
+		$cwdLocSrfType[$slot] = 0;
+	} else if ( `nodeType $name` == "mesh" ) {
+		$cwdLocSrfType[$slot] = 1;
+	} else if ( `nodeType $name` == "subdiv" ) {
+		$cwdLocSrfType[$slot] = 2;
+	} else {
+		$cwdLocSrfType[$slot] = -1;
+	}
+
+	if ( $cwdLocSrfType[$slot] >= 0 ) {
+		// save the name of the parent of this shape as well
+		// as a prefix to use when creating the spheres
+		//
+		string $parent[] = `listRelatives -p $name`;
+		$cwdLocParentName[$slot] = $parent[0];
+		$cwdLocNamePrefix[$slot] = $parent[0] + "cwdLoc";
+
+		// create particle shape that will hold emitted particles
+		// if necessary 
+		//
+ 		$cwdLocParticles[$slot] = $parent[0] + "EParticles";
+// 		if ( ! $particleShapePercwdLoc && ! `objExists $cwdLocParticles[$slot]` ) {
+// 			particle -n $cwdLocParticles[$slot];
+// 		}
+
+		$cwdLocGroupName[$slot] = $parent[0] + "cwdLocGrp";
+
+		if (  ! `objExists $cwdLocGroupName[$slot]` ) {
+			// Make a group for the painted cwdLocs. Place it at the
+			// same level as the surface
+			//
+			string $parentParent[] = `listRelatives -p $cwdLocParentName[$slot]`;
+
+			if ( size($parentParent) > 0 ) {
+				group -em -p $parentParent[0] -n $cwdLocGroupName[$slot];
+			} else {
+				group -em -w -n $cwdLocGroupName[$slot];
+			}
+
+			// Connect this new transform to the surface's transform
+			//
+			string $from = $cwdLocParentName[$slot];
+			string $to = $cwdLocGroupName[$slot];
+			string $attr[] = { "t", "r", "ro", "s", "sh",
+							   "rp", "rpt", "sp", "spt" };
+
+			for ( $a = 0; $a < size($attr); $a++ ) {
+				connectAttr ($from + "." + $attr[$a]) ($to + "." + $attr[$a]);
+			}
+		}
+	}
+
+	string $options;
+
+	// build up the string that will be passed back to the
+	// scriptable paint tool
+	//
+	if ( $cwdLocOp == 3 || $cwdLocOp == 4 ) {
+		// attribute painting
+		//
+		$options = ( "-id " + $slot
+				   + " -grid " + $gridSizeU + " " + $gridSizeV );
+	} else {
+		// creation/deletion/change render type
+		//
+		string $dither;
+
+		if ( $ditherGrid ) {
+			$dither = "true";
+		} else {
+			$dither = "false";
+		}
+
+		if ( $cwdLocOp == 1 ) {
+			// creation of cwdLocs
+			//
+			string $jitter;
+
+			if ( $jitterGrid ) {
+				$jitter = "true";
+			} else {
+				$jitter = "false";
+			}
+
+			$options = ( "-id " + $slot
+					   + " -grid " + $gridSizeU + " " + $gridSizeV
+					   + " -uv surface"
+					   + " -position local -normal local"
+					   + " -jitter " + $jitter
+					   + " -dither " + $dither );
+		} else {
+			// deletion of cwdLocs/change render type
+			//
+			$options = ( "-id " + $slot
+					   + " -grid " + $gridSizeU + " " + $gridSizeV
+					   + " -jitter false"
+					   + " -dither " + $dither );
+		}
+	}
+	return $options;
+}
+
+// This is the "Finalize Cmd". This procedure is called at the
+// end of the stroke. It is passed the surface ID, that was
+// generated by the "Initialize Cmd".
+//
+global proc finishcwdLocPaint( int $slot )
+{
+	global string $cwdLocNamePrefix[];
+	global int $cwdLocPaintFreeSlot;
+
+	// clear out the slot that was used for this surface
+	//
+	$cwdLocNamePrefix[$slot] = "";
+	if ( $slot < $cwdLocPaintFreeSlot ) {
+		$cwdLocPaintFreeSlot = $slot;
+	}
+}
+
+// This is the "Set Value Cmd" when the operation is creating
+// cwdLocs. A surface ID, a grid index on the surface and the
+// value associated with that grid index is passed. In addition
+// this procedure is also passed the (u,v) surface parameter
+// position for this grid point (this was specified in the
+// initcwdLocPaint procedure)
+//
+global proc createcwdLoc(
+	int $slot,
+	int $index,
+	float $val,
+	float $u,
+	float $v,
+	float $x,
+	float $y,
+	float $z,
+	float $nx,
+	float $ny,
+	float $nz
+)
+{
+	global string $cwdLocNamePrefix[];
+	global string $cwdLocParentName[];
+	global string $cwdLocParticles[];
+	global string $cwdLocGroupName[];
+	global int $cwdLocSrfType[];			// 0 - NURBS surface, 1 - mesh surface, 2 - subd surface
+
+	if ( $cwdLocNamePrefix[$slot] != "" && $val > 0 ) {
+		// generate the cwdLoc name
+		//
+		string $objname = $cwdLocNamePrefix[$slot] + $index;
+
+		if ( !`objExists $objname` ) {
+			// if the cwdLoc doesn't exist, one will be created
+			//
+
+			string $parent = $cwdLocParentName[$slot];
+
+			// create the cwdLoc, reparent it to the surface's
+			// parent and make a dynamics connecttion to the
+			// particle shape
+			//
+// 			cwdLoc -type $type -pos 0 0 0
+// 					-rate $createRate -spread $createSpread
+// 					-mnd $createMinDist -mxd $createMaxDist
+// 					-speed $createSpeed -name $objname;
+            spaceLocator -name $objname;
+            
+			parent -r $objname $cwdLocGroupName[$slot];
+
+			string $particles;
+
+			if ( $cwdLocSrfType[$slot] == 0 ) {	// NURBS surface
+				// create point on surface node which will be used to
+				// attach the cwdLoc to the surface so that the cwdLoc
+				// will move with the surface
+				// - also connect the normal of the surface so that the
+				//   cwdLoc always points along the normal
+				//
+				string $srfpoint = ($objname + "Loc");
+				createNode "pointOnSurfaceInfo" -n $srfpoint;
+				setAttr ($srfpoint + ".u") $u;
+				setAttr ($srfpoint + ".v") $v;
+				connectAttr ($parent + ".local") ($srfpoint + ".is");
+				connectAttr ($srfpoint + ".position") ($objname + ".translate");
+			} else if ( $cwdLocSrfType[$slot] == 1 || $cwdLocSrfType[$slot] == 2) {		// mesh or subdiv surface
+				setAttr ($objname + ".translateX") $x;
+				setAttr ($objname + ".translateY") $y;
+				setAttr ($objname + ".translateZ") $z;
+			}
+		}
+	}
+}
+
+// This is the "Set Value Cmd" when the operation is deleting
+// cwdLocs. A surface ID, a grid index on the surface and the
+// value associated with that grid index is passed.
+//
+global proc deletecwdLoc(
+	int $slot,
+	int $index,
+	float $val
+)
+{
+	global string $cwdLocNamePrefix[];
+	global string $cwdLocParticles[];
+	global string $cwdLocGroupName[];
+
+	if ( $cwdLocNamePrefix[$slot] != "" && $val > 0 ) {
+		string $objname = $cwdLocNamePrefix[$slot] + $index;
+		if ( `objExists $objname` ) {
+			delete $objname;
+		}
+		string $particles = $cwdLocParticles[$slot] + $index;
+		if ( `objExists $particles` ) {
+			delete $particles;
+		}
+		string $srfpoint = ($objname + "Loc");
+		if ( `objExists $srfpoint` ) {
+			delete $srfpoint;
+		}
+
+		// if there is a group and it's empty delete it
+		//
+		if ( `objExists $cwdLocGroupName[$slot]` ) {
+			string $children[] = `listRelatives -c $cwdLocGroupName[$slot]`;
+
+			if ( size($children) == 0 ) {
+				delete $cwdLocGroupName[$slot];
+			}
+		}
+	}
+}
