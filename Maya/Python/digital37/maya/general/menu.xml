@@ -42,7 +42,7 @@
 	
 	<node type="subMenu" name="Utils">
 		<node type="command" name="Check name" comment="Check if all nodes name are unique" cmd="import digital37.maya.utils;digital37.maya.utils.listNotUniqueName()" mode="python" option="False"></node>	
-		<node type="command" name="Delete unknown node" comment="Delete unknown node" cmd="import digital37.maya.utils;digital37.maya.utils.deleteUnknownNode()" mode="python" option="False"></node>
+		<node type="command" name="Delete unknown node" comment="Delete unknown node" cmd="import digital37.maya.general.delete_unknow_node;digital37.maya.general.delete_unknow_node.main()" mode="python" option="False"></node>
 		<node type="separator"></node>	
 		<node type="command" name="Reload menu" comment="reload the digital37 menu" cmd="import digital37.maya.general.menu;digital37.maya.general.menu.loadMenu()" mode="python" option="False"></node>
 		<node type="command" name="Reload shelf" comment="reload shelf custom shelf" cmd="import digital37.maya.general.shelf;digital37.maya.general.shelf.loadShelfs()" mode="python" option="False"></node>
@@ -59,6 +59,12 @@
 		<node type="command" name="Cleanup Light Links" comment="Cleanup Light Links" cmd="jrLightLinksCleanUp()" mode="mel" option="False"></node>
 		<node type="command" name="Submit Job To Deadline" comment="Submit Job To Deadline" cmd="SubmitJobToDeadline" mode="mel" option="False"></node>
 		<node type="command" name="Render Layer Pass Manager" comment="Render Layer Pass Manager" cmd="import digital37.maya.lighting.StartRenderLayerPassManager;digital37.maya.lighting.StartRenderLayerPassManager.main()" mode="python" option="False"></node>
+	</node>
+	
+	<node type="subMenu" name="Change Texture Detail">
+		<node type="command" name="Large" comment="Large" cmd="import digital37.maya.lighting.FileTexture;digital37.maya.lighting.FileTexture.main('L')" mode="python" option="False"></node>
+		<node type="command" name="Middle" comment="Middle" cmd="import digital37.maya.lighting.FileTexture;digital37.maya.lighting.FileTexture.main('M')" mode="python" option="False"></node>
+		<node type="command" name="Small" comment="Small" cmd="import digital37.maya.lighting.FileTexture;digital37.maya.lighting.FileTexture.main('S')" mode="python" option="False"></node>
 	</node>
 			
 	<node type="subMenu" name="TD">

@@ -101,7 +101,9 @@ class RelativePath(object):
             for tex in texturesList:
                 if pm.attributeQuery( 'fileTextureName',node=tex,exists=1 ):
                     texFile = tex.fileTextureName.get()
-                    tex.fileTextureName.set( self.convert_to_relative(self.RuleEntry_SourceImages, texFile) )
+                    #tex.fileTextureName.set( self.convert_to_relative(self.RuleEntry_SourceImages, texFile) )
+                    pm.setAttr(tex.fileTextureName,self.convert_to_relative(self.RuleEntry_SourceImages, texFile),type='string')
+                    #print  tex.fileTextureName.get()
                     #setAttr -type "string" Shoulder_file5.fileTextureName "sourceimages/character/ailixun/L/ailixun_mai_bump_L.jpg";
 
         

@@ -7,8 +7,11 @@ pymel.mayautils.executeDeferred(digital37.maya.general.menu.loadMenu)
 print 'create 37digital custom menu'
 
 #Init deadline submission script
-pm.mel.eval('source InitDeadlineSubmitter.mel')
-print 'source InitDeadlineSubmitter.mel'
+try:
+    pm.mel.eval('source InitDeadlineSubmitter.mel')
+    print 'source InitDeadlineSubmitter.mel'
+except:
+    pass
 # load needed plugin
 
 #dirmap

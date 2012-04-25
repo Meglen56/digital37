@@ -940,7 +940,7 @@ class RenderLayerPass(object):
         #renderPass = pm.ls(sl=1)
         #logging.debug('MAYA_LOCATION: '+MAYA_LOCATION)
         self.applyPassPreset(renderPass,passName)
-
+                
     def applyPassPreset(self,renderPass,passName) :
 
         passName =  self.PASSES_ALL[passName]
@@ -1480,7 +1480,6 @@ class RenderLayerPass(object):
                     
                     # Check shape has displacement shader or not
                     displacementShaders, shapeFaces = self.getDisplacementShader2(each)
-                    
                     if not pm.objExists(shaderName) :
                         shaderNoDis,shaderNoDisSG = self.createShader('useBackground', shaderName)
                         shaderNoDis.specularColor.set([0,0,0])
@@ -1697,7 +1696,6 @@ class RenderLayerPass(object):
                 
                 # Check shape has displacement shader or not
                 displacementShaders, shapeFaces = self.getDisplacementShader2(each)
-                
                 if not pm.objExists(shaderName) :
                     shaderNoDis,shaderNoDisSG = self.createShader('surfaceShader', shaderName)
                     shaderNoDis.outColor.set(outColor)
@@ -1765,7 +1763,6 @@ class RenderLayerPass(object):
                 
                 # Check shape has displacement shader or not
                 displacementShaders, shapeFaces = self.getDisplacementShader2(each)
-                
                 if not pm.objExists(shaderName) :
                     shaderNoDis,shaderNoDisSG = self.createShader('useBackground', shaderName)
                     shaderNoDis.specularColor.set([0,0,0])
@@ -1859,7 +1856,6 @@ class RenderLayerPass(object):
                                
                 # Check shape has displacement shader or not
                 displacementShaders, shapeFaces = self.getDisplacementShader2(each)
-                
                 if not pm.objExists(shaderName) :
                     shaderNoDis,shaderNoDisSG = self.createZDepthNetwork(shaderName)
                 else :
@@ -1901,6 +1897,61 @@ class RenderLayerPass(object):
         selObj = self.getGeometrySelection()
         #string $subsetShader=`mrCreateCustomNode -asUtility "" mip_render_subset`;
         subSetShader = pm.createNode('mip_render_subset',asUtility=1)
+        
+    def enable_ambientOcclusion(self):
+        cmd = 'global int $gMiStringOptAOStateIndex;'
+        cmd += 'string $resValue = "true";'
+        cmd += 'miSetStringOptionValue($gMiStringOptAOStateIndex,$resValue);'
+        cmd += '//mentalRayOptionsCheckAO;'
+        pm.mel.eval(cmd)
+        
+    def get_pass_in_scene(self):
+        passList = pm.ls(type='renderPass')
+        passDict = {}
+        if passList:
+            for p in passList:
+                passDict[p.passID()] = p
+        return passDict
 
+    def add_pass(self,passName):
+        return pm.createNode( 'renderPass',n=passName )
+    
+    def set_pass_id(self,passNode,passId):
+        pm.setRenderPassType(passNode,type=passId)
+        
+def main():
+    a = RenderLayerPass()
+    #create render layer
+    newLayer = a.createNewMRLayer('AO_Depth_RGB')
+    # get passes in scene
+    passDict = a.get_pass_in_scene()
+    #a.log_dict(passDict)
+    passId = ['AO','BEAUTY','CAMZ','CSTCOL']
+    passNode = {}
+    # initial dict
+    for k in passId:
+        passNode.update({k:None})
+        
+    for k,v in passDict.iteritems():
+        if k in passId:
+            passNode.update({k:v})
+            
+    for k,v in passNode.iteritems():
+        if not v:
+            #add pass
+            tmp = a.add_pass(k)
+            print tmp
+            print k
+            a.set_pass_id(tmp, k)
+            passNode.update({k:tmp})
+        else:
+            pm.rename(v,k)
+                
+    a.assign_pass_to_layer(newLayer, passNode.itervalues())
+    a.enable_ambientOcclusion()
+    # create RGB pass
+    shader,shaderSG=a.createShader('mia_material_x_passes', 'mia_material_x_passes_rgb')
+    
+    
 if __name__ == "__main__":
-    pass
+    main()
