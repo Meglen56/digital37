@@ -20,6 +20,7 @@ global proc removeOpenWindows()
 	for( $win in $windows )
 	{
 		if( `window -q -vis $win` && $win != $mainWindow )
-			window -e -vis 0 $win;
+			//catch(`window -e -vis 0 $win`);
+			catch(`deleteUI -window $win`);
 	}
 }

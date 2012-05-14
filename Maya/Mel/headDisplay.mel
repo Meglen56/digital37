@@ -43,14 +43,10 @@ global proc string zwHeadsUpDisplayUser()
 
 global proc string zwHeadsUpDisplayUser1()
 {
-	
-	string $zzjTempTime=`about -currentDate`;
-	string $zzjTempTime1=`substring $zzjTempTime 6 (size($zzjTempTime))`;
-	string $zzjTempSecond=`about -currentTime`;
-	string $zzjTempSecond1=`substring $zzjTempSecond 1 5`;	
-	string $time=$zzjTempTime1+"/"+ $zzjTempSecond1 ;
-	
-	return $time;
+	string $f = `file -q -sn -shn` ;
+    string $buffer[];
+    $numTokens = `tokenize $f "." $buffer`;
+    return $buffer[0];
 }
 
 global proc string zwHeadsUpDisplayDayNight()
@@ -190,7 +186,8 @@ global proc int zwHeadsUpDisplay(int $type)
 // Çócamera
 	string $modelPanel = `getPanel -withFocus`;
 	if (`getPanel -typeOf $modelPanel` != "modelPanel")
-		error "Please select the view you want to playblast";
+		//error "Please select the view you want to playblast";
+		warning"Please select the view you want to playblast";
 	string $camera = `modelEditor -query -camera $modelPanel`;
 	if (`nodeType $camera` == "camera")
 	{

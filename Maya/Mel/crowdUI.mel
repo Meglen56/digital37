@@ -2,6 +2,28 @@
  * Crowd Plugin for Maya UI mel code (C)opyright hongloull
  * Many thanks joe alter's shave and haircut UI
  */
+ 
+//
+//PROC flattenStringArray
+//
+proc string[] flattenStringArray (string $array[]){
+string $x,$y ;
+string $newArray[] ;
+int $itemFound = 0 ;
+$newArray[0] = $array[0] ;
+for($x in $array){
+     $itemFound = 0 ; 
+     for($y in $newArray){
+          if($x == $y){
+          	$itemFound = 1 ;
+          }
+     }
+     if($itemFound == 0){
+     	  $newArray[size($newArray)] = $x ;
+     }
+}
+return ($newArray) ;
+}
 
 global proc int[] crowd_getMayaVersion()
 {
@@ -323,6 +345,243 @@ global proc crowd_enableMenus()
 	}
 }
 
+global proc crowd_createFromParticle(){
+	// get particleshape
+	string $pS = crowd_getParticleShape();
+	
+	//create crowdShape node
+	cwd -type "create";
+	string	$crowdShapes[] = `ls -sl -type crowdShape`;
+	
+	//add particel attr
+	string $attrPPLists[] = {"cw_rotationPP","cw_rotationPP0",
+    									"cw_scalePP","cw_scalePP0",
+    									"cw_normalPP","cw_normalPP0",
+    									"cw_forwardPP","cw_forwardPP0",
+    									"cw_moveUVPP","cw_moveUVPP0"} ;
+    crowd_addPerParticleAttr($pS,"vectorArray",$attrPPLists);
+    
+	$attrPPLists = {"goalU","goalV",
+    									"parentU","parentV",
+    									"cw_rotationTypePP","cw_rotationTypePP0",
+    									"cw_scalePP","cw_scalePP0",
+    									"cw_objectIndexPP","cw_objectIndexPP0",
+    									"cw_cyclePP","cw_cyclePP0",
+    									"cw_cycleInitPP","cw_cycleInitPP0",
+    									"cw_birthFramePP","cw_birthFramePP0",
+    									"cw_lastFramePP","cw_lastFramePP0",
+    									"cw_goalUMultPP","cw_goalUMultPP0",
+    									"cw_goalVMultPP","cw_goalVMultPP0",
+    									"cw_modifyCyclePP","cw_modifyCyclePP0",
+    									"cw_goalUMultInitPP","cw_goalUMultInitPP0",
+    									"cw_goalVMultInitPP","cw_goalVMultInitPP0",
+    									"cw_radiusPP","cw_radiusPP0"} ;
+	crowd_addPerParticleAttr($pS,"doubleArray",$attrPPLists);						
+    				
+	// Add crowd attr to particle
+	crowd_addCrowdAttrToParticle($pS,{"particleSpeed","instancerSpeed"});
+	
+	//connect attr
+	connectAttr -f ($pS+".message") ($crowdShapes[0] + ".particle");
+	connectAttr -f ($pS+".count") ($crowdShapes[0] + ".count");
+	connectAttr -f ($crowdShapes[0] + ".particleSpeed") ($pS+".particleSpeed");
+	connectAttr -f ($crowdShapes[0] + ".instancerSpeed") ($pS+".instancerSpeed");
+	connectAttr -f ($pS+".goalU") ($crowdShapes[0] + ".inputUPP");
+	connectAttr -f ($pS+".goalV") ($crowdShapes[0] + ".inputVPP");
+	connectAttr -f ($pS+".position") ($crowdShapes[0] + ".inputPosition");
+	connectAttr -f ($pS+".velocity") ($crowdShapes[0] + ".inputVelocity");
+	connectAttr -f ($pS+".cw_forwardPP") ($crowdShapes[0] + ".inputForward");
+	connectAttr -f ($pS+".cw_radiusPP") ($crowdShapes[0] + ".inputRadius");
+	
+	//connect to time
+	connectAttr -f "time1.outTime" ($crowdShapes[0] + ".currentTime");
+	
+	//Refresh crowd menu
+	crowdCleanup();crowdInit();
+	
+	// Get particle's instancer node
+	string $instanceName = crowd_getInstancer($pS) ;
+	int $inputHierarchyCount = crowd_getInstancerInputHierarchy($instanceName) ;
+	
+	string $inputHierarchy,$inputHierarchys[] ;
+	int $i;
+    for($i=0;$i<$inputHierarchyCount;$i++){                        	
+    	//get instancer's input hierarchy 
+    	string $inputHierarchysTmp[] = `listConnections -source 1 ($instanceName+".inputHierarchy[" + $i + "]")` ;
+    	$inputHierarchys[$i] = $inputHierarchysTmp[0];
+    	//print($inputHierarchys[$i]+"\n") ;
+    }
+            
+	//get instancer input hierarchy parent array
+	string $parentGrps[] = `listRelatives -parent -fullPath $inputHierarchys` ;
+	if(!`objExists $parentGrps[0]`) {
+		warning( $instanceName + "'s input hierarchy \"" + $inputHierarchy +"\" has no parent group\n");
+		$parentGrps = {$instanceName};
+	}
+		
+	//flatten parent array
+	string $parentGrpName, $parentGrpNames[] = flattenStringArray($parentGrps) ;
+	int $parentGrpNamesSize = size($parentGrpNames) ;
+	int $stringArrayCountArray[] ;
+	$i = 0 ;
+	for($parentGrpName in $parentGrpNames){ 
+		$stringArrayCountArray[$i] = stringArrayCount($parentGrpName,$parentGrps) ;	  
+		//print($parentGrpName+"\n") ;
+		//print($stringArrayCountArray[$i]+"\n") ;
+		$i++ ;
+	}
+		
+	// Get and set dyn expression
+	//get creation and runtime exprssion of particle
+    string $ccExp=`dynExpression -q -s -c $pS` ;
+    string $crbdExp=`dynExpression -q -s -rad $pS` ;
+	
+	// Creation expression for crowd action
+	string $cExpTag_start="// cwd creation exp start" ;
+	string $cExpTag_end="// cwd creation exp end" ;
+	string $cExp = $cExpTag_start ;
+	$cExp += "\nlifespanPP = 100 ;" ;
+	$cExp += "\ngoalU = parentU ;" ;
+	$cExp += "\ngoalV = parentV ;" ;
+	$cExp += "\n//set forward for crowd alignment" ;
+	$cExp += "\ncw_forwardPP = <<0,0,-1>>;" ;
+	$cExp += "\ncw_goalUMultInitPP = rand(.0005,.0008) ;" ;
+	$cExp += "\n//set scalePP" ;
+	$cExp += "\ncw_scalePP = rand(.75,1.25) ;" ;
+	$cExp += "\ncw_radiusPP = cw_scalePP*1 ;" ;
+	$cExp += "\n//first set all cycle to 0  " ;
+	$cExp += "\ncw_cyclePP = 0 ;  " ;
+	$cExp += "\n//set cycle to random  " ;
+	$cExp += "\n//set cycle to $InitCycleCount  " ;
+	$cExp += "\n//sometimes $initCycleCount equals instanced objects's group count " ;
+	$cExp += "\nint $initCycleCount =  " + $parentGrpNamesSize + ";" ;
+	$cExp += "\nfloat $rand = rand(0,1) ;" ;
+
+	int $i,$j;
+	// Loop for init cyclePP
+	for( $i = 0; $i != $parentGrpNamesSize; ++$i){
+		$cExp += "\nif( $rand>(1.0/" + $parentGrpNamesSize ;
+		$cExp += ")*(" + $i + ")&&$rand<(1.0/" + $parentGrpNamesSize ;
+		$cExp += ")*(" + $i + "+1) ){ " ;
+		$cExp += "\n    cw_cycleInitPP = " + $i + ";    " ;
+		$cExp += "\n    cw_modifyCyclePP = trunc( rand(0,2) );    " ;
+		$cExp += "\n}                      " ;
+	}
+
+	$cExp += "\nint $cycle = cw_cyclePP ; " ;
+	$cExp += "\nswitch( $cycle ) { " ;
+	for( $i=0; $i != $parentGrpNamesSize; ++$i ) {
+		$cExp += "\n " ;
+		$cExp += "\n  case " + $i + " :    " ;
+		$cExp += "\n    cw_objectIndexPP = trunc( rand( 0, " + $stringArrayCountArray[$i] + " ) )" ;
+		for( $j=1; $j<=$i; ++$j ){
+			$cExp += " + " + $stringArrayCountArray[$j-1] ;
+		}
+		$cExp += " ;    " ;
+		$cExp += "\n    //set cw_goalUVMultPP   " ;
+		$cExp += "\n    cw_goalUMultInitPP *= 1 ;    " ;
+		$cExp += "\n    cw_goalVMultInitPP *= 1 ;    " ;
+		$cExp += "\n    cw_goalUMultPP = cw_goalUMultInitPP ; " ;
+		$cExp += "\n    cw_goalVMultPP = cw_goalUMultPP ; " ;
+		$cExp += "\n    break;    " ;
+	}
+	$cExp += "\n} " ;
+	$cExp += "\n//Init birthFramePP " ;
+	$cExp += "\ncw_cyclePP = cw_cycleInitPP;   " ;
+	$cExp += "\ncw_birthFramePP = frame;   " ;
+
+	$cExp += "\n" ;
+	$cExp += $cExpTag_end ;
+
+	
+	string $radExpTag_start="// cwd rad exp start" ;
+	string $radExpTag_end="// cwd rad exp end" ;
+	string $radExp = $radExpTag_start ;
+	$radExp += "\n//catch goalUV" ;
+	$radExp += "\nvector $preGoalUV = <<goalU,goalV,0>> ;" ;
+	// Get followUPP from crowdshape' outputUPP attribute
+	$radExp += "\n//Get cw_followPP form crowd shape node" ;
+	$radExp += "\ngoalU =  " + $crowdShapes[0] +  ".outputUPP ;" ;
+	$radExp += "\ngoalV =  " + $crowdShapes[0] +  ".outputVPP ;" ;
+	$radExp += "\n//instanceH runtime exp " ;
+	$radExp += "\n//We need to know when each creature is on its last frame of its cycle," ;
+	$radExp += "\n//as this is the only appropriate time to change cycles. We'll just keep " ;
+	$radExp += "\n//an eye out for particular objectIndexPP values and turn on 'lastFramePP if found" ;
+	$radExp += "\n// capture into integer (can't use a per-particle attr in a 'case' statement" ;
+	$radExp += "\nint $index = cw_objectIndexPP;" ;
+	$radExp += "\n// reset lastFramePP " ;
+	$radExp += "\ncw_lastFramePP = 0; " ;
+	$radExp += "\n// look for the last frame of each cycle " ;
+	$radExp += "\nswitch( $index ) { " ;
+	int $intTmp = -1 ;
+	for( $i = 0; $i != $parentGrpNamesSize; ++$i ) {
+		// Get inputHierarchyCountArray[$i] - 1
+		// ObjectIndexPP = count - 1 ;
+		$intTmp += $stringArrayCountArray[$i] ;
+		$radExp += "\n  case " + $intTmp + " :   " ;
+	}
+	$radExp += "\n	cw_lastFramePP = 1;" ;
+	$radExp += "\n	break;" ;
+	$radExp += "\n} " ;
+
+	$radExp += "\n// change stage if creature is a) old enough " ;
+	$radExp += "\n// b) hasn't been switched yet " ;
+	$radExp += "\n// and c) is on its last frame of a cycle " ;
+	$radExp += "\nif( cw_lastFramePP ) { " ;
+	$radExp += "\n     // Change cyclePP to rand " ;
+	$radExp += "\n     if( cw_modifyCyclePP ) { " ;
+	$radExp += "\n          cw_cyclePP = trunc( rand(0, " + $parentGrpNamesSize + " ) );" ;
+	$radExp += "\n     }" ;
+	$radExp += "\n     // Change cyclePP to init cyclePP " ;
+	$radExp += "\n     else {" ;
+	$radExp += "\n          cw_cyclePP = cw_cycleInitPP ;" ;
+	$radExp += "\n     }" ;
+	$radExp += "\n	   // reset birthFramePP " ;
+	$radExp += "\n     cw_birthFramePP = frame ;" ;
+	$radExp += "\n} " ;
+
+	$radExp += "\n//set particle instancer's cw_objectIndexPP  " ;
+	$radExp += "\ncw_objectIndexPP += instancerSpeed;     " ;
+
+	$radExp += "\nint $cycle = cw_cyclePP ;   " ;
+	$radExp += "\nswitch($cycle){      " ;
+	for( $i=0; $i != $parentGrpNamesSize; ++$i ) {
+		$radExp += "\n " ;
+		$radExp += "\n  case " + $i + " :    " ;
+		if($i==0){
+			$radExp += "\n    cw_objectIndexPP = cw_objectIndexPP%" + $stringArrayCountArray[$i] ;
+		}
+		else{
+			$radExp += "\n    cw_objectIndexPP = (frame - cw_birthFramePP)%" + $stringArrayCountArray[$i] + " " ;
+			for( $j=1; $j<=$i; ++$j ) {
+				$radExp += " + " + $stringArrayCountArray[$j-1] ;
+			}
+		}
+		$radExp += " ;    " ;
+		$radExp += "\n    break;    " ;
+	}
+
+	$radExp += "\n}   " ;
+	$radExp += "\n" ;
+	$radExp += $radExpTag_end ;
+	
+	string $regularExpr = $cExpTag_start+".*"+$cExpTag_end;
+	string $c = `substitute $regularExpr $ccExp $cExp`;
+	if($c == $ccExp){
+		$c = $ccExp + $cExp ;
+	}
+	
+	$regularExpr = $radExpTag_start+".*"+$radExpTag_end;
+	string $rad = `substitute $regularExpr $crbdExp $radExp`;
+	if($rad == $crbdExp){
+		$rad = $crbdExp + $radExp ;
+	}
+	
+	//write exp
+    dynExpression -s $c -c $pS ;
+    dynExpression -s $rad -rad $pS ;
+}
+
 
 global proc crowd_rebuildMenu()
 {
@@ -347,7 +606,7 @@ global proc crowd_rebuildMenu()
 				-subMenu true ;
 		{
 			menuItem -label "Create From Particle"
-					-c "cwd -type create" ;
+					-c "crowd_createFromParticle()" ;
 			setParent -menu ..;
 		}	
 		menuItem -d 1;
@@ -381,6 +640,10 @@ global proc crowd_rebuildMenu()
 					-c "evalEcho crowd(\"setParticle\")" ;	
 			menuItem -d 1;
 					
+			menuItem -label "Add Terrain"
+					-c "evalEcho crowd(\"addTerrain\")" ;
+			menuItem -d 1;
+											
 			menuItem -label "Add Seek"
 					-c "evalEcho crowd(\"addSeek\")" ;
 			menuItem -label "Remove Seek"
@@ -635,12 +898,12 @@ global proc crowd(string $type) {
 			connectAttr -f ( $particleShape + ".cw_RadiusPP" ) ( $crowdShape + ".inputRadius" ) ;
 			break ;
 			
-		case "setTerrain" :
+		case "addTerrain" :
 			string $surfaceShape = `crowd_getSurfaceShape` ;
 			// Connect attr
 			connectAttr -f ( $surfaceShape + ".worldSpace" ) ( $crowdShape + ".terrain" ) ;
 			break ;
-						
+									
 		case "addSeek" :
 			string $curveShape = `crowd_getCurveShape` ;
 			// Connect attr
@@ -688,4 +951,57 @@ global proc crowd(string $type) {
 		default :
 			break ;			
 	}
+}
+
+
+
+global proc crowd_addPerParticleAttr(string $pS,string $attrType,string $attrPPLists[]){
+    //add pp attr
+    string $attrPPList;
+    for($attrPPList in $attrPPLists){
+	     if (!`attributeExists $attrPPList $pS`){
+		      addAttr -ln $attrPPList -dt $attrType $pS ;
+		      setAttr -e -keyable true ($pS + "." + $attrPPList);
+	     }			
+    }
+}
+
+global proc crowd_addCrowdAttrToParticle(string $pS,string $attrList[]){
+    //add pp attr
+    string $attr;
+    for($attr in $attrList){
+	     if (!`attributeExists $attr $pS`){
+		      addAttr -ln $attr -at double $pS ;
+		      setAttr -e -keyable true ($pS + "." + $attr);
+		      setAttr ($pS + "." + $attr) 1;
+	     }			
+    }
+}
+
+global proc string crowd_getInstancer(string $pS){
+	int $i,$attrSize = `getAttr -size ($pS+ ".instanceData")` ;
+    string $tmp ;
+    string $instanceNameArray[];
+	for($i=0;$i<$attrSize;$i++){
+		$instanceNameArray = `listConnections -destination 1 ($pS+ ".instanceData["+$i+"].instancePointData")` ;
+        if(size($instanceNameArray[0])!=0){
+        	$tmp = $instanceNameArray[0] ;
+        }	
+    }
+    if(size($tmp)==0){
+    	error($pS + " has no instancer data.Please select one particle that has instancer data or select some instancers first.") ;
+    }
+    else{
+    	$instanceNameArray[0] = $tmp ;
+    }
+    return $instanceNameArray[0];
+}
+
+global proc string crowd_getInstancerInputHierarchy(string $instanceName){
+ 	//get instancer's input hierarchy count
+    int $inputHierarchyCount = `getAttr ($instanceName+".hierarchyCount")` ;
+    if($inputHierarchyCount<1){        	
+	    error( $instanceName + " has no input hierarchys!") ;
+    }
+    return $inputHierarchyCount;   
 }
