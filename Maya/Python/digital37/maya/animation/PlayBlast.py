@@ -41,7 +41,7 @@ class General():
     def copy(self,src,dst):
         shutil.copy(src, dst)
 
-class PlayBlast(General):
+class PlayBlast_Batch(General):
     '''
     playblast
     '''
@@ -159,7 +159,7 @@ class PlayBlast(General):
         
         
 def main():
-    PlayBlast().playBlast()
+    PlayBlast_Batch().playBlast()
     
 if __name__ == '__main__' :
     pass
