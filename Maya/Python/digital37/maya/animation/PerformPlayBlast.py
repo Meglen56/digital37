@@ -56,7 +56,7 @@ class General():
     def copy(self,src,dst):
         shutil.copy(src, dst)
 
-class PlayBlast_Batch(General):
+class PerformPlayBlast(General):
     '''
     playblast
     '''
@@ -185,11 +185,11 @@ class PlayBlast_Batch(General):
         self.Max = str(int(pm.playbackOptions(q=1,max=1)))
 
 #    def scriptJob(self):
-#        cmds.scriptJob(event=['SceneOpened','PlayBlast_Batch().playBlast()'])
+#        cmds.scriptJob(event=['SceneOpened','PerformPlayBlast().playBlast()'])
 
         
 def main():
-    PlayBlast_Batch().playBlast()
+    PerformPlayBlast().playBlast()
     
 if __name__ == '__main__' :
     pass
