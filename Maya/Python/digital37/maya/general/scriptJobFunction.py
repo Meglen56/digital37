@@ -26,5 +26,3 @@ def open():
     
 #    import digital37.maya.animation.PlayBlast_Batch
 #    digital37.maya.animation.PlayBlast_Batch.main()
-    
-           

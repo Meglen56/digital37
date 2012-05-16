@@ -34,11 +34,11 @@ class Project():
                     print d
                     if not os.path.exists(d):
                         os.makedirs(d)
-                    f = 'seer_'+shot_type_name+'_'+eposide+'_'+shot+'.mb'
-                    fileName = os.path.join(d,f)
-                    if not os.path.exists(fileName):
-                        fd = open(fileName,'w')
-                        fd.close()
+#                    f = 'seer_'+shot_type_name+'_'+eposide+'_'+shot+'.mb'
+#                    fileName = os.path.join(d,f)
+#                    if not os.path.exists(fileName):
+#                        fd = open(fileName,'w')
+#                        fd.close()
                                         
     def create_directory_shot(self):
         # create ep directory
@@ -154,12 +154,18 @@ def main():
     #a = Project('Z:/D031SEER/sequence')
     #a.create_directory3('vfx render output','ep14','sc0010 sc0020')
     #a.create_directory3('vfx render output','ep29','sc0010 sc0020 sc0030 sc0040 sc0050 sc0060 sc0070 sc0100 sc0101 sc0110 sc0120 sc0130 sc0140 sc0150 sc0151 sc0160 sc0170 sc0190 sc0200 sc0201 sc0220 sc0230 sc0240 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0330 sc0350 sc0360 sc0370 sc0380 sc0390 sc0400 sc0410 sc0420 sc0430 sc0440 sc0450 sc0460 sc0470 sc0480 sc0490 sc0500 sc0520 sc0530 sc0550 sc0560 sc0570 sc0580 sc0590 sc0600 sc0610 sc0620 sc0630 sc0631 sc0640 sc0660 sc0680 sc0690 sc0700 sc0710 sc0720 sc0730 sc0740 sc0750 sc0760 sc0770 sc0790 sc0820 sc0830 sc0840 sc0850 sc0860 sc0870 sc0880 sc0900 sc0910')
-    a = Project('Z:/D031SEER/sequence')
-    a.create_directory3('vfx render output','ep30b','sc0010a sc0010b sc0010c sc0010d sc0010e sc0010e1 sc0010e2 sc0010e3 sc0010f sc0010g sc0010g1 sc0010g2 sc0010h sc0100 sc0110 sc0120 sc0150 sc0180 sc0190 sc0200 sc0220 sc0230 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0330 sc0340 sc0350 sc0351 sc0360 sc0370 sc0380 sc0390 sc0400 sc0410 sc0440 sc0450 sc0460 sc0470 sc0480 sc0520 sc0530 sc0540 sc0550 sc0560 sc0570 sc0580 sc0600 sc0620 sc0630 sc0650 sc0660 sc0670 sc0680 sc0690 sc0710 sc0720 sc0730 sc0740 sc0750 sc0760 sc0770 sc0780 sc0790 sc0791 sc0800 sc0801 sc0810a sc0810a1 sc0810a2 sc0810a3 sc0810b sc0810b1 sc0810c sc0810d sc0820 sc0820a sc0820b sc0821 sc0840 sc0850 sc0860 sc0870 sc0880 sc0890 sc0891 sc0900 sc0910 sc0920 sc0921 sc0930 sc0940 sc0950 sc0960 sc0970 sc0971 sc0972 sc0973 sc0974 sc0975 sc0975b sc0975c sc0976 sc0990 sc1010 sc1020 sc1040 sc1050 sc1060 sc1070 sc1080 sc1090 sc1100 sc1110 sc1120 sc1130 sc1140 sc1160 sc1161 sc1162 sc1163 sc1200 sc1201 sc1202 sc1210 sc1211 sc1220 sc1280 sc1290 sc1320 sc1330 sc1340 sc1370 sc1371 sc1380 sc1390 sc1391 sc1400')
+    #a = Project('Z:/D031SEER/sequence')
+    #a.create_directory3('vfx render output','ep30b','sc0010a sc0010b sc0010c sc0010d sc0010e sc0010e1 sc0010e2 sc0010e3 sc0010f sc0010g sc0010g1 sc0010g2 sc0010h sc0100 sc0110 sc0120 sc0150 sc0180 sc0190 sc0200 sc0220 sc0230 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0330 sc0340 sc0350 sc0351 sc0360 sc0370 sc0380 sc0390 sc0400 sc0410 sc0440 sc0450 sc0460 sc0470 sc0480 sc0520 sc0530 sc0540 sc0550 sc0560 sc0570 sc0580 sc0600 sc0620 sc0630 sc0650 sc0660 sc0670 sc0680 sc0690 sc0710 sc0720 sc0730 sc0740 sc0750 sc0760 sc0770 sc0780 sc0790 sc0791 sc0800 sc0801 sc0810a sc0810a1 sc0810a2 sc0810a3 sc0810b sc0810b1 sc0810c sc0810d sc0820 sc0820a sc0820b sc0821 sc0840 sc0850 sc0860 sc0870 sc0880 sc0890 sc0891 sc0900 sc0910 sc0920 sc0921 sc0930 sc0940 sc0950 sc0960 sc0970 sc0971 sc0972 sc0973 sc0974 sc0975 sc0975b sc0975c sc0976 sc0990 sc1010 sc1020 sc1040 sc1050 sc1060 sc1070 sc1080 sc1090 sc1100 sc1110 sc1120 sc1130 sc1140 sc1160 sc1161 sc1162 sc1163 sc1200 sc1201 sc1202 sc1210 sc1211 sc1220 sc1280 sc1290 sc1320 sc1330 sc1340 sc1370 sc1371 sc1380 sc1390 sc1391 sc1400')
     #a.init_shot('ep02','sc0010 sc0020 sc0030 sc0040 sc0050 sc0060 sc0070 sc0080 sc0090 sc0100 sc0110 sc0120 sc0130 sc0140 sc0150 sc0160 sc0170 sc0180 sc0190 sc0210 sc0230 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0302 sc0310 sc0330 sc0340 sc0350 sc0360 sc0380 sc0400 sc0420 sc0430 sc0450 sc0460 sc0470 sc0480 sc0490 sc0530 sc0540')
     #a.init_shot('ep26','sc0010 sc0020 sc0030 sc0040 sc0050 sc0060 sc0080 sc0090 sc0100 sc0110 sc0120 sc0130 sc0140 sc0150 sc0160 sc0170 sc0180 sc0190 sc0200 sc0210 sc0220 sc0230 sc0240 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0330 sc0340 sc0350 sc0360 sc0370 sc0380 sc0390 sc0400')
     #a.create_directory_shot2()
-        
+    #a = Project('Z:/D031SEER/MayaProject')
+    #a.init_shot('ep32','sc0010 sc0020 sc0030 sc0031 sc0040 sc0050 sc0051 sc0060 sc0070 sc0080 sc0090 sc0100 sc0110 sc0120 sc0130 sc0140 sc0150 sc0160 sc0170 sc0180 sc0200 sc0210 sc0220 sc0240 sc0250 sc0260 sc0270 sc0280 sc0290 sc0300 sc0310 sc0320 sc0330 sc0340 sc0350 sc0360 sc0380 sc0390 sc0400 sc0410 sc0420 sc0430 sc0440 sc0450 sc0460 sc0470 sc0480 sc0490 sc0500 sc0510 sc0520 sc0530 sc0540 sc0541 sc0550 sc0560 sc0570 sc0580 sc0590 sc0600 sc0610')
+    #a.create_directory_shot2()
+    
+    #a = Project('Z:/D031SEER/sequence')
+    #a.create_directory3('vfx render output','ep23','')
+    
 if __name__ == '__main__' :
     main()
     
