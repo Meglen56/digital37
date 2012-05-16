@@ -1,1 +1,0 @@
-evalDeferred "python(\"import digital37.maya.animation.PlayBlast_Batch as PlayBlast_Batch;PlayBlast_Batch.main()\")";
