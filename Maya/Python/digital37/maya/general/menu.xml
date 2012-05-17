@@ -26,7 +26,11 @@
 		<node type="command" name="Check Model" comment="Check Model" cmd="import digital37.maya.modeling.checkModel;digital37.maya.modeling.checkModel.checkModel()" mode="python" option="False"></node>
 		<node type="command" name="Base Check Model" comment="Base Check Model" cmd="from digital37.maya.modeling.baseCheckToolsChild import *" mode="python" option="False"></node>
 	</node>
-		
+	
+	<node type="subMenu" name="Rigging">
+		<node type="command" name="Deformer After Set" comment="Deformer After Set" cmd="import digital37.maya.rigging.deformerAfterSet;digital37.maya.rigging.deformerAfterSet.main()" mode="python" option="False"></node>
+	</node>
+	
 	<node type="subMenu" name="Animation">
 		<node type="command" name="Camera" cmd="import digital37.maya.animation.renderCam;digital37.maya.animation.renderCam.CameraOnly();" comment='Camera' mode="python" option="False"></node>
 		<node type="command" name="Camera and Aim" cmd="import digital37.maya.animation.renderCam;digital37.maya.animation.renderCam.CameraOnly();" comment='Camera' mode="python" option="False"></node>
