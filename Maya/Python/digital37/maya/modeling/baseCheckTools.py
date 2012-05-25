@@ -1,54 +1,63 @@
 from maya.cmds import *
+from PyQt4 import QtCore, QtGui
+from checkTools import Ui_Frame
 import re
 
-class baseCheckTools():
+class baseCheckTools(QtGui.QFrame):
 
-    application = ''
-    version = ''
-    unit = ''
-    ui = ''
-
-    def __init__(self, uiName):
-
+    def __init__(self, uiBool, parent = None):
+        QtGui.QFrame.__init__(self, parent)
+        #super(baseCheckTools, self).__init__()
+        self.boolUI = uiBool
         self.application = 'maya'
         self.version = '2012 x64'
         self.unit = 'cm'
-        self.ui = uiName
-        #button(self.ui + '|pushButton1', e = True, bgc = (1.0, 0.0, 0.0))
-        #button(self.ui + '|pushButton2', e = True, bgc = (1.0, 0.0, 0.0))
-        #button(self.ui + '|pushButton3', e = True, bgc = (1.0, 0.0, 0.0))
-        #button(self.ui + '|pushButton4', e = True, bgc = (1.0, 0.0, 0.0))
-        #button(self.ui + '|pushButton5', e = True, bgc = (1.0, 0.0, 0.0))
-        #button(self.ui + '|pushButton6', e = True, bgc = (1.0, 0.0, 0.0))
-        #button(self.ui + '|pushButton7', e = True, bgc = (1.0, 0.0, 0.0))
-        #button(self.ui + '|pushButton8', e = True, bgc = (1.0, 0.0, 0.0))
-        #button(self.ui + '|pushButton9', e = True, bgc = (1.0, 0.0, 0.0))
-        #button(self.ui + '|pushButton10', e = True, bgc = (1.0, 0.0, 0.0))
-        #button(self.ui + '|pushButton11', e = True, bgc = (1.0, 0.0, 0.0))
-        #button(self.ui + '|pushButton12', e = True, bgc = (1.0, 0.0, 0.0))
-        #button(self.ui + '|pushButton13', e = True, bgc = (1.0, 0.0, 0.0))
-        #button(self.ui + '|pushButton14', e = True, bgc = (1.0, 0.0, 0.0))
-        #button(self.ui + '|pushButton15', e = True, bgc = (1.0, 0.0, 0.0))
+        self.ui = Ui_Frame()
+        self.ui.setupUi(self)
+        if self.boolUI:
+            self.c = QtGui.QColor(0, 255, 0)
+            self.p = QtGui.QPalette(self.c)
+        self.buttonConnect()
+        
+    def buttonConnect(self):
+        self.ui.baseInfo.connect(self.ui.baseInfo, QtCore.SIGNAL("clicked()"), self.checkBaseInfo)
+        self.ui.shapeAndTransformName.connect(self.ui.shapeAndTransformName, QtCore.SIGNAL("clicked()"), self.checkShapeTransName)
+        self.ui.zeroObject.connect(self.ui.zeroObject, QtCore.SIGNAL("clicked()"), self.zeroObject)
+        self.ui.doubleDisplay.connect(self.ui.doubleDisplay, QtCore.SIGNAL("clicked()"), self.doubleDisplay)
+        self.ui.fiveFace.connect(self.ui.fiveFace, QtCore.SIGNAL("clicked()"), self.checkFiveFace)
+        self.ui.reRangeUV.connect(self.ui.reRangeUV, QtCore.SIGNAL("clicked()"), self.checkUV)
+        self.ui.deleteHistory.connect(self.ui.deleteHistory, QtCore.SIGNAL("clicked()"), self.deleteHistory)
+        self.ui.deleteCamera.connect(self.ui.deleteCamera, QtCore.SIGNAL("clicked()"), self.deleteCamera)
+        self.ui.deleteLight.connect(self.ui.deleteLight, QtCore.SIGNAL("clicked()"), self.deleteLight)
+        self.ui.deleteDisplayLayer.connect(self.ui.deleteDisplayLayer, QtCore.SIGNAL("clicked()"), self.deleteDisplayLayer)
+        self.ui.deleteRenderLayer.connect(self.ui.deleteRenderLayer, QtCore.SIGNAL("clicked()"), self.deleteRenderLayer)
+        self.ui.deleteEmptyGroup.connect(self.ui.deleteEmptyGroup, QtCore.SIGNAL("clicked()"), self.deleteEmptyGroups)
+        self.ui.unloadPlugin.connect(self.ui.unloadPlugin, QtCore.SIGNAL("clicked()"), self.unloadPlugins)
+        self.ui.deleteUnknow.connect(self.ui.deleteUnknow, QtCore.SIGNAL("clicked()"), self.deleteUnknowNode)
         
     def checkBaseInfo(self):
 
         bool = True
         
         if(about(a = True) != self.application):
-            scrollField(self.ui + '|textEdit', e = True, it = '\napplication is error!\n')
+            if self.boolUI:
+                self.ui.textEdit.insertPlainText("\napplication is error!\n")
             warning('application is error!')
             bool = False
         if(about(version = True) != self.version):
-            scrollField(self.ui + '|textEdit', e = True, it = '\nversion is error, must is 2012 x64\n')
-            error('version is error, must is 2012 x64')
+            if self.boolUI:
+                self.ui.textEdit.insertPlainText("\nversion is error, must is 2011 x64\n")
+            error('version is error, must is 2011 x64')
             bool = False
         if(currentUnit(q = True, l = True) != self.unit):
-            scrollField(self.ui + '|textEdit', e = True, it = '\ncurrent unit is error, must is cm\n')
+            if self.boolUI:
+                self.ui.textEdit.insertPlainText("\ncurrent unit is error, must is cm\n")
             error('current unit is error, must is cm')
             bool = False
 
         if(bool):
-            button(self.ui + '|pushButton1', e = True, bgc = (0.0, 1.0, 0.0))
+            if self.boolUI:
+                self.ui.baseInfo.setPalette(self.p)
 
     def checkShapeTransName(self):
     
@@ -59,7 +68,8 @@ class baseCheckTools():
             #print all
             try:
                 if(len(all.split('|')) > 1):
-                    scrollField(self.ui + '|textEdit', e = True, it = '\nmulti object have same name with %s\n' %all)
+                    if self.boolUI:
+                        self.ui.textEdit.insertPlainText("\nmulti object have same name with %s\n" %all)
                     bool = False
             except:
                 pass
@@ -75,10 +85,12 @@ class baseCheckTools():
             for e in every:
                 tran += e
             if(not tran in shape):
-                scrollField(self.ui + '|textEdit', e = True, it = '\n%s name dont match its parent name\n' %all)
+                if self.boolUI:
+                    self.ui.textEdit.insertPlainText("\n%s name dont match its parent name\n" %all)
                 bool = False
-        if(bool):        
-            button(self.ui + '|pushButton2', e = True, bgc = (0.0, 1.0, 0.0))
+        if(bool):
+            if self.boolUI:
+                self.ui.shapeAndTransformName.setPalette(self.p)
                 
     def zeroObject(self):
 
@@ -90,11 +102,13 @@ class baseCheckTools():
             try:
                 makeIdentity(trans, a = True, t = True, r = True, s = True, n = 0)
             except:
-                scrollField(self.ui + '|textEdit', e = True, it = '\n%s zeroObject error\n' %trans)
+                if self.boolUI:
+                    self.ui.textEdit.insertPlainText("\n%s zeroObject error\n" %trans)
                 bool = False
 
         if(bool):
-            button(self.ui + '|pushButton3', e = True, bgc = (0.0, 1.0, 0.0))
+            if self.boolUI:
+                self.ui.zeroObject.setPalette(self.p)
                 
     def doubleDisplay(self):
         
@@ -106,12 +120,14 @@ class baseCheckTools():
                 select(all, r = True)
                 displaySurface(two = True)
             except:
-                scrollField(self.ui + '|textEdit', e = True, it = '\nno object are selected in doubleDisplay, maybe cause by reference\n')
+                if self.boolUI:
+                    self.ui.textEdit.insertPlainText("\nno object are selected in doubleDisplay, maybe cause by reference\n")
                 bool = False
         select(cl = True)
 
         if(bool):
-            button(self.ui + '|pushButton4', e = True, bgc = (0.0, 1.0, 0.0))
+            if self.boolUI:
+                self.ui.doubleDisplay.setPalette(self.p)
         
     def checkFiveFace(self):
 
@@ -132,10 +148,12 @@ class baseCheckTools():
                     if(e != ''):
                         allEdge.append(e)
                 if(len(allEdge) > 5):
-                    scrollField(self.ui + '|textEdit', e = True, it = '\n%s f[%s] face more than four\n' %(dag, f))
+                    if self.boolUI:
+                        self.ui.textEdit.insertPlainText("\n%s f[%s] face more than four\n" %(dag, f))
                     bool = False
         if(bool):
-            button(self.ui + '|pushButton5', e = True, bgc = (0.0, 1.0, 0.0))
+            if self.boolUI:
+                self.ui.fiveFace.setPalette(self.p)
                     
     def checkUV(self):
 
@@ -146,11 +164,13 @@ class baseCheckTools():
             try:
                 polyNormalizeUV(all, nt = 1, pa = False)
             except:
-                scrollField(self.ui + '|textEdit', e = True, it = '\ndont normalize %s uv to 0-1 range\n' %all)
+                if self.boolUI:
+                    self.ui.textEdit.insertPlainText("\ndont normalize %s uv to 0-1 range\n" %all)
                 bool = False
 
         if(bool):
-            button(self.ui + '|pushButton6', e = True, bgc = (0.0, 1.0, 0.0))
+            if self.boolUI:
+                self.ui.reRangeUV.setPalette(self.p)
                     
     def deleteHistory(self):
 
@@ -161,11 +181,13 @@ class baseCheckTools():
             try:
                 delete(all, ch = True)
             except:
-                scrollField(self.ui + '|textEdit', e = True, it = '\ncant delete %s history\n' %all)
+                if self.boolUI:
+                    self.ui.textEdit.insertPlainText("\ncant delete %s history\n" %all)
                 bool = False
 
         if(bool):
-            button(self.ui + '|pushButton7', e = True, bgc = (0.0, 1.0, 0.0))
+            if self.boolUI:
+                self.ui.deleteHistory.setPalette(self.p)
                 
     def deleteCamera(self):
     
@@ -174,8 +196,8 @@ class baseCheckTools():
             if all != 'front' and all != 'persp' and all != 'side' and all != 'top':
                 camera(all, e = True, sc = False)
                 delete(all)
-
-        button(self.ui + '|pushButton8', e = True, bgc = (0.0, 1.0, 0.0))
+        if self.boolUI:
+            self.ui.deleteCamera.setPalette(self.p)
                 
     def deleteLight(self):
     
@@ -186,7 +208,8 @@ class baseCheckTools():
             try:
                 delete(all)
             except:
-                scrollField(self.ui + '|textEdit', e = True, it = '\ncant delete %s\n' %all)
+                if self.boolUI:
+                    self.ui.textEdit.insertPlainText("\ncant delete %s\n" %all)
                 bool = False
                 
         allLightLinker = ls(type = 'lightLinker')
@@ -196,11 +219,13 @@ class baseCheckTools():
                     lockNode(all, l  = False)
                     delete(all)
                 except:
-                    scrollField(self.ui + '|textEdit', e = True, it = '\ncant delete %s\n' %all)
+                    if self.boolUI:
+                        self.ui.textEdit.insertPlainText("\ncant delete %s\n" %all)
                     bool = False
 
         if(bool):
-            button(self.ui + '|pushButton9', e = True, bgc = (0.0, 1.0, 0.0))
+            if self.boolUI:
+                self.ui.deleteLight.setPalette(self.p)
                 
     def deleteDisplayLayer(self):
 
@@ -212,11 +237,13 @@ class baseCheckTools():
                 try:
                     delete(all)
                 except:
-                    scrollField(self.ui + '|textEdit', e = True, it = '\ncant delete %s\n' %all)
+                    if self.boolUI:
+                        self.ui.textEdit.insertPlainText("\ncant delete %s\n" %all)
                     bool = False
 
         if(bool):
-            button(self.ui + '|pushButton10', e = True, bgc = (0.0, 1.0, 0.0))
+            if self.boolUI:
+                self.ui.deleteDisplayLayer.setPalette(self.p)
                     
     def deleteRenderLayer(self):
 
@@ -229,11 +256,13 @@ class baseCheckTools():
                     editRenderLayerGlobals( currentRenderLayer='defaultRenderLayer' )
                     delete(all)
                 except:
-                    scrollField(self.ui + '|textEdit', e = True, it = '\ncant delete %s\n' %all)
+                    if self.boolUI:
+                        self.ui.textEdit.insertPlainText("\ncant delete %s\n" %all)
                     bool = False
 
         if(bool):
-            button(self.ui + '|pushButton11', e = True, bgc = (0.0, 1.0, 0.0))
+            if self.boolUI:
+                self.ui.deleteRenderLayer.setPalette(self.p)
             
     def deleteEmptyGroups(self):
 
@@ -246,10 +275,12 @@ class baseCheckTools():
                 if(child == None):
                     delete(all)
             except:
-                scrollField(self.ui + '|textEdit', e = True, it = '\ncant delete %s\n' %all)
+                if self.boolUI:
+                    self.ui.textEdit.insertPlainText("\ncant delete %s\n" %all)
                 bool = False
         if(bool):
-            button(self.ui + '|pushButton12', e = True, bgc = (0.0, 1.0, 0.0))
+            if self.boolUI:
+                self.ui.deleteEmptyGroup.setPalette(self.p)
                     
     def unloadPlugins(self):
 
@@ -261,11 +292,13 @@ class baseCheckTools():
                 try:
                     unloadPlugin(all, f = True)
                 except:
-                    scrollField(self.ui + '|textEdit', e = True, it = '\ncant unload plugin %s, because some object are used this plugin\n' %all)
+                    if self.boolUI:
+                        self.ui.textEdit.insertPlainText("\ncant unload plugin %s, because some object are used this plugin\n" %all)
                     bool = False
 
         if(bool):
-            button(self.ui + '|pushButton14', e = True, bgc = (0.0, 1.0, 0.0))
+            if self.boolUI:
+                self.ui.unloadPlugin.setPalette(self.p)
 
     def deleteUnknowNode(self):
 
@@ -274,14 +307,15 @@ class baseCheckTools():
         allUnknow = ls(dep = True)
         for all in allUnknow:
             try:
-                if(nodeType(all) == 'unknown'):
+                if(nodeType(all) == 'unknow'):
                     lockNode(all, l = False)
                     delete(all)
             except:
-                scrollField(self.ui + '|textEdit', e = True, it = '\ncant delete unknow node %s\n' %all)
+                if self.boolUI:
+                    self.ui.textEdit.insertPlainText("\ncant delete unknow node %s\n" %all)
                 bool = False
-
-        button(self.ui + '|pushButton15', e = True, bgc = (0.0, 1.0, 0.0))
+        if self.boolUI:
+            self.ui.deleteUnknow.setPalette(self.p)
             
     def doAll(self):
         
@@ -298,3 +332,11 @@ class baseCheckTools():
         self.deleteRenderLayer()
         self.unloadPlugins()
         self.deleteUnknowNode()
+        
+def main(bool):
+    global modelBaseCheckTools
+    modelBaseCheckTools = baseCheckTools(bool)
+    if(bool):
+        modelBaseCheckTools.show()
+    else:
+        modelBaseCheckTools.doAll()
