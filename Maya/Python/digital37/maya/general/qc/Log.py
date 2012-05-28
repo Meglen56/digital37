@@ -1,6 +1,6 @@
-import tempfile, subprocess, traceback
+import tempfile
 import logging
-import os
+import os.path
 
 class Log():
     def __init__(self):
@@ -13,11 +13,18 @@ class Log():
         LOG_LEVEL = LOG_LEVELS.get(logLevel)
         logging.basicConfig(level=LOG_LEVEL)
         
-    def get_logger(self,etcFolder,name):
+    def get_logger(self,logDir=None,logFile=None):
         log = logging.getLogger("MyLogger")
         log.propagate = False
-        #handler = logging.RotatingFileHandler
-        handler = logging.FileHandler(etcFolder+ "/qc.log")
+        
+        # get tempfile's logger file if user not set
+        if not logDir:
+            logDir = tempfile.gettempdir()
+        if not logFile:
+            logFile = os.path.basename( tempfile.mkdtemp('.log', '', logDir) )
+            
+        handler = logging.RotatingFileHandler(os.path.join(logDir,logFile), maxBytes=2097152, backupCount=5)
+        #handler = logging.FileHandler(logDir+ "/qc.log")
         handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter("%(asctime)s %(message)s")
         handler.setFormatter(formatter)
@@ -34,30 +41,21 @@ class Log():
 #        handler.setFormatter(formatter)
 #        self.Log.addHandler(handler)
                 
-    def log_dict(self,inputDict):
+    def log_dict(self, inputDict):
         if inputDict :
-            s = ''
-            try :
-                s += str(inputDict)
-            except :
-                self.Log.warning('can not convert inputDict to string')        
-            for k,v in inputDict.items() :
-                s += '\t\t'
-                s += 'key:'+str(k) + '\t'
-                s += 'value:'+str(v)
-            self.Log.debug(s)
+            s = list()
+            for k, v in inputDict.iteritems() :
+                s.append('key:{0}\t\nvalue{1}:\t'.format(k, v))
+            self.Log.debug('\n'.join(s))
+        else :
+            self.Log.debug('log_dict:input is None')
     
     def log_list(self,inputList):
         if inputList :
-            s = ''
-            if inputList :
-                try :
-                    s += str(inputList)
-                except :
-                    self.Log.warning('can not convert inputList to string')
-                for i in inputList :
-                    s += '\t' + str(i)
-            self.Log.debug(s)
+            s = list()
+            for x in inputList :
+                s.append(x)
+            self.Log.debug('\n'.join(s))
         else:
             self.Log.debug('log_list:input is None')
 
@@ -71,9 +69,9 @@ class Log():
 #            fObj.write(s + '\n')
 #        fObj.close()
 
-#    def get_logger(self,etcFolder,name):
-#        #lf = etcFolder.replace('\\','/') + "/logger.conf"
-#        lf = os.path.abspath( etcFolder ).replace('\\','/') + "/logger.conf"
+#    def get_logger(self,logDir,name):
+#        #lf = logDir.replace('\\','/') + "/logger.conf"
+#        lf = os.path.abspath( logDir ).replace('\\','/') + "/logger.conf"
 #        print 'lf:%s' % lf
 #        f = open(lf,'r')
 #        print f.read()
