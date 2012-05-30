@@ -43,17 +43,13 @@ class Log():
                 
     def log_dict(self, inputDict):
         if inputDict :
-            s = list()
-            [s.append('key:{0}\t\nvalue{1}:\t'.format(k, v)) for k, v in inputDict.iteritems()]
-            self.Log.debug('\n'.join(s))
+            self.Log.debug( '\n'.join( [ 'key:{0}\t\nvalue{1}:\t'.format(k, v) for k, v in inputDict.iteritems() ] ) )
         else :
             self.Log.debug('log_dict:input is None')
     
     def log_list(self,inputList):
         if inputList :
-            s = list()
-            [s.append(x) for x in inputList]
-            self.Log.debug('\n'.join(s))
+            self.Log.debug( '\n'.join( [ x for x in inputList] ) )
         else:
             self.Log.debug('log_list:input is None')
 
