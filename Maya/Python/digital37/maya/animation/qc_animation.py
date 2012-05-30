@@ -3,12 +3,10 @@ import pymel.core as pm
 import traceback
 import maya.cmds as cmds
 
-import sys
-sys.path.append( 'D:/BatchTool/command/maya/qc' )
-import Log
-import System
+import system.log as log
+import system.system as system
 
-class QC(Log.Log,System.System):
+class QC_Animation(log.Log,system.System):
     def __init__(self):
         self.Scene_Name = ''
         self.Settings = dict()
@@ -16,8 +14,8 @@ class QC(Log.Log,System.System):
         self.Set_Playback = False
         
     def set_log(self,currentDir):
-        self.Log = self.get_logger( currentDir, 'Explorer' )
-        self.LogFile = currentDir + '/explorer.log'
+        self.Log = self.get_logger( currentDir, 'qc_animation.log' )
+        #self.LogFile = currentDir + '/explorer.log'
 
     def get_scene_name(self):
         #self.Scene_Name = os.path.splitext( os.path.basename( pm.system.sceneName() ) )[0]
@@ -162,7 +160,7 @@ def main(frameInfo=None):
     if not frameInfo:
         frameInfo = 'Z:/d031seer/QC/techical/anim/Frames_All.txt'
     
-    a = QC()
+    a = QC_Animation()
     
     # set logger
     a.set_log(currentDir)
