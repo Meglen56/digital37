@@ -120,38 +120,6 @@ class QC_Animation(log.Log,system.System):
             pm.currentUnit(linear='film')
             returnVar = False
         return returnVar
-                    
-    def remove_unknow_node(self):
-        returnVar = True
-        allUnknow = cmds.ls(dep = True)
-        if allUnknow:
-            for n in allUnknow:
-                if(cmds.nodeType(n) == 'unknown'):
-                    returnVar = False
-                    try:
-                        cmds.lockNode(n, l = False)
-                        cmds.delete(n)
-                    except:
-                        self.Log.warning('can not delete%s' % n)
-                    else:
-                        self.Log.warning('success deleted %s' % n)
-        return returnVar
-                        
-    def setResolution(self):
-        defaultResolution = pm.PyNode('defaultResolution')
-        if defaultResolution.w.get() != self.Settings['defaultResolution.w'] :
-            try:
-                defaultResolution.w.set( int(self.Settings['defaultResolution.w']) )
-            except:
-                traceback.print_exc()
-                return False
-        if defaultResolution.h.get() != self.Settings['defaultResolution.h'] :
-            try:
-                defaultResolution.h.set( int(self.Settings['defaultResolution.h']) )
-            except:
-                traceback.print_exc()
-                return False
-        return True
 
 def main(frameInfo=None):
     
@@ -172,7 +140,11 @@ def main(frameInfo=None):
     info.append( 'camera check:\t%s' % a.checkCamera() )
     info.append( 'set resolution:\t%s' % a.setResolution() )
     info.append( 'check unit:\t%s' % a.checkUnit() )
-    info.append( 'remove unknow node:\t%s' % a.remove_unknow_node() )
+    
+    import digital37.maya.general.delete_unknow_node as delete_unknow_node
+    info.append( delete_unknow_node.main() )
+    import digital37.maya.lighting.set_render_resolution as set_render_resolution
+    info.append( set_render_resolution.main( a.Options['defaultResolution.w'],a.Options['defaultResolution.h'] ) )
     
     info = '\r\n'.join(info)
     a.Log.debug( info+'\r\n\r\n' )
