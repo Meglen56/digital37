@@ -1,158 +1,99 @@
 import os
 import pymel.core as pm
-import traceback
 import maya.cmds as cmds
 
 import system.log as log
+reload(log)
 import system.system as system
 
 class QC_Animation(log.Log,system.System):
     def __init__(self):
         self.Scene_Name = ''
-        self.Settings = dict()
+        self.Options = dict()
         self.Frame_Info = dict()
-        self.Set_Playback = False
         
-    def set_log(self,currentDir):
-        self.Log = self.get_logger( currentDir, 'qc_animation.log' )
-        #self.LogFile = currentDir + '/explorer.log'
+    def set_log(self,logDir):
+        self.Log = self.get_logger( logDir, 'qc_animation.log' )
 
     def get_scene_name(self):
-        #self.Scene_Name = os.path.splitext( os.path.basename( pm.system.sceneName() ) )[0]
         self.Scene_Name = pm.system.sceneName()
-        self.Scene_Name_Short = os.path.splitext( os.path.basename( pm.system.sceneName() ) )[0]
+        self.Scene_Name_Short = os.path.splitext( os.path.basename( self.Scene_Name ) )[0]
         return self.Scene_Name
-        
-    def getSettings(self,f,frameInfo):
-        try:
-            f = open( f ,'r' )
-        except IOError:
-            self.Log.error('Could not open %s' % f)
-        else:
-            for x in f.readlines():
-                k = x.strip().split(':')[0]
-                v = x.strip().split(':')[1]
-                self.Settings[k] = v
-                    
-                f.close()
-        #self.log_dict(self.Settings)
-        
-        if frameInfo != None:
-            self.Set_Playback = True
-            self.get_Playback_info(frameInfo)
-        
-    def get_Playback_info(self,frameInfo):
-        try:
-            f = open( frameInfo ,'r' )
-        except IOError:
-            self.Log.error('Could not open %s' % f)
-        else:
-            for x in f.readlines():
-                k = x.strip().split()[0]
-                v0 = x.strip().split()[1]
-                v1 = x.strip().split()[2]
-                self.Frame_Info[k] = (v0,v1)
-                    
-                f.close()
-        #self.log_dict(self.Frame_Info)
-            
-    def set_Playback(self):
-        if self.Set_Playback :
-            if self.Scene_Name_Short in self.Frame_Info.iterkeys() :
-                pm.playbackOptions( minTime=self.Frame_Info[self.Scene_Name_Short][0],\
-                                    maxTime=self.Frame_Info[self.Scene_Name_Short][1] )
-        
-    def checkCamera(self):
-        # set persp to can not be renderable
-        if pm.PyNode('perspShape').renderable.get() == True :
-            pm.PyNode('perspShape').renderable.set(False)
-            
-        cams_default = set(['perspShape','sideShape','topShape','frontShape'])
-        cams = set( cmds.ls(type='camera') )
-        cam = cams - cams_default
-        cams_renderable=set()
-        if cam :
-            for c in cam:
-                if cmds.getAttr( c + '.renderable' ) :
-                    cams_renderable.add(c)
-                    
-                    # get camera transform node
-                    c = cmds.listRelatives(c,parent=True)[0]
-                    # lock camera
-                    for x in set(['tx','ty','tz','rx','ry','rz','sx','sy','sz']):
-                        try:
-                            cmds.setAttr((c + '.' + x),lock=True)
-                        except:
-                            traceback.print_exc()
-                            self.Log.warning('can not lock camera:%s\r\n' % c)
-                        else:
-                            self.Log.debug('lock camera success:%s\r\n'% c)
-        
-        # no camera can be renderable
-        if not cams_renderable :
-            for c in cam:
-                cmds.setAttr((c+'.renderable'),True)
-            return False
-        # more than one cameras can be renderable
-        elif len(cams_renderable) > 1 :
-            return False
-        else :
-            return True
     
-    def checkPlayback(self):
-        returnVar = True
-        # What is the current linear unit?
-        if pm.playbackOptions( query=True, min=True ) != 1.0 :
-            pm.currentUnit(linear='cm')
-            returnVar = False
-        if pm.playbackOptions( query=True, min=True ) != 1.0 :
-            pm.currentUnit(linear='film')
-            returnVar = False
-        return returnVar
-        
-    def checkUnit(self):
-        returnVar = True
-        # What is the current linear unit?
-        if pm.currentUnit( query=True, linear=True ) != u'cm' :
-            pm.currentUnit(linear='cm')
-            returnVar = False
-        if pm.currentUnit( query=True, time=True ) != u'film' :
-            pm.currentUnit(linear='film')
-            returnVar = False
-        return returnVar
+    def get_general_settings(self,fileName):
+        with open(fileName,'r') as f:
+            for x in f:
+                k,v = x.strip().split(':')
+                self.Options[k] = v
 
-def main(frameInfo=None):
-    
-    currentDir = 'D:/BatchTool/command/maya/qc'
-    generalSettings = 'Z:/d031seer/QC/techical/anim/qc.txt'
-    if not frameInfo:
-        frameInfo = 'Z:/d031seer/QC/techical/anim/Frames_All.txt'
+#    def get_Playback_info(self,frameInfo):
+#        try:
+#            f = open( frameInfo ,'r' )
+#        except IOError:
+#            self.Log.error('Could not open %s' % f)
+#        else:
+#            for x in f.readlines():
+#                k = x.strip().split()[0]
+#                v0 = x.strip().split()[1]
+#                v1 = x.strip().split()[2]
+#                self.Frame_Info[k] = (v0,v1)
+#                    
+#                f.close()
+    def get_playback_settings(self,fileName):
+        with open( fileName ,'r' ) as f:
+            for x in f:
+                k,v0,v1 = x.strip().split()
+                self.Frame_Info[k] = (v0,v1)
+
+
+def main(logDir=None,generalSettingsFile=None,playbackSettingsFile=None):
     
     a = QC_Animation()
     
+    info=debug=error = list()
+    s = 'scenes:\t%s' % a.get_scene_name()
+    info.append( [s,s] )
+    
     # set logger
-    a.set_log(currentDir)
-    a.get_scene_name()
-    a.getSettings(generalSettings,frameInfo)
+    a.set_log(logDir)
     
-    info = list()
-    info.append( 'scenes:\t%s' % a.get_scene_name() )
-    info.append( 'camera check:\t%s' % a.checkCamera() )
-    info.append( 'set resolution:\t%s' % a.setResolution() )
-    info.append( 'check unit:\t%s' % a.checkUnit() )
+    # if generalSettingsFile then do some general checking
+    if generalSettingsFile:
+        a.get_general_settings(generalSettingsFile)
+        # set defaultResolution's width and height
+        import digital37.maya.lighting.set_render_resolution as set_render_resolution
+        reload(set_render_resolution)
+        info.append( set_render_resolution.main( a.Options['defaultResolution.w'],a.Options['defaultResolution.h'] ) )
     
-    import digital37.maya.general.delete_unknow_node as delete_unknow_node
-    info.append( delete_unknow_node.main() )
-    import digital37.maya.lighting.set_render_resolution as set_render_resolution
-    info.append( set_render_resolution.main( a.Options['defaultResolution.w'],a.Options['defaultResolution.h'] ) )
+    # if playbackSettingsFile then do playback setting
+    if playbackSettingsFile:
+        a.get_playback_settings(playbackSettingsFile)
+        if a.Scene_Name_Short in a.Frame_Info.iterkeys() :
+            import digital37.maya.animation.set_playback as set_playback
+            reload(set_playback)
+            info.append( set_playback.main(a.Frame_Info[a.Scene_Name_Short][0],\
+                                           a.Frame_Info[a.Scene_Name_Short][1]) )
+        
+#    import digital37.maya.general.check_camera as check_camera
+#    reload(check_camera)
+#    info.append( check_camera.main() )
+#    import digital37.maya.general.delete_unknow_node as delete_unknow_node
+#    reload(delete_unknow_node)
+#    info.append( delete_unknow_node.main() )
+#    import digital37.maya.general.remove_open_windows as remove_open_windows
+#    reload(remove_open_windows)
+#    info.append( remove_open_windows.main() )
     
-    info = '\r\n'.join(info)
-    a.Log.debug( info+'\r\n\r\n' )
+    for i in info :
+        print 'i:\t' % i
+        debug.append(i[0])
+        print i[0]
+        error.append(i[1])
     
-    a.set_Playback()
-#    import RelativePath
-#    # check relative path
-#    RelativePath.RelativePath().convert_reference_to_relative()
+    debug = '\r\n'.join(debug)
+    error = '\r\n'.join(error)
+    a.Log.debug( debug+'\r\n\r\n' )
+    a.Log.error( error+'\r\n\r\n' )
     
 if __name__ == '__main__' :
     main()

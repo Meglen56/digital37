@@ -2,9 +2,11 @@ import pymel.core as pm
 import traceback
 
 def main(w,h):
-    l = list()
+    debug,error = list()
+    
     # use '*' as a fill char and center aligned
-    l.append('{0: ^80}'.format('set_render_resolution'))
+    debug.append('{0: ^80}'.format('set_render_resolution'))
+    error.append('{0: ^80}'.format('set_render_resolution'))
     
     defaultResolution = pm.PyNode('defaultResolution')
     if defaultResolution.w.get() != w :
@@ -12,15 +14,15 @@ def main(w,h):
             defaultResolution.w.set( int(w) )
         except:
             traceback.print_exc()
-            return False
+            error.append('set defaultResolution.w error')
         else:
-            l.append('set defaultResolution.w success.')
+            debug.append('set defaultResolution.w success.')
     if defaultResolution.h.get() != h :
         try:
             defaultResolution.h.set( int(h) )
         except:
             traceback.print_exc()
-            return False
+            error.append('set defaultResolution.h error')
         else:
-            l.append('set defaultResolution.h success.')
-    return '\r\n'.join(l)
+            debug.append('set defaultResolution.h success.')
+    return ['\r\n'.join(debug), '\r\n'.join(error)]

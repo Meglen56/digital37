@@ -22,8 +22,9 @@ class Log():
             logDir = tempfile.gettempdir()
         if not logFile:
             logFile = os.path.basename( tempfile.mkdtemp('.log', '', logDir) )
-            
-        handler = logging.RotatingFileHandler(os.path.join(logDir,logFile), maxBytes=2097152, backupCount=5)
+        
+        #handler = logging.FileHandler(os.path.join(logDir,logFile), maxBytes=2097152, backupCount=5)
+        handler = logging.FileHandler(os.path.join(logDir,logFile))
         #handler = logging.FileHandler(logDir+ "/qc.log")
         handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter("%(asctime)s %(message)s")

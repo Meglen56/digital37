@@ -1,9 +1,12 @@
 import maya.cmds as cmds
 
 def main():
-    l = list()
+    debug = list()
+    error = list()
     # use '*' as a fill char and center aligned
-    l.append('{0: ^80}'.format('delete_unknow_node'))
+    debug.append('{0: ^80}'.format('delete_unknow_node'))
+    error.append('{0: ^80}'.format('delete_unknow_node'))
+    
     allUnknow = cmds.ls(dep=True)
     if allUnknow:
         for n in allUnknow:
@@ -13,8 +16,10 @@ def main():
                     cmds.delete(n)
                     print 'delete%s' % n
                 except:
-                    l.append('can not delete%s' % n)
+                    error.append('can not delete%s' % n)
                 else:
-                    l.append('delete %s success' % n)
-    print '\r\n'.join(l)
-    return '\r\n'.join(l)
+                    debug.append('delete %s success' % n)
+                    
+    print '\r\n'.join(debug)
+    print '\r\n'.join(error)
+    return [ '\r\n'.join(debug), '\r\n'.join(error) ]
