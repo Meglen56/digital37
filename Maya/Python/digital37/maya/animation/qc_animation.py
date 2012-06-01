@@ -83,9 +83,9 @@ def main(logDir=None,generalSettingsFile=None,playbackSettingsFile=None):
 #    import digital37.maya.general.remove_open_windows as remove_open_windows
 #    reload(remove_open_windows)
 #    info.append( remove_open_windows.main() )
-    
+    print info
     for i in info :
-        print 'i:\t' % i
+        print 'i:\t%s' % i
         debug.append(i[0])
         print i[0]
         error.append(i[1])
