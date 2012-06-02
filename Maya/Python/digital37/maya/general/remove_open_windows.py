@@ -1,4 +1,4 @@
-import pymel.core as pm
+import maya.cmds as cmds
 
 def main():
     debug = list()
@@ -7,10 +7,12 @@ def main():
     debug.append('{0:-<40}'.format('remove_open_windows'))
     error = debug
     
-    for x in pm.lsUI(wnd=True) :
-        if ( pm.window(x,q=True,vis=True) and x != 'MayaWindow' ) :
+    for x in cmds.lsUI(wnd=True) :
+        if ( cmds.window(x,q=True,vis=True) and x != 'MayaWindow' ) :
+            print x
+            #scriptEditorPanel1Window
             try:
-                pm.deleteUI(x,window=True)
+                cmds.deleteUI(x,window=True)
             except:
                 error.append('delete window %s error' % x)
             else:
