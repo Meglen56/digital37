@@ -4,10 +4,9 @@ import traceback
 
 def main():
     debug = list()
-    error = list()
-    # use '*' as a fill char and center aligned
+    # use ' ' as a fill char and center aligned
     debug.append('{0: ^80}'.format('check_camera'))
-    error.append('{0: ^80}'.format('check_camera'))
+    error = debug
     
     # set persp to can not be renderable
     if pm.PyNode('perspShape').renderable.get() == True :
@@ -37,19 +36,20 @@ def main():
     # no camera can be renderable
     if not cams_renderable :
         for c in cam:
-            try:
-                cmds.setAttr((c+'.renderable'),True)
-            except:
-                traceback.print_exc()
-                error.append('set %s renderable error' % c)
-            else:
-                debug.append('set %s renderable success' % c)
+            if c.startswith('cam_'):
+                try:
+                    cmds.setAttr((c+'.renderable'),True)
+                except:
+                    traceback.print_exc()
+                    error.append('set %s renderable error' % c)
+                else:
+                    debug.append('set %s renderable success' % c)
     # more than one cameras can be renderable
     elif len(cams_renderable) > 1 :
         error.append( 'more then one renderable camera' % ' '.join( list(cams_renderable) ) )
     else :
-        debug.append('only have one renderable camera\t%s' % c)
+        debug.append('only have one renderable camera\t%s' % list(cams_renderable)[0] )
         
-    print '\r\n'.join(debug)
-    print '\r\n'.join(error)
-    return [ '\r\n'.join(debug), '\r\n'.join(error) ]
+    #print '\r\n'.join(debug)
+    #print '\r\n'.join(error)
+    return ( '\r\n'.join(debug), '\r\n'.join(error) )

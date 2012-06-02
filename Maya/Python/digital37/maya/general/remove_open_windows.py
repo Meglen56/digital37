@@ -1,11 +1,11 @@
 import pymel.core as pm
 
 def main():
-    debug=error = list()
+    debug = list()
     
-    # use '*' as a fill char and center aligned
+    # use ' ' as a fill char and center aligned
     debug.append('{0: ^80}'.format('remove_open_windows'))
-    error.append('{0: ^80}'.format('remove_open_windows'))
+    error = debug
     
     for x in pm.lsUI(wnd=True) :
         if ( pm.window(x,q=True,vis=True) and x != 'MayaWindow' ) :
@@ -16,4 +16,4 @@ def main():
             else:
                 debug.append('delete window %s success' % x)
     
-    return ['\r\n'.join(debug), '\r\n'.join(error)]
+    return ('\r\n'.join(debug), '\r\n'.join(error))

@@ -32,8 +32,7 @@
 	</node>
 	
 	<node type="subMenu" name="Animation">
-		<node type="command" name="Camera" cmd="import digital37.maya.animation.renderCam;digital37.maya.animation.renderCam.CameraOnly();" comment='Camera' mode="python" option="False"></node>
-		<node type="command" name="Camera and Aim" cmd="import digital37.maya.animation.renderCam;digital37.maya.animation.renderCam.CameraOnly();" comment='Camera' mode="python" option="False"></node>
+		<node type="command" name="QC Animation" comment="QC Animation" cmd="import digital37.maya.animation.qc_animation;reload(digital37.maya.animation.qc_animation);digital37.maya.animation.qc_animation.main()" mode="python" option="False"></node>
 		<node type="command" name="Camera" cmd="import digital37.maya.animation.renderCam;digital37.maya.animation.renderCam.CameraOnly();" comment='Camera' mode="python" option="False"></node>
 		<node type="command" name="Bake Camera" cmd="xxzBakeCamera();" comment='Bake Camera' mode="mel"  option="False"></node>
 		<node type="command" name="Playblast Show" cmd="playblastShow();" comment='Playblast Show' mode="mel" option="False"></node>

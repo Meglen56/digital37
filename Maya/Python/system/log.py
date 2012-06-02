@@ -24,7 +24,9 @@ class Log():
             logFile = os.path.basename( tempfile.mkdtemp('.log', '', logDir) )
         
         #handler = logging.FileHandler(os.path.join(logDir,logFile), maxBytes=2097152, backupCount=5)
-        handler = logging.FileHandler(os.path.join(logDir,logFile))
+        file_log = os.path.join(logDir,logFile)
+        print 'file_log:%s' % file_log
+        handler = logging.FileHandler(file_log)
         #handler = logging.FileHandler(logDir+ "/qc.log")
         handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter("%(asctime)s %(message)s")

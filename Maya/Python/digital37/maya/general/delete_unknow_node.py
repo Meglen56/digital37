@@ -2,10 +2,9 @@ import maya.cmds as cmds
 
 def main():
     debug = list()
-    error = list()
-    # use '*' as a fill char and center aligned
+    # use ' ' as a fill char and center aligned
     debug.append('{0: ^80}'.format('delete_unknow_node'))
-    error.append('{0: ^80}'.format('delete_unknow_node'))
+    error = debug
     
     allUnknow = cmds.ls(dep=True)
     if allUnknow:
@@ -20,6 +19,6 @@ def main():
                 else:
                     debug.append('delete %s success' % n)
                     
-    print '\r\n'.join(debug)
-    print '\r\n'.join(error)
-    return [ '\r\n'.join(debug), '\r\n'.join(error) ]
+    #print '\r\n'.join(debug)
+    #print '\r\n'.join(error)
+    return ( '\r\n'.join(debug), '\r\n'.join(error) )

@@ -1,11 +1,11 @@
 import pymel.core as pm
 
 def main(unit_linear,unit_time):
-    debug,error = list()
+    debug = list()
     
-    # use '*' as a fill char and center aligned
+    # use ' ' as a fill char and center aligned
     debug.append('{0: ^80}'.format('check_unit'))
-    error.append('{0: ^80}'.format('check_unit'))
+    error = debug
     
     # What is the current linear unit?
     #if pm.currentUnit( query=True, linear=True ) != u'cm' :
@@ -24,4 +24,4 @@ def main(unit_linear,unit_time):
         
     print '\r\n'.join(debug)
     print '\r\n'.join(error)
-    return ['\r\n'.join(debug), '\r\n'.join(error)]
+    return ('\r\n'.join(debug), '\r\n'.join(error))

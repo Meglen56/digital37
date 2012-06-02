@@ -50,9 +50,11 @@ def main(logDir=None,generalSettingsFile=None,playbackSettingsFile=None):
     
     a = QC_Animation()
     
-    info=debug=error = list()
-    s = 'scenes:\t%s' % a.get_scene_name()
-    info.append( [s,s] )
+    info=list()
+    debug=list()
+    error=list()
+    s = '\r\nscenes:\t%s' % a.get_scene_name()
+    info.append( (s,s) )
     
     # set logger
     a.set_log(logDir)
@@ -74,27 +76,33 @@ def main(logDir=None,generalSettingsFile=None,playbackSettingsFile=None):
             info.append( set_playback.main(a.Frame_Info[a.Scene_Name_Short][0],\
                                            a.Frame_Info[a.Scene_Name_Short][1]) )
         
-#    import digital37.maya.general.check_camera as check_camera
-#    reload(check_camera)
-#    info.append( check_camera.main() )
-#    import digital37.maya.general.delete_unknow_node as delete_unknow_node
-#    reload(delete_unknow_node)
-#    info.append( delete_unknow_node.main() )
-#    import digital37.maya.general.remove_open_windows as remove_open_windows
-#    reload(remove_open_windows)
-#    info.append( remove_open_windows.main() )
-    print info
-    for i in info :
-        print 'i:\t%s' % i
-        debug.append(i[0])
-        print i[0]
-        error.append(i[1])
+    import digital37.maya.general.check_camera as check_camera
+    reload(check_camera)
+    info.append( check_camera.main() )
+
+    import digital37.maya.general.delete_unknow_node as delete_unknow_node
+    reload(delete_unknow_node)
+    info.append( delete_unknow_node.main() )
     
+    import digital37.maya.general.remove_open_windows as remove_open_windows
+    reload(remove_open_windows)
+    info.append( remove_open_windows.main() )
+
+#    print info
+#    for i in info:
+#        print 'i:',i
+#        print type(i)
+#        debug.append(i[0])
+#        error.append(i[1])
+    [(debug.append(i[0]),error.append(i[1])) for i in info]
+        
     debug = '\r\n'.join(debug)
     error = '\r\n'.join(error)
+
     a.Log.debug( debug+'\r\n\r\n' )
     a.Log.error( error+'\r\n\r\n' )
     
 if __name__ == '__main__' :
-    main()
+    #main()
+    pass
     

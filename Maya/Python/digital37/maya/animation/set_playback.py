@@ -1,11 +1,11 @@
 import pymel.core as pm
 
 def main(minTime,maxTime):
-    debug,error = list()
+    debug = list()
     
     # use '*' as a fill char and center aligned
     debug.append('{0: ^80}'.format('set_playback'))
-    error.append('{0: ^80}'.format('set_playback'))
+    error = debug
     
     try:
         pm.playbackOptions( minTime=minTime,\
@@ -17,4 +17,4 @@ def main(minTime,maxTime):
         
     print '\r\n'.join(debug)
     print '\r\n'.join(error)
-    return ['\r\n'.join(debug), '\r\n'.join(error)]
+    return ('\r\n'.join(debug), '\r\n'.join(error))
