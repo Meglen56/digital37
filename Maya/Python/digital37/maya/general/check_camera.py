@@ -5,7 +5,7 @@ import traceback
 def main():
     debug = list()
     # use ' ' as a fill char and center aligned
-    debug.append('{0: ^80}'.format('check_camera'))
+    debug.append('{0:-<40}'.format('check_camera'))
     error = debug
     
     # set persp to can not be renderable
@@ -21,17 +21,36 @@ def main():
             if cmds.getAttr( c + '.renderable' ) :
                 cams_renderable.add(c)
                 
+                # lock camera shape node
+                status = True
+                for x in ['hfa','vfa','fl','lsr','fs','fd','sa','coi']:
+                    try:
+                        cmds.setAttr((c + '.' + x),lock=True)
+                    except:
+                        traceback.print_exc()
+                        status = False
+
+                if status:
+                    debug.append('lock camera shape success:%s'% c)
+                else:
+                    error.append('can not lock camera shape:%s' % c)
+                    
                 # get camera transform node
                 c = cmds.listRelatives(c,parent=True)[0]
-                # lock camera
+                # lock camera transform node
+                status = True
                 for x in set(['tx','ty','tz','rx','ry','rz','sx','sy','sz']):
                     try:
                         cmds.setAttr((c + '.' + x),lock=True)
                     except:
                         traceback.print_exc()
-                        error.append('can not lock camera:%s' % c)
-                    else:
-                        debug.append('lock camera success:%s'% c)
+                        status = False
+                if status:
+                    debug.append('lock camera transform success:%s'% c)
+                else:
+                    error.append('can not lock camera transform :%s' % c)
+                    
+                
     
     # no camera can be renderable
     if not cams_renderable :

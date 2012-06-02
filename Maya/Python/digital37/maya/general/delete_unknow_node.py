@@ -3,7 +3,7 @@ import maya.cmds as cmds
 def main():
     debug = list()
     # use ' ' as a fill char and center aligned
-    debug.append('{0: ^80}'.format('delete_unknow_node'))
+    debug.append('{0:-<40}'.format('delete_unknow_node'))
     error = debug
     
     allUnknow = cmds.ls(dep=True)

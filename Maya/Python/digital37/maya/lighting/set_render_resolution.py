@@ -2,11 +2,11 @@ import pymel.core as pm
 import traceback
 
 def main(w,h):
-    debug,error = list()
+    debug = list()
     
-    # use '*' as a fill char and center aligned
-    debug.append('{0: ^80}'.format('set_render_resolution'))
-    error.append('{0: ^80}'.format('set_render_resolution'))
+    # use ' ' as a fill char and center aligned
+    debug.append('{0:-<40}'.format('set_render_resolution'))
+    error = debug
     
     defaultResolution = pm.PyNode('defaultResolution')
     if defaultResolution.w.get() != w :

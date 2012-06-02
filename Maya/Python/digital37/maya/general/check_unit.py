@@ -4,7 +4,7 @@ def main(unit_linear,unit_time):
     debug = list()
     
     # use ' ' as a fill char and center aligned
-    debug.append('{0: ^80}'.format('check_unit'))
+    debug.append('{0:-<40}'.format('check_unit'))
     error = debug
     
     # What is the current linear unit?

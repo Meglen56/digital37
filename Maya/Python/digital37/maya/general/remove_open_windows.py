@@ -4,7 +4,7 @@ def main():
     debug = list()
     
     # use ' ' as a fill char and center aligned
-    debug.append('{0: ^80}'.format('remove_open_windows'))
+    debug.append('{0:-<40}'.format('remove_open_windows'))
     error = debug
     
     for x in pm.lsUI(wnd=True) :

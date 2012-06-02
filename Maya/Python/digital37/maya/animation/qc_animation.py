@@ -13,7 +13,7 @@ class QC_Animation(log.Log,system.System):
         self.Frame_Info = dict()
         
     def set_log(self,logDir):
-        self.Log = self.get_logger( logDir, 'qc_animation.log' )
+        self.Log = self.get_file_logger( logDir, 'qc_animation.log' )
 
     def get_scene_name(self):
         self.Scene_Name = pm.system.sceneName()
@@ -42,8 +42,10 @@ class QC_Animation(log.Log,system.System):
     def get_playback_settings(self,fileName):
         with open( fileName ,'r' ) as f:
             for x in f:
-                k,v0,v1 = x.strip().split()
-                self.Frame_Info[k] = (v0,v1)
+                if x:
+                    y = x.strip().split()
+                    if len(y) == 3:
+                        self.Frame_Info[y[0]] = (y[1],y[2])
 
 
 def main(logDir=None,generalSettingsFile=None,playbackSettingsFile=None):
@@ -53,7 +55,7 @@ def main(logDir=None,generalSettingsFile=None,playbackSettingsFile=None):
     info=list()
     debug=list()
     error=list()
-    s = '\r\nscenes:\t%s' % a.get_scene_name()
+    s = '%s' % a.get_scene_name()
     info.append( (s,s) )
     
     # set logger
@@ -97,10 +99,12 @@ def main(logDir=None,generalSettingsFile=None,playbackSettingsFile=None):
     [(debug.append(i[0]),error.append(i[1])) for i in info]
         
     debug = '\r\n'.join(debug)
+    print debug
     error = '\r\n'.join(error)
+    print error
 
-    a.Log.debug( debug+'\r\n\r\n' )
-    a.Log.error( error+'\r\n\r\n' )
+    a.Log.debug( debug+'\r\n' )
+    a.Log.error( error+'\r\n' )
     
 if __name__ == '__main__' :
     #main()
