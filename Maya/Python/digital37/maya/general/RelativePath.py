@@ -3,7 +3,10 @@ import os.path
 import traceback
 import pymel.core as pm
 
-class RelativePath(object):
+import system.log as log
+reload(log)
+
+class RelativePath(log.Log):
     def __init__(self):
         self.Reference_File_Names=set()
         self.Texture_File_Names=list()
@@ -15,36 +18,39 @@ class RelativePath(object):
         if ref_nodes:
             # Get top level reference nodes
             for ref_node in ref_nodes :
-                a = False
+                isTopRef = False
                 try:
-                    a = pm.system.referenceQuery(ref_node,topReference=1,referenceNode=1)
+                    isTopRef = pm.system.referenceQuery(ref_node,topReference=1,referenceNode=1)
                 except:
-                    traceback.print_exc()
+                    self.Log.error( traceback.format_exc() )
                 else:
-                    if a :
+                    if isTopRef :
                         ref_nodes_top.append(ref_node)
             if ref_nodes_top:
                 print 'ref_nodes_top:',ref_nodes_top
                 for ref_node in ref_nodes_top:
                     # Check reference node is loaded or not
-                    print ref_node
+                    self.Log.debug( ref_node )
                     # if reference file is not load
                     if pm.system.referenceQuery(ref_node,isLoaded=1) :
+                        self.Log.warning('%s has not been loaded' % ref_node.name())
+                        
                         file_name = ''
                         # Get reference node's file name
                         try:
                             # use unresolvedName flag to get unresolvedName name
                             file_name= pm.system.referenceQuery(ref_node,filename=1,unresolvedName=1)
                         except:
-                            traceback.print_exc()
+                            self.Log.error( traceback.format_exc() )
                         else:
                             if file_name:
                                 #print file_name
                                 #self.Reference_File_Names.add(file_name)
                                 self.RuleEntry_Scenes = 'scenes'
                                 if not self.check_relative(self.RuleEntry_Scenes, file_name):
+                                    self.Log.warning('%s is not relative path' % file_name)
                                     file_name_after = self.convert_to_relative(self.RuleEntry_Scenes, file_name)
-                                    print 'file_name_after:',file_name_after
+                                    #print 'file_name_after:',file_name_after
                                     ext = os.path.splitext(file_name)[1]
                                     if ext=='.mb':
                                         ext = 'mayaBinary'
@@ -55,8 +61,10 @@ class RelativePath(object):
                                     #pm.system.loadReference(file_name_after,type=ext,options='v=0;p=17')
                                     #file -loadReference $ref -type $ext -options "v=0;p=17" $file
                                     cmd = 'file -loadReference ' + ref_node + ' -type ' + ext + ' -options ' + '\"v=0;p=17\" \"' + file_name_after + '\"'
-                                    print cmd
+                                    #print cmd
                                     pm.mel.eval( cmd )
+                                else:
+                                    self.Log.debug('%s is relative path' % file_name)
                     else:
                         file_name = ''
                         # Get reference node's file name
@@ -64,15 +72,16 @@ class RelativePath(object):
                             # use unresolvedName flag to get unresolvedName name
                             file_name= pm.system.referenceQuery(ref_node,filename=1,unresolvedName=1)
                         except:
-                            traceback.print_exc()
+                            self.Log.error( traceback.format_exc() )
                         else:
                             if file_name:
                                 #print file_name
                                 #self.Reference_File_Names.add(file_name)
                                 self.RuleEntry_Scenes = 'scenes'
                                 if not self.check_relative(self.RuleEntry_Scenes, file_name):
+                                    self.Log.warning('%s is not relative path' % file_name)
                                     file_name_after = self.convert_to_relative(self.RuleEntry_Scenes, file_name)
-                                    print 'file_name_after:',file_name_after
+                                    #print 'file_name_after:',file_name_after
                                     ext = os.path.splitext(file_name)[1]
                                     if ext=='.mb':
                                         ext = 'mayaBinary'
@@ -83,14 +92,15 @@ class RelativePath(object):
                                     #pm.system.loadReference(file_name_after,type=ext,options='v=0;p=17')
                                     #file -loadReference $ref -type $ext -options "v=0;p=17" $file
                                     cmd = 'file -loadReference ' + ref_node + ' -type ' + ext + ' -options ' + '\"v=0;p=17\" \"' + file_name_after + '\"'
-                                    print cmd
+                                    #print cmd
                                     pm.mel.eval( cmd )
                                     
                                     # unload file
                                     cmd = 'file -unloadReference ' + ref_node + ' \"' + file_name_after + '\"'
-                                    print cmd
+                                    #print cmd
                                     pm.mel.eval(cmd)
-                            
+                                else:
+                                    self.Log.debug('%s is relative path' % file_name)
                         
                                 
     def convert_texture_to_relative(self):
@@ -124,11 +134,12 @@ class RelativePath(object):
         #p = re.compile('^.*/sourceimages')
         inputStr = str(inputStr).replace('\\','/')
         returnStr = re.sub( ('^.*/(' + parten + ')'), parten, inputStr )
-        print inputStr,'\t',returnStr
+        self.Log.debug('source:\t%s' % inputStr)
+        self.Log.debug('target:\t%s' % returnStr)
         return returnStr
 
     def check_relative(self,parten,inputStr):
-        print 'inputStr',inputStr
+        self.Log.debug('check relative path input:%s' % inputStr)
         if inputStr.startswith( parten ) :
             return True
         else:
@@ -170,10 +181,12 @@ class RelativePath(object):
     #test()
 def main():
     a = RelativePath()
+    a.get_file_logger(None, 'debug')
     a.convert_reference_to_relative()
     a.convert_texture_to_relative()
     
 if __name__ == '__main__' :
-    main()
+    #main()
+    pass
     
     

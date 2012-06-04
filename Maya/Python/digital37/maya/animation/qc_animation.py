@@ -5,15 +5,15 @@ import maya.cmds as cmds
 import system.log as log
 reload(log)
 import system.system as system
+import digital37.maya.general.RelativePath as relativePath
+reload(relativePath)
 
-class QC_Animation(log.Log,system.System):
+class QC_Animation(log.Log,system.System,relativePath.RelativePath):
     def __init__(self):
         self.Scene_Name = ''
         self.Options = dict()
         self.Frame_Info = dict()
-        
-    def set_log(self,logDir):
-        self.Log = self.get_file_logger( logDir, 'qc_animation.log' )
+        relativePath.RelativePath.__init__(self)
 
     def get_scene_name(self):
         self.Scene_Name = pm.system.sceneName()
@@ -48,18 +48,14 @@ class QC_Animation(log.Log,system.System):
                         self.Frame_Info[y[0]] = (y[1],y[2])
 
 
-def main(logDir=None,generalSettingsFile=None,playbackSettingsFile=None):
+def main(generalSettingsFile=None,playbackSettingsFile=None,logFile=None,logLevel='debug'):
     
     a = QC_Animation()
     
-    info=list()
-    debug=list()
-    error=list()
-    s = '%s' % a.get_scene_name()
-    info.append( (s,s) )
-    
     # set logger
-    a.set_log(logDir)
+    a.get_file_logger( logFile, logLevel )
+    
+    a.Log.error( '\r\n\r\n%s' % a.get_scene_name() )
     
     # if generalSettingsFile then do some general checking
     if generalSettingsFile:
@@ -67,7 +63,7 @@ def main(logDir=None,generalSettingsFile=None,playbackSettingsFile=None):
         # set defaultResolution's width and height
         import digital37.maya.lighting.set_render_resolution as set_render_resolution
         reload(set_render_resolution)
-        info.append( set_render_resolution.main( a.Options['defaultResolution.w'],a.Options['defaultResolution.h'] ) )
+        set_render_resolution.main( a.Options['defaultResolution.w'],a.Options['defaultResolution.h'],a.Log ) 
     
     # if playbackSettingsFile then do playback setting
     if playbackSettingsFile:
@@ -75,36 +71,22 @@ def main(logDir=None,generalSettingsFile=None,playbackSettingsFile=None):
         if a.Scene_Name_Short in a.Frame_Info.iterkeys() :
             import digital37.maya.animation.set_playback as set_playback
             reload(set_playback)
-            info.append( set_playback.main(a.Frame_Info[a.Scene_Name_Short][0],\
-                                           a.Frame_Info[a.Scene_Name_Short][1]) )
+            set_playback.main(a.Frame_Info[a.Scene_Name_Short][0],a.Frame_Info[a.Scene_Name_Short][1],a.Log )
         
     import digital37.maya.general.check_camera as check_camera
     reload(check_camera)
-    info.append( check_camera.main() )
+    check_camera.main(a.Log)
 
     import digital37.maya.general.delete_unknow_node as delete_unknow_node
     reload(delete_unknow_node)
-    info.append( delete_unknow_node.main() )
+    delete_unknow_node.main(a.Log)
     
     import digital37.maya.general.remove_open_windows as remove_open_windows
     reload(remove_open_windows)
-    info.append( remove_open_windows.main() )
-
-#    print info
-#    for i in info:
-#        print 'i:',i
-#        print type(i)
-#        debug.append(i[0])
-#        error.append(i[1])
-    [(debug.append(i[0]),error.append(i[1])) for i in info]
-        
-    debug = '\r\n'.join(debug)
-    print debug
-    error = '\r\n'.join(error)
-    print error
-
-    a.Log.debug( debug+'\r\n' )
-    a.Log.error( error+'\r\n' )
+    remove_open_windows.main(a.Log)
+    
+    # check relative path for reference
+    a.convert_reference_to_relative(a.Log)
     
 if __name__ == '__main__' :
     #main()

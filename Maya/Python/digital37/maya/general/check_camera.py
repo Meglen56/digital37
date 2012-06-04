@@ -2,15 +2,17 @@ import maya.cmds as cmds
 import pymel.core as pm
 import traceback
 
-def main():
-    debug = list()
+def main(log):
+    if not log:
+        import logging
+        log = logging.getLogger()
     # use ' ' as a fill char and center aligned
-    debug.append('{0:-<40}'.format('check_camera'))
-    error = debug
+    log.debug('{0:-<40}'.format('check_camera'))
     
     # set persp to can not be renderable
     if pm.PyNode('perspShape').renderable.get() == True :
         pm.PyNode('perspShape').renderable.set(False)
+        log.warning( 'persp is renderable' )
         
     cams_default = set(['perspShape','sideShape','topShape','frontShape'])
     cams = set( cmds.ls(type='camera') )
@@ -24,33 +26,37 @@ def main():
                 # lock camera shape node
                 status = True
                 for x in ['hfa','vfa','fl','lsr','fs','fd','sa','coi']:
-                    try:
-                        cmds.setAttr((c + '.' + x),lock=True)
-                    except:
-                        traceback.print_exc()
+                    # check attribute has been lock or not
+                    if not cmds.getAttr((c + '.' + x),lock=True) :
                         status = False
+                        try:
+                            cmds.setAttr((c + '.' + x),lock=True)
+                        except:
+                            log.error('can not lock camera shape:%s' % c)                            
+                            log.error(traceback.format_exc())
 
                 if status:
-                    debug.append('lock camera shape success:%s'% c)
+                    log.debug('lock camera shape success:%s'% c)
                 else:
-                    error.append('can not lock camera shape:%s' % c)
+                    log.warning('%s has not been locked'% c)
                     
                 # get camera transform node
                 c = cmds.listRelatives(c,parent=True)[0]
                 # lock camera transform node
                 status = True
                 for x in set(['tx','ty','tz','rx','ry','rz','sx','sy','sz']):
-                    try:
-                        cmds.setAttr((c + '.' + x),lock=True)
-                    except:
-                        traceback.print_exc()
+                    # check attribute has been lock or not
+                    if not cmds.getAttr((c + '.' + x),lock=True) :
                         status = False
+                        try:
+                            cmds.setAttr((c + '.' + x),lock=True)
+                        except:
+                            status = False
+                            log.error(traceback.format_exc())
                 if status:
-                    debug.append('lock camera transform success:%s'% c)
+                    log.debug('lock camera transform success:%s'% c)
                 else:
-                    error.append('can not lock camera transform :%s' % c)
-                    
-                
+                    log.warning('%s has not been locked'% c)
     
     # no camera can be renderable
     if not cams_renderable :
@@ -59,16 +65,12 @@ def main():
                 try:
                     cmds.setAttr((c+'.renderable'),True)
                 except:
-                    traceback.print_exc()
-                    error.append('set %s renderable error' % c)
+                    log.error('set %s renderable error' % c)
+                    log.error(traceback.format_exc())
                 else:
-                    debug.append('set %s renderable success' % c)
+                    log.debug('set %s renderable success' % c)
     # more than one cameras can be renderable
     elif len(cams_renderable) > 1 :
-        error.append( 'more then one renderable camera' % ' '.join( list(cams_renderable) ) )
+        log.warning( 'more then one renderable camera' % ' '.join( list(cams_renderable) ) )
     else :
-        debug.append('only have one renderable camera\t%s' % list(cams_renderable)[0] )
-        
-    #print '\r\n'.join(debug)
-    #print '\r\n'.join(error)
-    return ( '\r\n'.join(debug), '\r\n'.join(error) )
+        log.debug('only have one renderable camera\t%s' % list(cams_renderable)[0] )

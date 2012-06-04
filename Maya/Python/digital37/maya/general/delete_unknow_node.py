@@ -1,10 +1,12 @@
 import maya.cmds as cmds
+import traceback
 
-def main():
-    debug = list()
+def main(log):
+    if not log:
+        import logging
+        log = logging.getLogger()
     # use ' ' as a fill char and center aligned
-    debug.append('{0:-<40}'.format('delete_unknow_node'))
-    error = debug
+    log.debug('{0:-<40}'.format('delete_unknow_node'))
     
     allUnknow = cmds.ls(dep=True)
     if allUnknow:
@@ -13,12 +15,9 @@ def main():
                 try:
                     cmds.lockNode(n, l=False)
                     cmds.delete(n)
-                    print 'delete%s' % n
                 except:
-                    error.append('can not delete%s' % n)
+                    log.error('can not delete%s' % n)
+                    log.error(traceback.format_exc())
                 else:
-                    debug.append('delete %s success' % n)
-                    
-    #print '\r\n'.join(debug)
-    #print '\r\n'.join(error)
-    return ( '\r\n'.join(debug), '\r\n'.join(error) )
+                    log.warning('delete %s success' % n)
+

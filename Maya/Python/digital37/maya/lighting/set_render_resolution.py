@@ -1,28 +1,27 @@
 import pymel.core as pm
 import traceback
 
-def main(w,h):
-    debug = list()
-    
+def main(w,h,log):
+    if not log:
+        import logging
+        log = logging.getLogger()
     # use ' ' as a fill char and center aligned
-    debug.append('{0:-<40}'.format('set_render_resolution'))
-    error = debug
-    
+    log.debug('{0:-<40}'.format('set_render_resolution'))
+
     defaultResolution = pm.PyNode('defaultResolution')
     if defaultResolution.w.get() != w :
         try:
             defaultResolution.w.set( int(w) )
         except:
-            traceback.print_exc()
-            error.append('set defaultResolution.w error')
+            log.error('set defaultResolution.w error')
+            log.error( traceback.format_exc() )
         else:
-            debug.append('set defaultResolution.w success.')
+            log.debug('set defaultResolution.w success.')
     if defaultResolution.h.get() != h :
         try:
             defaultResolution.h.set( int(h) )
         except:
-            traceback.print_exc()
-            error.append('set defaultResolution.h error')
+            log.error('set defaultResolution.h error')
+            log.error( traceback.format_exc() )
         else:
-            debug.append('set defaultResolution.h success.')
-    return ['\r\n'.join(debug), '\r\n'.join(error)]
+            log.debug('set defaultResolution.h success.')
