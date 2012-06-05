@@ -5,15 +5,15 @@ import maya.cmds as cmds
 import system.log as log
 reload(log)
 import system.system as system
-import digital37.maya.general.RelativePath as relativePath
-reload(relativePath)
+#import digital37.maya.general.RelativePath as relativePath
+#reload(relativePath)
 
-class QC_Animation(log.Log,system.System,relativePath.RelativePath):
+class QC_Animation(log.Log,system.System):
     def __init__(self):
         self.Scene_Name = ''
         self.Options = dict()
         self.Frame_Info = dict()
-        relativePath.RelativePath.__init__(self)
+        #relativePath.RelativePath.__init__(self)
 
     def get_scene_name(self):
         self.Scene_Name = pm.system.sceneName()
@@ -86,7 +86,7 @@ def main(generalSettingsFile=None,playbackSettingsFile=None,logFile=None,logLeve
     remove_open_windows.main(a.Log)
     
     # check relative path for reference
-    a.convert_reference_to_relative(a.Log)
+    #a.convert_reference_to_relative(a.Log)
     
 if __name__ == '__main__' :
     #main()

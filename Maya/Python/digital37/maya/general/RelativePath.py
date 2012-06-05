@@ -112,7 +112,15 @@ class RelativePath(log.Log):
                 if pm.attributeQuery( 'fileTextureName',node=tex,exists=1 ):
                     texFile = tex.fileTextureName.get()
                     #tex.fileTextureName.set( self.convert_to_relative(self.RuleEntry_SourceImages, texFile) )
-                    pm.setAttr(tex.fileTextureName,self.convert_to_relative(self.RuleEntry_SourceImages, texFile),type='string')
+                    if not self.check_relative(self.RuleEntry_SourceImages, texFile):
+                        self.Log.warning('%s is not relative path' % texFile)
+                        texFile_relative = self.convert_to_relative(self.RuleEntry_SourceImages, texFile)
+                        try:
+                            pm.setAttr(tex.fileTextureName,texFile_relative,type='string')
+                        except:
+                            self.Log.error('can not set %s to relative: %s' % (texFile,texFile_relative))
+                        else:
+                            self.Log.debug('set %s to relative: %s' % (texFile,texFile_relative))
                     #print  tex.fileTextureName.get()
                     #setAttr -type "string" Shoulder_file5.fileTextureName "sourceimages/character/ailixun/L/ailixun_mai_bump_L.jpg";
 
