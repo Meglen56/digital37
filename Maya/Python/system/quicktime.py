@@ -2,6 +2,7 @@ import os
 import tempfile
 import system as system
 import log as log
+reload(log)
 
 class Quicktime(system.System,log.Log):
     QUICKTIME_SETTINGS = 'q:/mhxy/quicktime_export_settings.xml'
@@ -127,33 +128,40 @@ class Quicktime(system.System,log.Log):
         #os.popen(deadlineCmd)
 
     # make quicktime command local by deadlinequicktimegenerator
-    def make_mov_cmd(self,sequence,startFrame,finishFrame):
+    def make_mov_cmd(self,sequence,startFrame,finishFrame,movieName=None):
         ## deadlinequicktimegenerator.exe -CreateMovie d:/temp/test.0001.jpg d:/temp/quicktime_export_settings.xml "QuickTime Movie" 1 25 25 d:/temp/test3.mov
-        #cmd = 'ffmpeg -i '
         cmd = list()
         cmd.append('deadlinequicktimegenerator -CreateMovie ')
-        cmd.append(sequence + '.' + str(startFrame) + '.jpeg ')
+        cmd.append(sequence + ' ' )
         cmd.append(self.get_quicktime_settings() + ' ')
         cmd.append('"QuickTime Movie" ' + str(startFrame) + ' ' + str(finishFrame) + ' 25 ')
-        cmd.append(sequence + '.mov')
+        if not movieName:
+            movieName = sequence.split('.')[0] + '.mov'
+        cmd.append( movieName )
         return ''.join(cmd)
         
     def make_mov(self,sequence,startFrame,finishFrame):
-        self.Log.debug('make_mov:')
         # get make movie command        
         cmd = self.make_mov_cmd(sequence,startFrame,finishFrame)
+        print 'make_mov_cmd:%s' % cmd
         self.Log.debug('make_mov_cmd:%s' % cmd)
         # run movie command
         self.execute_cmd(cmd)
         
-def main():
+# main('R:/project/pipelineProject/quicktime/quicktime_export_settings.xml','R:/project/pipelineProject/quicktime/images/colorBar.0001.jpg',1,10,None,'debug')
+def main(quickTimeSettingsFile,imagesFile,startFrame,finishFrame,logFile=None,logLevel='debug'):
     a = Quicktime()
-    a.get_file_logger()
-    a.make_mov('R:/project/pipelineProject/quicktime/images/colorBar.0001.jpg', 1, 10)
+    a.get_file_logger(logFile,logLevel)
+    #a.get_stream_logger()
+    a.Log.debug('make_mov:')
+    a.set_quicktime_settings(quickTimeSettingsFile)
+    a.make_mov(imagesFile, startFrame, finishFrame)
 #    a.submit_quicktime_cmd(1, 10, 'R:/project/pipelineProject/quicktime/images/colorBar.0001.jpg', \
 #                           'R:/project/pipelineProject/quicktime/colorBar.mov', \
 #                           'R:/project/pipelineProject/quicktime/quicktime_export_settings.xml','quicktime_test')
     
 if __name__ == '__main__' :
-    main()
+    pass
+#    main('R:/project/pipelineProject/quicktime/quicktime_export_settings.xml',\
+#         'R:/project/pipelineProject/quicktime/images/colorBar.0001.jpg',1,10,'d:/temp2/quickTime.log','debug')
     

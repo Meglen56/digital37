@@ -40,7 +40,7 @@
 		<node type="command" name="Motion Trail" cmd="michelMotionTrail();" comment='Motiontrail' mode="mel" option="False"></node>
 		<node type="command" name="Auto Tangent" cmd="autoTangent();" comment='autotangent' mode="mel" option="False"></node>
 		<node type="command" name="Multi Scaler" cmd="keyScalerButtons();" comment='Multiscaler' mode="mel" option="False"></node>
-		<node type="command" name="Create Playblaset Movie" comment="Create Playblaset Movie" cmd="import digital37.maya.animation.PlayBlast;digital37.maya.animation.PlayBlast.PlayBlast().playBlast()" mode="python" option="False"></node>
+		<node type="command" name="Create Playblaset Movie" comment="Create Playblaset Movie" cmd="import digital37.maya.animation.playBlast;digital37.maya.animation.playBlast.main()" mode="python" option="False"></node>
 	</node>
 	
 	<node type="subMenu" name="Utils">

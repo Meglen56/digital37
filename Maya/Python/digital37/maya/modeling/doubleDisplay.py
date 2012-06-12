@@ -5,15 +5,12 @@ def main():
 
     loger = logging.getLogger()
     
-    allObj = ls(type = ['mesh', 'nurbsSurface'])
+    allObj = cmds.ls(type = ['mesh', 'nurbsSurface'])
     for all in allObj:
         try:
-            select(all, r = True)
+            cmds.select(all, r = True)
             displaySurface(two = True)
             loger.debug("doubleDisplay is successful")
         except:
-            if self.boolUI:
                 loger.debug("no object are selected in doubleDisplay, maybe cause by reference")
-        select(cl = True)
-
-main()
+        cmds.select(cl = True)

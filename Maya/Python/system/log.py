@@ -20,8 +20,8 @@ class Log():
     def get_file_logger(self,logFile=None,logLevel='debug'):
         #log = logging.getLogger("MyLogger")
         # use time.asctime() to get different logger,else will be multi-loop
-        log = logging.getLogger(time.asctime())
-        log.propagate = False
+        self.Log = logging.getLogger(time.asctime())
+        self.Log.propagate = False
         
         # get tempfile's logger file if user not set
         if not logFile:
@@ -35,25 +35,24 @@ class Log():
         handler.setLevel(Log.LOG_LEVELS.get(logLevel))
         formatter = logging.Formatter("%(levelname)s %(asctime)s %(message)s")
         handler.setFormatter(formatter)
-        log.addHandler(handler)
+        self.Log.addHandler(handler)
         
 #        # set maya logger handler
 #        import maya.utils
 #        handler = maya.utils.MayaGuiLogHandler()
 #        handler.setLevel(logging.DEBUG)
 #        handler.setFormatter(formatter)
-#        log.addHandler(handler)        
-        self.Log = log
+#        log.addHandler(handler)
         
     def get_stream_logger(self):
-        log = logging.getLogger("MyLogger")
-        log.propagate = False
+        self.Log = logging.getLogger("MyLogger")
+        self.Log.propagate = False
         handler = logging.StreamHandler()
         handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter("%(levelname)s %(asctime)s %(message)s")
         handler.setFormatter(formatter)
-        log.addHandler(handler)
-        return log
+        self.Log.addHandler(handler)
+        return self.Log
         
 #    def setLog_maya(self):
 #        self.Log = logging.getLogger("MyLogger")

@@ -1,7 +1,7 @@
 import maya.cmds as cmds
 import traceback
 
-def main(log):
+def main(log=None):
     if not log:
         import logging
         log = logging.getLogger()
