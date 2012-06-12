@@ -139,7 +139,8 @@ class Quicktime(system.System,log.Log):
         return ''.join(cmd)
         
     def make_mov(self,sequence,startFrame,finishFrame):
-        # get make movie command
+        self.Log.debug('make_mov:')
+        # get make movie command        
         cmd = self.make_mov_cmd(sequence,startFrame,finishFrame)
         self.Log.debug('make_mov_cmd:%s' % cmd)
         # run movie command
