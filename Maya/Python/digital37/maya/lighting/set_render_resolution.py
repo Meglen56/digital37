@@ -1,7 +1,7 @@
 import pymel.core as pm
 import traceback
 
-def main(w,h,log):
+def main(w,h,log=None):
     if not log:
         import logging
         log = logging.getLogger()

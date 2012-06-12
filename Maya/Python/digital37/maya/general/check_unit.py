@@ -1,6 +1,6 @@
 import pymel.core as pm
 
-def main(unit_linear,unit_time,log):
+def main(unit_linear,unit_time,log=None):
     if not log:
         import logging
         log = logging.getLogger()
