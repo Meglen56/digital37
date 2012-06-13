@@ -10,6 +10,8 @@ import system.quicktime as quicktime
 reload(quicktime)
 import digital37.maya.general.scene as scene
 reload(scene)
+import digital37.maya.lighting.get_render_resolution as get_render_resolution
+
 
 class PlayBlast(scene.Scene,quicktime.Quicktime):
     '''
@@ -32,7 +34,7 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
         else:
             return False
         
-    def playBlast(self,width,height):
+    def playBlast(self,width=None,height=None):
         # get info for playback start and end
         minTime, maxTime = self.get_playback_info()
         
@@ -43,6 +45,9 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
         #playblast  -format avi -sequenceTime 0 -clearCache 0 -viewer 1 -showOrnaments 1 -fp 4 -percent 50 -compression "none" -quality 70;
         #playblast  -format iff -filename "D:/mhxy/scenes/shot/seq001/shot053a/simPlayblast/mhxy_seq001_shot053a_anim_fin" -sequenceTime 0 -clearCache 1 -viewer 1 -showOrnaments 1 -fp 4 -percent 50 -compression "jpg" -quality 100;
         # if not set width and height, then use rendering settings
+        # get render settings's width and height
+        if not width:
+            width,height = get_render_resolution.main()
         pm.playblast(format='iff',sequenceTime=0,clearCache=1,viewer=0,\
                      showOrnaments=1,fp=1,percent=100,compression="jpg",\
                      widthHeight=(width,height),\
@@ -66,12 +71,12 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
             traceback.print_exc()
         logging.debug("PlayBlast: %s",(self.PB_Name + '.mov') )
         
-def main(width=1280,height=720,quicktime_settings_file=None):
+def main(width=None,height=None,quicktime_settings_file=None):
     a = PlayBlast()
     a.get_file_logger()
     a.set_quicktime_settings(quicktime_settings_file)
     a.set_pb_name_by_folder('playblast')
-    #TODO 128 will be return in some pc when do playblast
+    # TODO 128 will be return in some pc when do playblast
     a.set_subprocess_returnCode([0,128])
     a.playBlast(width,height)
     
