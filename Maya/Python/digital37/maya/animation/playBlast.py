@@ -10,8 +10,6 @@ import system.quicktime as quicktime
 reload(quicktime)
 import digital37.maya.general.scene as scene
 reload(scene)
-import digital37.maya.lighting.get_render_resolution as get_render_resolution
-
 
 class PlayBlast(scene.Scene,quicktime.Quicktime):
     '''
@@ -33,6 +31,12 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
             self.set_pb_name( self.Scene_Name_Full_Path_Without_Ext.replace( '/anim/', ('/%s/' % folderName) ) )
         else:
             return False
+            
+    def evalDeferred_playblast(self,fileName,fp):
+        pm.evalDeferred( 'pm.playblast(format="iff",sequenceTime=0,clearCache=1,viewer=0,\
+                    showOrnaments=1,fp='+fp+',percent=100,compression="jpg",\
+                    widthHeight=(1024,553),\
+                    forceOverwrite=1,quality=100,filename=\"' + fileName + '\")' )
         
     def playBlast(self,width=None,height=None):
         # get info for playback start and end
@@ -47,6 +51,7 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
         # if not set width and height, then use rendering settings
         # get render settings's width and height
         if not width:
+            import digital37.maya.lighting.get_render_resolution as get_render_resolution
             width,height = get_render_resolution.main()
         pm.playblast(format='iff',sequenceTime=0,clearCache=1,viewer=0,\
                      showOrnaments=1,fp=1,percent=100,compression="jpg",\
@@ -56,8 +61,9 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
         # add frame number and extension to make movie 
         self.make_mov( (self.Images + ('.%s.jpeg' % minTime)), minTime, maxTime )
 
-    # override do_after_execute_cmd in system module
     def do_after_execute_cmd(self):
+        '''override do_after_execute_cmd in system module
+        '''
         logging.debug( 'PlayBlast:Success\r\n' )
         # copy movie
         # check folder exists or not

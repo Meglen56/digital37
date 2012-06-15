@@ -1,6 +1,5 @@
 import os
 import pymel.core as pm
-import maya.cmds as cmds
 
 import system.log as log
 reload(log)
@@ -73,9 +72,9 @@ def main(generalSettingsFile=None,playbackSettingsFile=None,logFile=None,logLeve
             reload(set_playback)
             set_playback.main(a.Frame_Info[a.Scene_Name_Short][0],a.Frame_Info[a.Scene_Name_Short][1],a.Log )
         
-    import digital37.maya.general.check_camera as check_camera
-    reload(check_camera)
-    check_camera.main(a.Log)
+    import digital37.maya.general.camera as camera 
+    reload(camera)
+    camera.Camera(a.Log).check_renderable_camera('cam_')
 
     import digital37.maya.general.delete_unknow_node as delete_unknow_node
     reload(delete_unknow_node)
