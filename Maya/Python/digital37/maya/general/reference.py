@@ -120,7 +120,8 @@ class Reference(log.Log):
                     if not self.check_relative('scenes', file_name):
                         self.Log.warning('%s is not relative path' % file_name)
                         file_name_after = self.convert_to_relative('scenes', file_name)
-                        file_ref.replaceWith(file_name_after)
+                        # replace a reference without triggering reload with 'loadReferenceDepth' flag
+                        file_ref.replaceWith(file_name_after,loadReferenceDepth='none')
                         if isUnload :
                             file_ref.unload()
                     else:
