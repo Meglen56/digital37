@@ -34,8 +34,8 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
             
     def evalDeferred_playblast(self,fileName,width,height,fp):
         pm.evalDeferred( 'pm.playblast(format="iff",sequenceTime=0,clearCache=1,viewer=0,\
-                    showOrnaments=1,fp='+fp+',percent=100,compression="jpg",\
-                    widthHeight=('+width+','+height+'),\
+                    showOrnaments=1,fp='+str(fp)+',percent=100,compression="jpg",\
+                    widthHeight=('+str(width)+','+str(height)+'),\
                     forceOverwrite=1,quality=100,filename=\"' + fileName + '\")' )
         
     def playBlast(self,width=None,height=None):

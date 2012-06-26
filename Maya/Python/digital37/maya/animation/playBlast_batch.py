@@ -1,48 +1,12 @@
 import traceback
+import os.path
 import pymel.core as pm
 import maya.cmds as cmds
 
-import digital37.maya.animation.playBlast.PlayBlast as PlayBlast
-reload(PlayBlast)
+import digital37.maya.animation.playBlast as playBlast
+reload(playBlast)
 
-#class General():
-#    def __init__(self):
-#        self.Scene_Name = None
-#        self.PB_Name = None
-#        self.Scene_Full_Name = None
-#        self.Min = 1
-#        self.Max = 1
-#        self.OutputDir = None
-#    
-#    def get_scene_name(self):
-#        self.Scene_Name = os.path.splitext( os.path.basename( pm.system.sceneName() ) )[0]
-#        self.Scene_Full_Name = os.path.splitext( pm.system.sceneName() )[0]
-#        self.Scene_Name_Short = os.path.splitext( os.path.basename( pm.system.sceneName() ) )[0]
-#    
-#    def get_pb_name(self):
-#        try:
-#            #self.PB_Name = self.Scene_Full_Name.replace('/anim/','/playblast/').replace('_an_','_')
-#            #self.PB_Name = 'Z:/D031SEER/pb/' + self.Scene_Name_Short.split('_')[-2] \
-#            self.PB_Name = self.OutputDir + self.Scene_Name_Short.split('_')[-2] \
-#            + '/' + self.Scene_Name_Short.split('_')[-2] + '_' + self.Scene_Name_Short.split('_')[-1] \
-#            + '/' + self.Scene_Name_Short.split('_')[-2] + '_' + self.Scene_Name_Short.split('_')[-1]
-#            print self.PB_Name
-#        except :
-#            traceback.print_exc()
-#            print 'get pb name error'
-#            return False
-#        else:
-#            return True
-#    
-#    def create_dir(self,dirPath):
-#        if not os.path.exists( dirPath ):
-#            try:
-#                os.makedirs( dirPath )
-#            except:
-#                traceback.print_exc()
-#                print 'create dirs error'
-
-class PlayBlast_Batch(PlayBlast):
+class PlayBlast_Batch(playBlast.PlayBlast):
     '''
     playblast
     '''
@@ -53,10 +17,10 @@ class PlayBlast_Batch(PlayBlast):
         '''override get_pb_name in PlayBlast
         '''
         try:
-            #self.PB_Name = 'Z:/D031SEER/pb/' + self.Scene_Name_Short.split('_')[-2] \
-            self.PB_Name = outputDir + self.Scene_Name_Short.split('_')[-2] \
-            + '/' + self.Scene_Name_Short.split('_')[-2] + '_' + self.Scene_Name_Short.split('_')[-1] \
-            + '/' + self.Scene_Name_Short.split('_')[-2] + '_' + self.Scene_Name_Short.split('_')[-1]
+            #self.PB_Name example: outputdir/ep01/ep01_sc0010/ep01_sc0010.####.jpeg
+            self.PB_Name = os.path.join(outputDir,self.Scene_Name_Short_Without_Ext.split('_')[-2],
+                                        self.Scene_Name_Short_Without_Ext.split('_')[-2] + '_' + self.Scene_Name_Short_Without_Ext.split('_')[-1],
+                                        self.Scene_Name_Short_Without_Ext.split('_')[-2] + '_' + self.Scene_Name_Short_Without_Ext.split('_')[-1])
             print self.PB_Name
         except :
             traceback.print_exc()
@@ -69,32 +33,22 @@ class PlayBlast_Batch(PlayBlast):
         self.get_scene_name()
         # self.Scene_Name_Full_Path defined in scene.Scene
         if self.Scene_Name_Full_Path:
-            #remove open windows
-            import digital37.maya.general.remove_open_windows as remove_open_windows
-            remove_open_windows.main(self.Log)
-            
             self.get_pb_name(outputDir)
             
-            #set temp dir for xp
-            #tempfile.tempdir = 'c:/Windows/Temp'
             self.Images = self.PB_Name
             
             # get renderable camera
-            self.get_cam()
-            self.create_model_panel()
-            #self.set_hardwareRenderingGlobals()
-            # 6
-            #cmd = 'DisplayShadedAndTextured;'
-            cmd = 'DisplayShaded;'
-            pm.mel.eval(cmd)
-            print cmd
-            self.do_playblast()
-            print self.PB_Name
-            #cmds.quit(force=True)
-            self.evalDeferred_playblast(self.Images, width, height, 4)
-            
-            # quit maya force
-            pm.evalDeferred('import maya.cmds as cmds\ncmds.quit(f=1)')
+            if self.get_cam():
+                self.create_model_panel(width,height)
+                #self.set_hardwareRenderingGlobals()
+                # 6
+                #cmd = 'DisplayShadedAndTextured;'
+                pm.mel.eval('DisplayShaded;')
+                #cmds.quit(force=True)
+                self.evalDeferred_playblast(self.Images, width, height, 4)
+                
+                # quit maya force
+                #pm.evalDeferred('import maya.cmds as cmds\ncmds.quit(f=1)')
                     
     def get_cam(self):
         import digital37.maya.general.camera as camera
@@ -102,10 +56,15 @@ class PlayBlast_Batch(PlayBlast):
         # get renderable camera
         a = camera.Camera()
         a.get_renderable_camera()
-        self.Camera = a.Cam_Renderable[0]
-        # set camera attr
-        #pm.camera(self.Cam,e=1,displayFilmGate=0,displayResolution=0,overscan=1.0)
-        camera.set_attr_for_pb(self.Camera)
+        if a.Cam_Renderable:
+            self.Camera = list(a.Cam_Renderable)[0]
+            # set camera attr
+            #pm.camera(self.Cam,e=1,displayFilmGate=0,displayResolution=0,overscan=1.0)
+            camera.set_attr_for_pb(self.Camera)
+            return True
+        else:
+            print 'there is no renderable camera'
+            return False
         
     def create_model_panel(self,width,height):
         '''create one tear off model panel for playblast

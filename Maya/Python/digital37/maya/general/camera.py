@@ -71,6 +71,8 @@ class Camera():
             for c in self.Cam:
                 if cmds.getAttr( c + '.renderable' ) :
                     self.Cam_Renderable.add(c)
+        if not self.Cam_Renderable :
+            self.Log.warning('no renderable camera')
             
     def check_renderable_camera(self,camPrefix='cam_'):
         # use ' ' as a fill char and center aligned
