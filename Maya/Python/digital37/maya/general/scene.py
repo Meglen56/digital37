@@ -1,5 +1,4 @@
 import os.path
-import traceback
 import pymel.core as pm
 
 class Scene():

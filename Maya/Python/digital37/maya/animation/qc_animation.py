@@ -1,23 +1,22 @@
-import os
-import pymel.core as pm
-
 import system.log as log
 reload(log)
-import system.system as system
-#import digital37.maya.general.RelativePath as relativePath
-#reload(relativePath)
 
-class QC_Animation(log.Log,system.System):
+import system.system as system
+
+import digital37.maya.general.scene as scene
+reload(scene)
+
+class QC_Animation(log.Log,system.System,scene.Scene):
     def __init__(self):
         self.Scene_Name = ''
         self.Options = dict()
         self.Frame_Info = dict()
         #relativePath.RelativePath.__init__(self)
 
-    def get_scene_name(self):
-        self.Scene_Name = pm.system.sceneName()
-        self.Scene_Name_Short = os.path.splitext( os.path.basename( self.Scene_Name ) )[0]
-        return self.Scene_Name
+#    def get_scene_name(self):
+#        self.Scene_Name = pm.system.sceneName()
+#        self.Scene_Name_Short = os.path.splitext( os.path.basename( self.Scene_Name ) )[0]
+#        return self.Scene_Name
     
     def get_general_settings(self,fileName):
         with open(fileName,'r') as f:
@@ -54,7 +53,8 @@ def main(generalSettingsFile=None,playbackSettingsFile=None,logFile=None,logLeve
     # set logger
     a.get_file_logger( logFile, logLevel )
     
-    a.Log.error( '\r\n\r\n%s' % a.get_scene_name() )
+    a.get_scene_name()
+    a.Log.error( '\r\n\r\n%s' % a.Scene_Name_Full_Path_Without_Ext )
     
     # if generalSettingsFile then do some general checking
     if generalSettingsFile:
