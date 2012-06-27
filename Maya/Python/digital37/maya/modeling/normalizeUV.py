@@ -1,15 +1,15 @@
 import maya.cmds as cmds
-import logging
 
-def main():
+def main(log=None):
 
-    loger = logging.getLogger()
+    if not log:
+        import logging
+        log = logging.getLogger()
     
-    allObj = cmds.ls(type = 'mesh')
-    for all in allObj:
+    allObj = cmds.ls(dag=True,type = 'mesh')
+    for x in allObj:
         try:
-            cmds.polyNormalizeUV(all, nt = 1, pa = False)
-            loger.debug("normalize %s uv to 0-1 range successful" %all)
+            cmds.polyNormalizeUV(x, nt = 1, pa = False)
+            #log.debug("normalize %s uv to 0-1 range successful" %x)
         except:
-            if self.boolUI:
-                loger.warning("dont normalize %s uv to 0-1 range" %all)
+            log.warning("normalize %s uv to 0-1 range error" %x)

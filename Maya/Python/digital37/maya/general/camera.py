@@ -50,7 +50,7 @@ def lock_camera(self,camera,log=None):
         log.warning('%s has not been locked'% c)
             
         
-def delete_camera(log=None):
+def delete_perspective_camera(log=None):
     '''
     delete all perspective cameras except 'persp'
     '''
@@ -58,7 +58,8 @@ def delete_camera(log=None):
         import logging
         log = logging.getLogger()
         
-    cam_persp = cmds.listCameras(perspective=True).remove('persp')
+    cam_persp = cmds.listCameras(perspective=True)
+    cam_persp.remove('persp')
     if cam_persp:
         for cam in cam_persp:
             try:
@@ -67,7 +68,7 @@ def delete_camera(log=None):
                 log.error('can not delete camera:%s' % cam)
                 log.error(traceback.format_exc())
             else:
-                log.warning('delete camera:%s success' % cam)
+                log.warning('delete camera success:%s' % cam)
     else:
         log.debug('There is no perspective camera in the scene.')
         
