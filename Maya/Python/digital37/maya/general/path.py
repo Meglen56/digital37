@@ -1,6 +1,6 @@
 import re
 
-def convert_to_relative(self,parten,inputStr):
+def convert_to_relative(parten,inputStr):
     '''
     example: convertToRelative('sourceimages','C:/AW/Maya5.0/sourceimages/maya.exe')
     result: 'sourceimages/maya.exe'

@@ -1,6 +1,5 @@
 import os
 import traceback
-import logging 
 import tempfile
 import shutil
 
@@ -21,14 +20,14 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
     def set_pb_name(self,pb_name):
         self.PB_Name = pb_name
         
-    # use folderName to replace maya scene's full path name's 'anim'
+    # use outputDir to replace maya scene's full path name's 'anim'
     # example: scenes/shot/ep01/ep01_sc0010/anim/project_an_ep01_sc0010.mb
-    #          scenes/shot/ep01/ep01_sc0010/folderName/project_an_ep01_sc0010.mov
-    def set_pb_name_by_folder(self,folderName='playblast'):
+    #          scenes/shot/ep01/ep01_sc0010/outputDir/project_an_ep01_sc0010.mov
+    def set_pb_name_by_folder(self,outputDir='playblast'):
         self.get_scene_name()
         # self.Scene_Name_Full_Path defined in scene.Scene
         if self.Scene_Name_Full_Path:
-            self.set_pb_name( self.Scene_Name_Full_Path_Without_Ext.replace( '/anim/', ('/%s/' % folderName) ) )
+            self.set_pb_name( self.Scene_Name_Full_Path_Without_Ext.replace( '/anim/', ('/%s/' % outputDir) ) )
         else:
             return False
             
@@ -38,33 +37,71 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
                     widthHeight=('+str(width)+','+str(height)+'),\
                     forceOverwrite=1,quality=100,filename=\"' + fileName + '\")' )
         
-    def playBlast(self,width=None,height=None):
-        # get info for playback start and end
-        minTime, maxTime = self.get_playback_info()
+    def before_playblast(self,outputDir='playblast',width=None,height=None):
+        '''
+        do before playBlast
+        '''
+        # get playBlast image's name
+        if self.Name_By_Folder:
+            self.set_pb_name_by_folder(outputDir)
+        else:
+            self.get_scene_name()
+            # set image's name to output folder
+            self.set_pb_name( os.path.join(outputDir,self.Scene_Name_Short_Without_Ext))
         
-        #set temp dir for xp
-        #tempfile.tempdir = 'c:/Windows/Temp'
-        self.Images = tempfile.mkstemp(prefix='PlayBlast')[1]
+        # get playBack range
+        self.MinTime, self.MaxTime = self.get_playback_info()
         
-        #playblast  -format avi -sequenceTime 0 -clearCache 0 -viewer 1 -showOrnaments 1 -fp 4 -percent 50 -compression "none" -quality 70;
-        #playblast  -format iff -filename "D:/mhxy/scenes/shot/seq001/shot053a/simPlayblast/mhxy_seq001_shot053a_anim_fin" -sequenceTime 0 -clearCache 1 -viewer 1 -showOrnaments 1 -fp 4 -percent 50 -compression "jpg" -quality 100;
+        # get image's width and height
         # if not set width and height, then use rendering settings
         # get render settings's width and height
         if not width:
             import digital37.maya.lighting.get_render_resolution as get_render_resolution
             width,height = get_render_resolution.main()
+        self.Width = width
+        self.Height = height
+            
+    def do_playblast(self,imageName=None):
+        '''
+        do plabyBlast 
+        '''
+        if not imageName:
+            #set temp images name
+            imageName = tempfile.mkstemp(prefix='PlayBlast')[1]
+        self.Images = imageName
+          
         pm.playblast(format='iff',sequenceTime=0,clearCache=1,viewer=0,\
                      showOrnaments=1,fp=1,percent=100,compression="jpg",\
-                     widthHeight=(width,height),\
+                     widthHeight=(self.Width,self.Height),\
                      forceOverwrite=1,quality=100,filename=self.Images)
         
-        # add frame number and extension to make movie 
-        self.make_mov( (self.Images + ('.%s.jpeg' % minTime)), minTime, maxTime )
-
+    def after_playblast(self):
+        '''
+        do after playBlast
+        '''
+        # make movie from image sequence
+        # add frame number and extension to make movie
+        if self.Make_Movie: 
+            self.make_mov( (self.Images + ('.%s.jpeg' % self.MinTime)), self.MinTime, self.MaxTime )
+        
+    def playBlast(self,nameByFolder=False,outputDir='playblast',imageName=None,
+                  width=None,height=None,makeMovie=False,quicktime_settings_file=None):
+        # check images name's path is relative with scene's name or not
+        self.Name_By_Folder = nameByFolder
+        self.Make_Movie = makeMovie
+        if self.Make_Movie:
+            self.set_quicktime_settings(quicktime_settings_file)
+            # TODO 128 will be return in some pc when do playblast
+            self.set_subprocess_returnCode([0,128])
+            
+        self.before_playblast(outputDir, width, height)
+        self.do_playblast(imageName)
+        self.after_playblast()
+        
     def do_after_execute_cmd(self):
         '''override do_after_execute_cmd in system module
         '''
-        logging.debug( 'PlayBlast:Success\r\n' )
+        self.Log.debug( 'PlayBlast:Success\r\n' )
         # copy movie
         # check folder exists or not
         self.create_dir( os.path.dirname(self.PB_Name + '.mov') )
@@ -74,17 +111,24 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
         try:
             os.system(cmd)
         except:
-            traceback.print_exc()
-        logging.debug("PlayBlast: %s",(self.PB_Name + '.mov') )
-        
-def main(width=None,height=None,quicktime_settings_file=None):
+            self.Log.error( traceback.format_exc() )
+        self.Log.debug("PlayBlast: %s",(self.PB_Name + '.mov') )
+    
+def main(log=None,nameByFolder=False,outputDir='playblast',imageName=None,
+         width=None,height=None,makeMovie=False,quicktime_settings_file=None):
     a = PlayBlast()
-    a.get_file_logger()
-    a.set_quicktime_settings(quicktime_settings_file)
-    a.set_pb_name_by_folder('playblast')
-    # TODO 128 will be return in some pc when do playblast
-    a.set_subprocess_returnCode([0,128])
-    a.playBlast(width,height)
+    if not log:
+        a.get_stream_logger()
+    a.playBlast(nameByFolder, outputDir, imageName, width, height, makeMovie, quicktime_settings_file)
+    
+#def main(width=None,height=None,quicktime_settings_file=None):
+#    a = PlayBlast()
+#    a.get_file_logger()
+#    a.set_quicktime_settings(quicktime_settings_file)
+#    a.set_pb_name_by_folder('playblast')
+#    # TODO 128 will be return in some pc when do playblast
+#    a.set_subprocess_returnCode([0,128])
+#    a.playBlast(width,height)
     
 if __name__ == '__main__' :
     pass

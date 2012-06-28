@@ -34,6 +34,9 @@ reload(delete_render_layer)
 import digital37.maya.lighting.delete_light as delete_light
 reload(delete_light)
 
+import digital37.maya.lighting.fileTexture as fileTexture 
+reload(fileTexture)
+
 def main(logFile=None,logLevel='debug'):
     '''
     qc for modeling
@@ -78,3 +81,6 @@ def main(logFile=None,logLevel='debug'):
     delete_history.main(log)
     
     delete_light.main(log)
+    
+    # convert file texture's file name to relative
+    fileTexture.FileTexture(log).convert_all_texture_to_relative()
