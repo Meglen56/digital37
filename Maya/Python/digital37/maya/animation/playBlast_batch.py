@@ -84,25 +84,6 @@ class PlayBlast_Batch(playBlast.PlayBlast):
         #
         #cmds.setFocus(panel_current)
         cmds.setFocus(panel_current)
-        
-#    def set_Playback(self):
-#        if self.Scene_Name_Short in self.Frame_Info.iterkeys() :
-#            pm.playbackOptions( minTime=self.Frame_Info[self.Scene_Name_Short][0],\
-#                                maxTime=self.Frame_Info[self.Scene_Name_Short][1] )
-                        
-#    def get_playback_settings(self,fileName):
-#        with open( fileName ,'r' ) as f:
-#            for x in f:
-#                if x:
-#                    y = x.strip().split()
-#                    if len(y) == 3:
-#                        self.Frame_Info[y[0]] = (y[1],y[2])
-                
-#    def get_frames_info(self):
-#        # rename sequence from 1
-#        # get sequence
-#        self.Min = str(int(pm.playbackOptions(q=1,min=1)))
-#        self.Max = str(int(pm.playbackOptions(q=1,max=1)))
 
 def main(outputDir=None,width=1024,height=553):
     PlayBlast_Batch().playBlast(outputDir,width,height)

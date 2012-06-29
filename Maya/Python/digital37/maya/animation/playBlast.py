@@ -37,7 +37,7 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
                     widthHeight=('+str(width)+','+str(height)+'),\
                     forceOverwrite=1,quality=100,filename=\"' + fileName + '\")' )
         
-    def before_playblast(self,outputDir='playblast',width=None,height=None):
+    def before_playblast(self,outputDir=None,width=None,height=None):
         '''
         do before playBlast
         '''
@@ -46,6 +46,9 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
             self.set_pb_name_by_folder(outputDir)
         else:
             self.get_scene_name()
+            if not outputDir:
+                outputDir = tempfile.mkdtemp()
+            #print outputDir
             # set image's name to output folder
             self.set_pb_name( os.path.join(outputDir,self.Scene_Name_Short_Without_Ext))
         
@@ -69,7 +72,7 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
             #set temp images name
             imageName = tempfile.mkstemp(prefix='PlayBlast')[1]
         self.Images = imageName
-          
+        #print 'self.Images:%s' % self.Images
         pm.playblast(format='iff',sequenceTime=0,clearCache=1,viewer=0,\
                      showOrnaments=1,fp=1,percent=100,compression="jpg",\
                      widthHeight=(self.Width,self.Height),\
@@ -84,20 +87,32 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
         if self.Make_Movie: 
             self.make_mov( (self.Images + ('.%s.jpeg' % self.MinTime)), self.MinTime, self.MaxTime )
         
-    def playBlast(self,nameByFolder=False,outputDir='playblast',imageName=None,
-                  width=None,height=None,makeMovie=False,quicktime_settings_file=None):
+    def playBlast_with_mov(self,nameByFolder=False,outputDir='playblast',imageName=None,
+                  width=None,height=None,quicktime_settings_file=None):
         # check images name's path is relative with scene's name or not
         self.Name_By_Folder = nameByFolder
-        self.Make_Movie = makeMovie
-        if self.Make_Movie:
+        self.Make_Movie = True
+        if quicktime_settings_file:
             self.set_quicktime_settings(quicktime_settings_file)
             # TODO 128 will be return in some pc when do playblast
             self.set_subprocess_returnCode([0,128])
-            
+                
+            self.before_playblast(outputDir, width, height)
+            self.do_playblast(imageName)
+            self.after_playblast()
+        else:
+            self.Log.error('can not get quicktime_settings file')
+        
+        
+    def playBlast(self,nameByFolder=False,outputDir='playblast',imageName=None,
+                  width=None,height=None):
+        self.Make_Movie = False
+        # check images name's path is relative with scene's name or not
+        self.Name_By_Folder = nameByFolder
         self.before_playblast(outputDir, width, height)
         self.do_playblast(imageName)
         self.after_playblast()
-        
+                
     def do_after_execute_cmd(self):
         '''override do_after_execute_cmd in system module
         '''
@@ -119,17 +134,12 @@ def main(log=None,nameByFolder=False,outputDir='playblast',imageName=None,
     a = PlayBlast()
     if not log:
         a.get_stream_logger()
-    a.playBlast(nameByFolder, outputDir, imageName, width, height, makeMovie, quicktime_settings_file)
-    
-#def main(width=None,height=None,quicktime_settings_file=None):
-#    a = PlayBlast()
-#    a.get_file_logger()
-#    a.set_quicktime_settings(quicktime_settings_file)
-#    a.set_pb_name_by_folder('playblast')
-#    # TODO 128 will be return in some pc when do playblast
-#    a.set_subprocess_returnCode([0,128])
-#    a.playBlast(width,height)
+    if makeMovie:
+        a.playBlast_with_mov(nameByFolder, outputDir, imageName, width, height, quicktime_settings_file)
+    else:
+        a.playBlast(nameByFolder, outputDir, imageName, width, height)
     
 if __name__ == '__main__' :
-    pass
-    #main()
+    #pass
+    #main(None,None,None,None,None,None,False,'D:/RND/project/pipelineProject/quicktime/quicktime_export_settings.xml')
+    main(None,None,None,None,None,None,True,'D:/RND/project/pipelineProject/quicktime/quicktime_export_settings.xml')
