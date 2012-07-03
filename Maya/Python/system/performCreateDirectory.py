@@ -15,37 +15,44 @@ class PerformCreateDirectory():
         for f in dir_list:
             if type(f) is type('') :
                 if f:
-                    f = f.split() 
-                    # for 'some name'
-                    # create folder
-                    for x in f :
-                        self.make_dir(dir_root,x)
+                    self.make_dir(dir_root,x)
                 else:
                     # skip for ''
                     pass
-            elif type(f) is type(dict()) :
+            if type(f) is type(list()) :
                 #
-                for k,v in f.iteritems() :
-                    for x in k.split() :
-                        root_dir = os.path.join(dir_root,x)
-                        print 'root_dir:\t%s' % root_dir
-                        self.create_directory(root_dir,v)
+                for l in f:
+                    if type(l) is type(dict()) :
+                        for k,v in l.iteritems() :
+                            for x in k.split() :
+                                root_dir = os.path.join(dir_root,x)
+                                print 'root_dir:\t%s' % root_dir
+                                print 'v:\t%s' % v
+                                self.create_directory(root_dir,v)
+                    else:
+                        print 'l:\t%s' % l
+                        if l:
+                            self.make_dir(dir_root, l)
             else:
                 print 'type error in dir_list'
 
     # make folders and files
     def make_dir(self,root,name):
-        # replace '\' with '/'
         root = root.replace('\\','/')
-        d = os.path.join(root,name)
+        # TODO 
+        # root = ../sc010/sc010_shot0020/light
+        # root_list = ['sc010_shot0020', 'light']
+        #root_list = root.split('/')[-2:]
+        #print root_list
+        d = os.path.join(root,name).replace('\\','/')
+        print 'd:%s' % d
         if not os.path.exists(d):
             if os.path.dirname(d) == d :
                 # create folder
-                if not os.path.exists(d):
-                    try:
-                        os.makedirs(d)
-                    except:
-                        traceback.print_exc()
+                try:
+                    os.makedirs(d)
+                except:
+                    traceback.print_exc()
             else :
                 # create file
                 # create folder first
@@ -56,38 +63,47 @@ class PerformCreateDirectory():
                         traceback.print_exc()
                     else:
                         # create file
-                        if not os.path.exists(d):
-                            try:
-                                fd = open(d,'w')
-                            except:
-                                traceback.print_exc()
-                            else:
-                                fd.close()
-            
+                        try:
+                            fd = open(d,'w')
+                        except:
+                            traceback.print_exc()
+                        else:
+                            fd.close()
+                else:
+                    # create file
+                    try:
+                        fd = open(d,'w')
+                    except:
+                        traceback.print_exc()
+                    else:
+                        fd.close()
+
     def get_acture_name(self,sourceList):
         targetList = sourceList
         # self.Dir_Framework 
-        # self.Dir_Name
-        # self.Dir_Framework: [{'a': ['1', '']}, {'b': [{'2': ['I', 'II']}]}, 'c']   
+        # self.Dir_Name 
+        # self.Dir_Framework: [{'sc': [{'sc+x+shot': [{'type': ['sc+x+shot+x+type+.mb']}]}]}]
         for l,i in zip(sourceList,xrange(len(sourceList))):
-            # l = {'a': ['1', '']}
-            # find 'a' and replace with acture name
+            targetList[i] = list()
             if type(l) is type(dict()) :
-                # replace 'a' with acture name
-                # replace ['1', ''] with acture name
                 print 'l:\t%s' % l
                 for k,v in l.iteritems():
+                    # k: 'sc'
+                    # v: [{'sc+x+shot': [{'type': ['sc+x+shot+x+type+.mb']}]}]
                     returnList = self.get_acture_name(v)
+                    print 'returnList:%s\t' % returnList
+                    # rerurnList: {'type': ['sc+x+shot+x+type+.mb']}
                     # k = 'a' with no '+'
-                    a = self.get_acture_name_2( k )
-                    targetList[i] = {a:returnList}
+                    a = self.get_mapped_name( k )
+                    for x in a:
+                        targetList[i].append( {x:returnList} )
             else :         
-                # l = 'c' or l = 'c+d'
-                targetList[i] = self.get_acture_name_2(l)
+                print 'l:\t%s' % l
+                targetList[i] = self.get_mapped_name(l)
             print 'targetList\t%s' % targetList
         return targetList
-
-    def get_acture_name_2(self,l):
+     
+    def get_mapped_name(self,l):
         t = list()
         if l.find('+') == -1 :
             # l = 'c'
@@ -119,9 +135,66 @@ class PerformCreateDirectory():
             # t = [('aa', 'bb'), ('aa', 'cc'), ('bb', 'bb'), ('bb', 'cc')]
             for x in t1_product:
                 t.append( ''.join(x) )
-        t = ' '.join(t)
+        #t = ' '.join(t)
         print 't:\t%s' % t
         return t
+                
+#    def get_acture_name(self,sourceList):
+#        targetList = sourceList
+#        # self.Dir_Framework 
+#        # self.Dir_Name 
+#        # self.Dir_Framework: [{'sc': [{'sc+x+shot': [{'type': ['sc+x+shot+x+type+.mb']}]}]}]
+#        for l,i in zip(sourceList,xrange(len(sourceList))):
+#            if type(l) is type(dict()) :
+#                print 'l:\t%s' % l
+#                for k,v in l.iteritems():
+#                    # k: 'sc'
+#                    # v: [{'sc+x+shot': [{'type': ['sc+x+shot+x+type+.mb']}]}]
+#                    returnList = self.get_acture_name(v)
+#                    # k = 'a' with no '+'
+#                    a = self.get_mapped_name( k )
+#                    targetList[i] = {a:returnList}
+#            else :         
+#                print 'l:\t%s' % l
+#                targetList[i] = self.get_mapped_name(l)
+#            print 'targetList\t%s' % targetList
+#        return targetList
+#     
+#    def get_mapped_name(self,l):
+#        t = list()
+#        if l.find('+') == -1 :
+#            # l = 'c'
+#            if l in self.Dir_Name:# l in self.Dir_Name
+#                for x in self.Dir_Name[l].split() :
+#                    print 'x:\t%s' % x
+#                    t.append(x)
+#            else:# l not in self.Dir_Name
+#                # use l for value 
+#                t.append(l)
+#        else:
+#            # l = 'c+d'
+#            # split '+'
+#            t1 = list()
+#            for x in l.split('+') :
+#                tmp = list()
+#                if x in self.Dir_Name:# x in self.Dir_Name
+#                    for y in self.Dir_Name[x].split() :
+#                        tmp.append(y)
+#                    t1.append(tmp)
+#                else:# x not in self.Dir_Name
+#                    tmp.append(x)
+#                    t1.append(tmp)
+#            print 't1:\t%s' % t1
+#            
+#            # t1 = {'a': ['aa', 'bb'], 'b': ['bb', 'cc']}
+#            t1_product = list( self.product(t1) )
+#            print t1_product
+#            # t = [('aa', 'bb'), ('aa', 'cc'), ('bb', 'bb'), ('bb', 'cc')]
+#            for x in t1_product:
+#                t.append( ''.join(x) )
+#        t = ' '.join(t)
+#        print 't:\t%s' % t
+#        return t
                 
     # from itertools's product function
     def product(self,inputList):
@@ -148,11 +221,37 @@ class PerformCreateDirectory():
 def main():
     a = PerformCreateDirectory()
     a.Dir_Root='D:/Autodesk'
-    a.Dir_Framework=[{'ep':[{'ep+x+shot': [{'type':['ep+x+shot+x+type+f']}]}]}]
-    a.Dir_Name={'ep': 'ep010', 'shot': 'shot0010 shot0020', 'type': 'anim light vfx cam comp', 'x':'_', 'f':'.mb'}
+    a.Dir_Framework=[{'sc':[{'sc+x+shot': [{'type':['sc+x+shot+x+type+.mb']}]}]}]
+    a.Dir_Name={'sc': 'sc010', 'shot': 'shot0010 shot0020', 'type': 'anim light', 'x':'_'}
     a.perform_create_directory()
     
 if __name__ == '__main__' :
-    #main()
-    pass
+    main()
+    #pass
     
+#    #self.Dir_Framework: [{['a']: ['1', '']}, {['b']: [{'2': ['I', 'II']}]}, ['c']]                                                                                 
+#    def create_directory(self,dir_root,dir_list):
+#        # create ep directory
+#        for f in dir_list:
+#            if type(f) is type('') :
+#                if f:
+#                    f = f.split() 
+#                    # for 'some name'
+#                    # create folder
+#                    for x in f :
+#                        print 'x:%s' %x
+#                        print 'dir_root:%s' % dir_root                
+#                        self.make_dir(dir_root,x)
+#                else:
+#                    # skip for ''
+#                    pass
+#            elif type(f) is type(dict()) :
+#                #
+#                for k,v in f.iteritems() :
+#                    for x in k.split() :
+#                        root_dir = os.path.join(dir_root,x)
+#                        print 'root_dir:\t%s' % root_dir
+#                        print 'v:\t%s' % v
+#                        self.create_directory(root_dir,v)
+#            else:
+#                print 'type error in dir_list'

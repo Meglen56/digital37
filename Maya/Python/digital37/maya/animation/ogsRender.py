@@ -148,45 +148,7 @@ class OgsRender(General):
         threadName = threading.Thread( target=self.writeMessage,args=( f,p ) )
         threadName.setDaemon(1)
         threadName.start()
-                                        
-    def writeMessage(self,f,p):
-        start_time = time.time()
-        while True :
-            #subprocess is not complete
-            if p.poll() == None :
-                if p.stdout and (time.time()-start_time<120):
-                    try:
-                        output = p.stdout.readline()
-                    except:
-                        traceback.print_exc()
-                        break
-                    else:
-                        if output :
-                            logging.debug(output)
-                            f.write( output )
-                            f.flush()
-                else:
-                    break
-            #subprocess is complete
-            else :
-                #TODO 128 will be return in some pc
-                if(p.returncode==0 or p.returncode==128):
-                #if(p.returncode==0):
-                    logging.debug( 'OgsRender:Success\r\n' )
-                    # copy movie
-                    # check folder exists or not
-                    self.create_dir( os.path.dirname(self.PB_Name + '.mov') )
-                    self.copy( (self.Images + '.mov'), (self.PB_Name + '.mov') )
-                    cmd = 'start '
-                    cmd += self.PB_Name + '.mov'
-                    try:
-                        os.system(cmd)
-                    except:
-                        traceback.print_exc()
-                    logging.debug("OgsRender: %s",(self.PB_Name + '.mov') )
-                else:
-                    logging.debug("ReturnCode: %s",str(p.returncode) )
-                break                    
+               
         
         
 def main():

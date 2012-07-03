@@ -1,3 +1,6 @@
+'''
+make quicktime movie by deadline and quicktime
+'''
 import os
 import tempfile
 import system as system
@@ -6,12 +9,18 @@ reload(log)
 
 class Quicktime(system.System,log.Log):
     QUICKTIME_SETTINGS = 'q:/mhxy/quicktime_export_settings.xml'
+    QUICKTIME_TIME = '24'
     DEADLINE_POOL = 'none'
     DEADLINE_GROUP = 'none'
     
     def __init__(self):
         pass
     
+    def set_time(self,time=None):
+        if not time:
+            time = 24
+        Quicktime.QUICKTIME_TIME = str(time)
+        
     def set_quicktime_settings(self,fileName):
         Quicktime.QUICKTIME_SETTINGS = fileName
 
@@ -134,9 +143,11 @@ class Quicktime(system.System,log.Log):
         cmd.append('deadlinequicktimegenerator -CreateMovie ')
         cmd.append(sequence + ' ' )
         cmd.append(self.get_quicktime_settings() + ' ')
-        cmd.append('"QuickTime Movie" ' + str(startFrame) + ' ' + str(finishFrame) + ' 25 ')
+        cmd.append('"QuickTime Movie" ' + str(startFrame) + ' ' + str(finishFrame) + ' ' + Quicktime.QUICKTIME_TIME +' ')
+        # movieName: ../x.1.jpg
+        # quicktime name: ../x.mov
         if not movieName:
-            movieName = sequence.split('.')[0] + '.mov'
+            movieName = os.path.splitext(os.path.splitext(sequence)[0])[0] + '.mov'
         cmd.append( movieName )
         return ''.join(cmd)
         

@@ -4,7 +4,6 @@ import tempfile
 import shutil
 
 import pymel.core as pm
-
 import system.quicktime as quicktime
 reload(quicktime)
 import digital37.maya.general.scene as scene
@@ -32,25 +31,42 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
             return False
             
     def evalDeferred_playblast(self,fileName,width,height,fp):
-        pm.evalDeferred( 'pm.playblast(format="iff",sequenceTime=0,clearCache=1,viewer=0,\
+        try:
+            pm.evalDeferred( 'pm.playblast(format="iff",sequenceTime=0,clearCache=1,viewer=0,\
                     showOrnaments=1,fp='+str(fp)+',percent=100,compression="jpg",\
                     widthHeight=('+str(width)+','+str(height)+'),\
                     forceOverwrite=1,quality=100,filename=\"' + fileName + '\")' )
-        
+        except:
+            self.Log.error('evalDeferred_playblast error')
+            self.Log.error(traceback.format_exc())
+            
+    def eval_playblast(self,fileName,width,height,fp):
+        try:
+            pm.playblast(format='iff',sequenceTime=0,clearCache=1,viewer=0,\
+                     showOrnaments=1,fp=fp,percent=100,compression="jpg",\
+                     widthHeight=(width,height),\
+                     forceOverwrite=1,quality=100,filename=fileName)
+        except:
+            self.Log.error('eval_playblast error')
+            self.Log.error(traceback.format_exc())
+                
     def before_playblast(self,outputDir=None,width=None,height=None):
         '''
         do before playBlast
         '''
         # get playBlast image's name
+        self.get_scene_name()
         if self.Name_By_Folder:
             self.set_pb_name_by_folder(outputDir)
         else:
-            self.get_scene_name()
             if not outputDir:
-                outputDir = tempfile.mkdtemp()
+                fd,outputDir = tempfile.mkdtemp()
+                fObj = os.fdopen(fd,'w')
+                fObj.write( '' )
+                fObj.close()
             #print outputDir
             # set image's name to output folder
-            self.set_pb_name( os.path.join(outputDir,self.Scene_Name_Short_Without_Ext))
+            self.set_pb_name( os.path.abspath(os.path.join(outputDir,self.Scene_Name_Short_Without_Ext)))
         
         # get playBack range
         self.MinTime, self.MaxTime = self.get_playback_info()
@@ -70,9 +86,13 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
         '''
         if not imageName:
             #set temp images name
-            imageName = tempfile.mkstemp(prefix='PlayBlast')[1]
+            fd,imageName = tempfile.mkstemp(prefix='PlayBlast')
+            fObj = os.fdopen(fd,'w')
+            fObj.write( '' )
+            fObj.close()          
         self.Images = imageName
-        #print 'self.Images:%s' % self.Images
+        
+        print 'self.Images:%s' % self.Images
         pm.playblast(format='iff',sequenceTime=0,clearCache=1,viewer=0,\
                      showOrnaments=1,fp=1,percent=100,compression="jpg",\
                      widthHeight=(self.Width,self.Height),\
@@ -88,18 +108,20 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
             self.make_mov( (self.Images + ('.%s.jpeg' % self.MinTime)), self.MinTime, self.MaxTime )
         
     def playBlast_with_mov(self,nameByFolder=False,outputDir='playblast',imageName=None,
-                  width=None,height=None,quicktime_settings_file=None):
+                  width=None,height=None,quicktime_settings_file=None,quicktime_time=None):
         # check images name's path is relative with scene's name or not
         self.Name_By_Folder = nameByFolder
         self.Make_Movie = True
         if quicktime_settings_file:
             self.set_quicktime_settings(quicktime_settings_file)
+            self.set_time(quicktime_time)
             # TODO 128 will be return in some pc when do playblast
             self.set_subprocess_returnCode([0,128])
                 
             self.before_playblast(outputDir, width, height)
             self.do_playblast(imageName)
             self.after_playblast()
+            
         else:
             self.Log.error('can not get quicktime_settings file')
         
@@ -130,12 +152,12 @@ class PlayBlast(scene.Scene,quicktime.Quicktime):
         self.Log.debug("PlayBlast: %s",(self.PB_Name + '.mov') )
     
 def main(log=None,nameByFolder=False,outputDir='playblast',imageName=None,
-         width=None,height=None,makeMovie=False,quicktime_settings_file=None):
+         width=None,height=None,makeMovie=False,quicktime_settings_file=None,quicktime_time=None):
     a = PlayBlast()
     if not log:
         a.get_stream_logger()
     if makeMovie:
-        a.playBlast_with_mov(nameByFolder, outputDir, imageName, width, height, quicktime_settings_file)
+        a.playBlast_with_mov(nameByFolder, outputDir, imageName, width, height, quicktime_settings_file,quicktime_time)
     else:
         a.playBlast(nameByFolder, outputDir, imageName, width, height)
     
