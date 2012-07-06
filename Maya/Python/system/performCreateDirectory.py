@@ -15,7 +15,7 @@ class PerformCreateDirectory():
         for f in dir_list:
             if type(f) is type('') :
                 if f:
-                    self.make_dir(dir_root,x)
+                    self.make_dir(dir_root,f)
                 else:
                     # skip for ''
                     pass
@@ -97,7 +97,7 @@ class PerformCreateDirectory():
                     a = self.get_mapped_name( k )
                     for x in a:
                         targetList[i].append( {x:returnList} )
-            else :         
+            else :       
                 print 'l:\t%s' % l
                 targetList[i] = self.get_mapped_name(l)
             print 'targetList\t%s' % targetList

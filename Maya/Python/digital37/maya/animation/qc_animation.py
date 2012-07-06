@@ -12,11 +12,6 @@ class QC_Animation(log.Log,system.System,scene.Scene):
         self.Options = dict()
         self.Frame_Info = dict()
         #relativePath.RelativePath.__init__(self)
-
-#    def get_scene_name(self):
-#        self.Scene_Name = pm.system.sceneName()
-#        self.Scene_Name_Short = os.path.splitext( os.path.basename( self.Scene_Name ) )[0]
-#        return self.Scene_Name
     
     def get_general_settings(self,fileName):
         with open(fileName,'r') as f:
@@ -24,19 +19,6 @@ class QC_Animation(log.Log,system.System,scene.Scene):
                 k,v = x.strip().split(':')
                 self.Options[k] = v
 
-#    def get_Playback_info(self,frameInfo):
-#        try:
-#            f = open( frameInfo ,'r' )
-#        except IOError:
-#            self.Log.error('Could not open %s' % f)
-#        else:
-#            for x in f.readlines():
-#                k = x.strip().split()[0]
-#                v0 = x.strip().split()[1]
-#                v1 = x.strip().split()[2]
-#                self.Frame_Info[k] = (v0,v1)
-#                    
-#                f.close()
     def get_playback_settings(self,fileName):
         with open( fileName ,'r' ) as f:
             for x in f:
@@ -46,7 +28,16 @@ class QC_Animation(log.Log,system.System,scene.Scene):
                         self.Frame_Info[y[0]] = (y[1],y[2])
 
 
-def main(generalSettingsFile=None,playbackSettingsFile=None,logFile=None,logLevel='debug'):
+#def main(logFile=None,logLevel='debug',generalSettingsFile=None,playbackSettingsFile=None):
+def main(logFile=None,logLevel='debug',configureDirectory=None):
+    '''
+    configureDirectory: folder for store some project configure settings,\
+    include frameInfo.ini and presets sub folder
+    frameInfo.ini: seer_ani_ep13_sc0010    1    145
+                   seer_ani_ep13_sc0020    1    210
+    presets folder: renderGlobalsPreset_renderSettings.mel
+                    resolutionPreset_renderSettings.mel
+    '''
     
     a = QC_Animation()
     
@@ -56,23 +47,34 @@ def main(generalSettingsFile=None,playbackSettingsFile=None,logFile=None,logLeve
     a.get_scene_name()
     a.Log.error( '\r\n\r\n%s' % a.Scene_Name_Full_Path_Without_Ext )
     
-    # if generalSettingsFile then do some general checking
-    if generalSettingsFile:
-        a.get_general_settings(generalSettingsFile)
-        # set defaultResolution's width and height
-        import digital37.maya.lighting.set_render_resolution as set_render_resolution
-        reload(set_render_resolution)
-        set_render_resolution.main( a.Options['defaultResolution.w'],a.Options['defaultResolution.h'],a.Log ) 
+#    # if generalSettingsFile then do some general checking
+#    if generalSettingsFile:
+#        a.get_general_settings(generalSettingsFile)
+#        # set defaultResolution's width and height
+#        import digital37.maya.lighting.set_render_resolution as set_render_resolution
+#        reload(set_render_resolution)
+#        set_render_resolution.main( a.Options['defaultResolution.w'],a.Options['defaultResolution.h'],a.Log ) 
     
-    # if playbackSettingsFile then do playback setting
-    if playbackSettingsFile:
-        a.get_playback_settings(playbackSettingsFile)
-        if a.Scene_Name_Short in a.Frame_Info.iterkeys() :
+    # if frameSettingsFile then do playback range settings
+    import os.path
+    frameSettingsFile = os.path.join(configureDirectory,'frameInfo.ini')
+    if os.path.exists( frameSettingsFile ) :
+        a.get_playback_settings(frameSettingsFile)
+        if a.Scene_Name_Short_Without_Ext in a.Frame_Info.iterkeys() :
             import digital37.maya.animation.set_playback as set_playback
             reload(set_playback)
-            set_playback.main(a.Frame_Info[a.Scene_Name_Short][0],a.Frame_Info[a.Scene_Name_Short][1],a.Log )
+            set_playback.main(a.Frame_Info[a.Scene_Name_Short_Without_Ext][0],\
+                              a.Frame_Info[a.Scene_Name_Short_Without_Ext][1],a.Log )
         
-    import digital37.maya.general.camera as camera 
+    # set render settings
+    import digital37.maya.lighting.set_render_settings as set_render_settings
+    reload(set_render_settings)
+    set_render_settings.main(a.Log, configureDirectory)
+    
+    # get renderable camera 
+    # lock camera
+    # set camera's attribute
+    import digital37.maya.general.camera as camera
     reload(camera)
     camera.Camera(a.Log).check_renderable_camera('cam_')
 

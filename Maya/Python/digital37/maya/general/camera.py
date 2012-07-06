@@ -98,6 +98,20 @@ class Camera():
         if not self.Cam_Renderable :
             self.Log.warning('no renderable camera')
             
+    def check_attr(self,camera):
+        '''
+        check camera's attribute
+        '''
+        # check attr
+        # check "fit resolution gate" is set to "Horizontal" or not
+        if cmds.getAttr(camera + '.filmFit') != 1:
+            try:
+                cmds.setAttr((camera + '.filmFit'),1)
+            except:
+                self.Log.error('set camera fit resolution gate error:%s' % camera)
+            else:
+                self.Log.warning('set camera \"fit resolution gate\" attribute to \"Horizontal\" success:%s' % camera)
+        
     def check_renderable_camera(self,camPrefix='cam_'):
         # use ' ' as a fill char and center aligned
         self.Log.debug('{0:-<40}'.format('check_renderable_camera'))
@@ -125,6 +139,8 @@ class Camera():
         else :
             self.Log.debug('only have one renderable camera\t%s' % list(self.Cam_Renderable)[0] )
             
-        # lock camera
         for c in self.Cam_Renderable:
+            # lock camera
             lock_camera(c, self.Log)
+            # check camera attr
+            self.check_attr(c)

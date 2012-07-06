@@ -44,11 +44,11 @@ class Log():
 #        handler.setFormatter(formatter)
 #        log.addHandler(handler)
         
-    def get_stream_logger(self):
+    def get_stream_logger(self,logLevel='debug'):
         self.Log = logging.getLogger("MyLogger")
         self.Log.propagate = False
         handler = logging.StreamHandler()
-        handler.setLevel(logging.DEBUG)
+        handler.setLevel(Log.LOG_LEVELS.get(logLevel))
         formatter = logging.Formatter("%(levelname)s %(asctime)s %(message)s")
         handler.setFormatter(formatter)
         self.Log.addHandler(handler)

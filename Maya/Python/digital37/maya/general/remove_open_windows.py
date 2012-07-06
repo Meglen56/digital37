@@ -8,19 +8,21 @@ def main(log=None):
     # use ' ' as a fill char and center aligned
     log.debug('{0:-<40}'.format('remove_open_windows'))
 
-    for x in cmds.lsUI(wnd=True) :
-        if ( cmds.window(x,q=True,vis=True) and x != 'MayaWindow' ) :
-            #print x
-            # remove scriptEditor will cause maya crash ,so set scriptEditorPanel1Window vis to false
-            if x != 'scriptEditorPanel1Window' :
-                try: 
-                    cmds.deleteUI(x,window=True)
-                except:
-                    log.error('delete window %s error' % x)
-                    log.error(traceback.format_exc())
+    wins = cmds.lsUI(wnd=True)
+    if wins:
+        for x in wins  :
+            if ( cmds.window(x,q=True,vis=True) and x != 'MayaWindow' ) :
+                #print x
+                # remove scriptEditor will cause maya crash ,so set scriptEditorPanel1Window vis to false
+                if x != 'scriptEditorPanel1Window' :
+                    try: 
+                        cmds.deleteUI(x,window=True)
+                    except:
+                        log.error('delete window %s error' % x)
+                        log.error(traceback.format_exc())
+                    else:
+                        log.debug('delete window %s success' % x)
                 else:
-                    log.debug('delete window %s success' % x)
-            else:
-                # close scriptEditor
-                cmds.window(x,e=True,vis=False)
-                log.warning('close window %s' % x)
+                    # close scriptEditor
+                    cmds.window(x,e=True,vis=False)
+                    log.warning('close window %s' % x)

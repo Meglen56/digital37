@@ -9,8 +9,11 @@ def main(log=None):
     allLight = cmds.ls(lights = True)
     if allLight:
         for x in allLight:
+            # get parent transform node
+            t = cmds.listRelatives( x, parent=True )
             try:
                 cmds.delete(x)
+                cmds.delete(t)
                 log.warning("delete light success:%s" %x)
             except:
                 log.error("delete light error:%s" %x)

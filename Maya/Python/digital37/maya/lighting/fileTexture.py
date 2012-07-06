@@ -14,7 +14,7 @@ class FileTexture(log.Log):
     def __init__(self,log=None):
         self.Connections = set()
         self.Texture_Files = set()
-        self.Texture_Nodes = set()
+        self.Texture_File_Nodes = set()
         if not log:
             log = self.get_stream_logger()
         self.Log = log
@@ -43,14 +43,26 @@ class FileTexture(log.Log):
         self.log_list(shader)
         return shader
         
-    def get_texture_file(self):
-        # Get texture file
+    def get_texture_file_node(self):
+        # Get texture file node
         texturesList = pm.ls(textures=True)
         if texturesList :
             for tex in texturesList:
                 if pm.attributeQuery( 'fileTextureName',node=tex,exists=1 ):
-                    self.Texture_Nodes.add(tex)
+                    self.Texture_File_Nodes.add(tex)
                         
+    def check_file_texture_exists(self):
+        '''
+        check file exists or not
+        '''
+        # Get texture file node
+        self.get_texture_file_node()
+        # get texture file name
+        for x in self.Texture_File_Nodes:
+            n = x.fileTextureName.get()
+            if not os.path.isfile(n):
+                self.Log.warning('file texture\'s fileTextureName is not exists: %s' % n)
+                                            
     def get_sel_geometry_shape(self):
         selObj = pm.ls(sl=1,dag=1,lf=1,type=['mesh','nurbsSurface','subdiv'])
         if not selObj :
@@ -61,17 +73,17 @@ class FileTexture(log.Log):
             self.log_list(selObj)
             return selObj
         
-    def get_texture_file_from_selection(self):
+    def get_texture_file_node_from_selection(self):
         g_shape = self.get_sel_geometry_shape()
         if g_shape:
             shadingSG = self.get_shadingSG(g_shape)
             shader= self.get_shader(shadingSG)
             self.glob_connections(shader)
-            self.Texture_Nodes = (x for x in self.Connections if str(type(x))==self.__class__.FILE_TYPE)
-            #self.log_list(self.Texture_Nodes)
+            self.Texture_File_Nodes = (x for x in self.Connections if str(type(x))==self.__class__.FILE_TYPE)
+            #self.log_list(self.Texture_File_Nodes)
             
     def change_texture_file_detail(self,map_partten,map_detail):
-        for x in self.Texture_Nodes:
+        for x in self.Texture_File_Nodes:
             if pm.attributeQuery( 'fileTextureName',node=x,exists=1 ):
                 n = x.fileTextureName.get()
                 if n :
@@ -101,10 +113,10 @@ class FileTexture(log.Log):
                 print 'user cancel'
             except:
                 traceback.print_exc()
-    
+        
     def change_detail(self,map_partten='__[LMS]$',map_detail='__M'):
         # get texture files from selection
-        self.get_texture_file_from_selection()
+        self.get_texture_file_node_from_selection()
         self.change_texture_file_detail(map_partten,map_detail)
         
     def convert_to_relative(self,partten,inputStr):
@@ -113,8 +125,8 @@ class FileTexture(log.Log):
         return path.convert_to_relative(partten, inputStr)
         
     def convert_all_texture_to_relative(self):
-        self.get_texture_file()
-        for x in self.Texture_Nodes:
+        self.get_texture_file_node()
+        for x in self.Texture_File_Nodes:
             if pm.attributeQuery( 'fileTextureName',node=x,exists=1 ):
                 n = x.fileTextureName.get()
                 if n :
