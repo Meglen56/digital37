@@ -80,6 +80,8 @@ class Camera():
         if not log:
             import logging
             self.Log = logging.getLogger()
+        else:
+            self.Log = log
             
     def get_renderable_camera(self):
         # set persp to can not be renderable

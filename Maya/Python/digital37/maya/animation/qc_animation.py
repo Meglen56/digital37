@@ -38,15 +38,26 @@ def main(logFile=None,logLevel='debug',configureDirectory=None):
     presets folder: renderGlobalsPreset_renderSettings.mel
                     resolutionPreset_renderSettings.mel
     '''
+    stat = True
     
     a = QC_Animation()
     
     # set logger
-    a.get_file_logger( logFile, logLevel )
+    if not logFile:
+        # set stream logger
+        a.get_stream_logger(logLevel)
+    else:
+        a.get_file_logger( logFile, logLevel )
     
     a.get_scene_name()
     a.Log.error( '\r\n\r\n%s' % a.Scene_Name_Full_Path_Without_Ext )
     
+    # maya version
+    import digital37.maya.general.version as version
+    reload(version)
+    if not version.check_version(log):
+        stat = False
+        
 #    # if generalSettingsFile then do some general checking
 #    if generalSettingsFile:
 #        a.get_general_settings(generalSettingsFile)
@@ -71,7 +82,7 @@ def main(logFile=None,logLevel='debug',configureDirectory=None):
     reload(set_render_settings)
     set_render_settings.main(a.Log, configureDirectory)
     
-    # get renderable camera 
+    # get renderable camera
     # lock camera
     # set camera's attribute
     import digital37.maya.general.camera as camera
@@ -82,12 +93,45 @@ def main(logFile=None,logLevel='debug',configureDirectory=None):
     reload(delete_unknow_node)
     delete_unknow_node.main(a.Log)
     
-    import digital37.maya.general.remove_open_windows as remove_open_windows
-    reload(remove_open_windows)
-    remove_open_windows.main(a.Log)
+    # remove unload reference
+    import digital37.maya.general.reference as reference
+    reload(reference)
+    r = reference.Reference()
+    r.set_logger(a.Log)
+    r.remove_unload_ref_node()
     
-    # check relative path for reference
-    #a.convert_reference_to_relative(a.Log)
+    # delete display layer
+    # source cleanUpScene.mel first
+    #mel.eval('source "cleanUpScene.mel"')
+    #mel.eval( 'deleteEmptyLayers("Display")' )
+    import digital37.maya.general.delete_display_layer as delete_display_layer
+    reload(delete_display_layer)
+    delete_display_layer.main(log)
+    
+    # delete empty render layer
+    #mel.eval( 'deleteEmptyLayers("Render")' )
+    import digital37.maya.general.delete_render_layer as delete_render_layer
+    reload(delete_render_layer)
+    delete_render_layer.main(log)
+    
+    # remove light linker
+    import maya.mel as mel
+    mel.eval('jrLightLinksCleanUp()')
+    
+    import digital37.maya.lighting.delete_light as delete_light
+    reload(delete_light)
+    delete_light.main(log)
+    
+    # set "outliner/persp" view and set low quality display
+    import digital37.maya.general.panel as panel
+    reload(panel)
+    panel.Panel().set_outliner_persp()
+    
+#    import digital37.maya.general.remove_open_windows as remove_open_windows
+#    reload(remove_open_windows)
+#    remove_open_windows.main(a.Log)
+    
+    return stat
     
 if __name__ == '__main__' :
     #main()

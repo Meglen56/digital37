@@ -44,6 +44,9 @@ class Log():
 #        handler.setFormatter(formatter)
 #        log.addHandler(handler)
         
+    def set_logger(self,logger):
+        self.Log = logger
+        
     def get_stream_logger(self,logLevel='debug'):
         self.Log = logging.getLogger("MyLogger")
         self.Log.propagate = False

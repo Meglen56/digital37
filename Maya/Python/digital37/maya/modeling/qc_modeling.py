@@ -55,13 +55,19 @@ def main(logFile=None,logLevel='debug'):
     reload(make_identity)
     make_identity.main(log)
     
-    # delete empty display layer
+    # delete display layer
     # source cleanUpScene.mel first
-    mel.eval('source "cleanUpScene.mel"')
-    mel.eval( 'deleteEmptyLayers("Display")' )
+    #mel.eval('source "cleanUpScene.mel"')
+    #mel.eval( 'deleteEmptyLayers("Display")' )
+    import digital37.maya.general.delete_display_layer as delete_display_layer
+    reload(delete_display_layer)
+    delete_display_layer.main(log)
     
     # delete empty render layer
-    mel.eval( 'deleteEmptyLayers("Render")' )
+    #mel.eval( 'deleteEmptyLayers("Render")' )
+    import digital37.maya.general.delete_render_layer as delete_render_layer
+    reload(delete_render_layer)
+    delete_render_layer.main(log)
     
     # remove unused locator
     mel.eval( 'deleteUnusedLocators()' )

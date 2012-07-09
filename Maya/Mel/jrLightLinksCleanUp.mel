@@ -30,10 +30,9 @@ global proc int jrLightLinksCleanUp()
        for ($i=0; $i<size($lightLinker); $i++) 
           {
          //跳出一个进程表来显示进度。
-   progressWindow -title  ("Checking '" + $lightLinker[$i] + "' (" + ($i+1) + "/" + $numOfLinker + ") ...") 
-         -isInterruptable  1 -status  ("查询LightLink中, 请等待... ");
+   
    //如果该窗口被用户点了放弃按钮，那么打断这次的操作，循环结束。
-            if ( `progressWindow -query -isCancelled` ) break;
+            
          //申明字符串变量$connections，将与每个lightLinker的连接列出存入字符串变量$connections中。
    string $connections[] = `listConnections -connections  1 -plugs  1 -destination  0 -source  1 $lightLinker[$i]`;
    //申明字符串变量$tmpPair。
@@ -50,7 +49,7 @@ global proc int jrLightLinksCleanUp()
      {
               //如果没有找到相应的灯光连接，那么中断窗口过程，跳出当前的这个循环操作，继续执行循环后的代码
       print ("- Cleaning Up '" + $lightLinker[$i] + "': 没有多余的灯光连接被找到!\n");
-      progressWindow -endProgress ;
+      
       continue;
           }
        else 
@@ -69,17 +68,12 @@ global proc int jrLightLinksCleanUp()
          int $progress = 0;
    int $percentage = 0;
          //执行窗口进程程序，是否结束根据变量$numOfcons的大小
-   progressWindow -edit -title ("'" + $lightLinker[$i] + "' (" + ($i+1) + "/" + $numOfLinker + ")" + ", " + ($numOfcons/2) + " Connections...") -progress $progress -isInterruptable 1 -min 0 -max $numOfcons;
+   
    //申明整数变量$j。
    int $j = 0;
          //当整数变量$j小于整数变量$numOfcons时，检查到对话框被按了放弃，那么打断所有的程序进程。
        while ($j<$numOfcons) 
          {
-       if ( `progressWindow -query -isCancelled` ) 
-                   {
-           warning "用户放弃了!\n";
-        break;
-          }
                //整数变量$numOfAllLinks的数值自增加         
       $numOfAllLinks ++;
                //将整数变量$j的值赋予整数变量$progress
@@ -87,7 +81,7 @@ global proc int jrLightLinksCleanUp()
                //整数变量$percentage的值等于整数变量$progress的值乘于100再除以整数变量$numOfcons的值
       $percentage = $progress * 100 / $numOfcons;
                //执行窗口进程程序
-      progressWindow -edit -progress $progress -status ("  处理 LightLinks (" + $percentage + "%) ... ");
+
                //申明字符串变量$LinkIgnoreLit，看是否匹配变量$connections中物体名称，例如link[0]，存入字符串变量$LinkIgnoreLit
                //申明字符串变量$LinkIgnoreObj，看是否匹配变量$connections中物体名称，例如link[0]，存入字符串变量$LinkIgnoreLit
          string $LinkIgnoreLit = match("(link){0,1}(ignore){0,1}\\[[0-9]+\\]", $connections[$j]);
@@ -128,7 +122,6 @@ global proc int jrLightLinksCleanUp()
           }
    }
       //程序窗口结束
-   progressWindow -endProgress;
   }
  $elaspedTime = `timerX -startTime $startTime`;
  $min = $elaspedTime/60;
