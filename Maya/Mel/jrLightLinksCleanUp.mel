@@ -7,11 +7,8 @@ Modify: luxun
 
 global proc int jrLightLinksCleanUp()
 {
- //`timerX`用来计算共用了多少时间。
- //申明一个浮点变量$startTime，申明一个浮点变量$elaspedTime，申明整数变量$min，申明整数变量$sec。
- float $startTime = `timerX`;
- float $elaspedTime;
-    int $min;
+  //申明一个浮点变量$startTime，申明一个浮点变量$elaspedTime，申明整数变量$min，申明整数变量$sec。
+     int $min;
     int $sec;
  //申明字符串变量$lightLinker的同时，将场景中类型为lightLinker的节点名称存入字符串变量$lightLinker中。
  string $lightLinker[] = `ls -typ lightLinker`;
@@ -29,13 +26,8 @@ global proc int jrLightLinksCleanUp()
  //对于字符串变量$lightLinker中的每一个成员，都执行
        for ($i=0; $i<size($lightLinker); $i++) 
           {
-         //跳出一个进程表来显示进度。
-   
-   //如果该窗口被用户点了放弃按钮，那么打断这次的操作，循环结束。
-            
          //申明字符串变量$connections，将与每个lightLinker的连接列出存入字符串变量$connections中。
    string $connections[] = `listConnections -connections  1 -plugs  1 -destination  0 -source  1 $lightLinker[$i]`;
-   //申明字符串变量$tmpPair。
          string $tmpPair = "";
          //申明整数变量$numOfcons，将获得的所有与lightLinker有关联的节点数量存入变量$numOfcons。
    int $numOfcons = size($connections);
@@ -63,12 +55,6 @@ global proc int jrLightLinksCleanUp()
                   //那么执行打印，告诉用户总共有多少个连接在清理
          print ("- Cleaning Up '" + $lightLinker[$i] + "', All "  + ($numOfcons/2) + " Connections\n");
            }
-   //申明整数变量$progress。
-   //申明整数变量$percentage。
-         int $progress = 0;
-   int $percentage = 0;
-         //执行窗口进程程序，是否结束根据变量$numOfcons的大小
-   
    //申明整数变量$j。
    int $j = 0;
          //当整数变量$j小于整数变量$numOfcons时，检查到对话框被按了放弃，那么打断所有的程序进程。
@@ -76,11 +62,6 @@ global proc int jrLightLinksCleanUp()
          {
                //整数变量$numOfAllLinks的数值自增加         
       $numOfAllLinks ++;
-               //将整数变量$j的值赋予整数变量$progress
-      $progress = $j;
-               //整数变量$percentage的值等于整数变量$progress的值乘于100再除以整数变量$numOfcons的值
-      $percentage = $progress * 100 / $numOfcons;
-               //执行窗口进程程序
 
                //申明字符串变量$LinkIgnoreLit，看是否匹配变量$connections中物体名称，例如link[0]，存入字符串变量$LinkIgnoreLit
                //申明字符串变量$LinkIgnoreObj，看是否匹配变量$connections中物体名称，例如link[0]，存入字符串变量$LinkIgnoreLit
@@ -123,9 +104,6 @@ global proc int jrLightLinksCleanUp()
    }
       //程序窗口结束
   }
- $elaspedTime = `timerX -startTime $startTime`;
- $min = $elaspedTime/60;
- $sec = $elaspedTime%60;
  print "\njrLightLinksCleanUp摘要:\n";
  print "-------------------------------\n";
  print ("- 共有 "+$numOfLinker+" 个灯光连接节点，" + $numOfAllLinks + " 个灯光连接. 删除了总共 " + $numOfbadLinks + " 个多余无用的连接，(共耗时: " + $min + " 分钟, " + $sec + " 秒)\n");

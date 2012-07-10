@@ -36,7 +36,7 @@ class Log():
         formatter = logging.Formatter("%(levelname)s %(asctime)s %(message)s")
         handler.setFormatter(formatter)
         self.Log.addHandler(handler)
-        
+        self.Handler = handler
 #        # set maya logger handler
 #        import maya.utils
 #        handler = maya.utils.MayaGuiLogHandler()

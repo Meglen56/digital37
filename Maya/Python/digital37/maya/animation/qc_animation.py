@@ -55,7 +55,7 @@ def main(logFile=None,logLevel='debug',configureDirectory=None):
     # maya version
     import digital37.maya.general.version as version
     reload(version)
-    if not version.check_version(log):
+    if not version.check_version(a.Log):
         stat = False
         
 #    # if generalSettingsFile then do some general checking
@@ -106,13 +106,13 @@ def main(logFile=None,logLevel='debug',configureDirectory=None):
     #mel.eval( 'deleteEmptyLayers("Display")' )
     import digital37.maya.general.delete_display_layer as delete_display_layer
     reload(delete_display_layer)
-    delete_display_layer.main(log)
+    delete_display_layer.main(a.Log)
     
     # delete empty render layer
     #mel.eval( 'deleteEmptyLayers("Render")' )
     import digital37.maya.general.delete_render_layer as delete_render_layer
     reload(delete_render_layer)
-    delete_render_layer.main(log)
+    delete_render_layer.main(a.Log)
     
     # remove light linker
     import maya.mel as mel
@@ -120,7 +120,7 @@ def main(logFile=None,logLevel='debug',configureDirectory=None):
     
     import digital37.maya.lighting.delete_light as delete_light
     reload(delete_light)
-    delete_light.main(log)
+    delete_light.main(a.Log)
     
     # set "outliner/persp" view and set low quality display
     import digital37.maya.general.panel as panel
@@ -130,6 +130,13 @@ def main(logFile=None,logLevel='debug',configureDirectory=None):
 #    import digital37.maya.general.remove_open_windows as remove_open_windows
 #    reload(remove_open_windows)
 #    remove_open_windows.main(a.Log)
+    
+    # close logger file, so can open file with other application
+    # stream logger has no attribute 'handler' 
+    try:
+        a.Handler.close()
+    except:
+        pass
     
     return stat
     

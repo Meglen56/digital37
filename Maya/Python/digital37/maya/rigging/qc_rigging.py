@@ -32,17 +32,7 @@ def main(logFile=None,logLevel='debug'):
     reload(version)
     if not version.check_version(a.Log):
         stat = False
-    
-    # turn off double display
-    import digital37.maya.modeling.turn_off_double_display as turn_off_double_display
-    reload(turn_off_double_display)
-    turn_off_double_display.main(a.Log)
-    
-    # normal uv to 0-1
-    import digital37.maya.modeling.normalizeUV as normalizeUV
-    reload(normalizeUV)
-    normalizeUV.main(a.Log)
-    
+
     # delete perspective cameras
     import digital37.maya.general.camera as camera
     reload(camera)
@@ -67,36 +57,20 @@ def main(logFile=None,logLevel='debug'):
     reload(delete_render_layer)
     delete_render_layer.main(a.Log)
     
-    # remove unused locator
     # source cleanUpScene.mel first
     mel.eval('source "cleanUpScene.mel"')
-    mel.eval( 'deleteUnusedLocators()' )
     
     # remove unused rendering node
     # mel command
     mel.eval('MLdeleteUnused()')
-    
-    # remove empty transform
-    mel.eval( 'deleteEmptyGroups()' )
-    
-    import digital37.maya.general.delete_history as delete_history
-    reload(delete_history)
-    delete_history.main(a.Log)
-    
+
     import digital37.maya.lighting.delete_light as delete_light
     reload(delete_light)
     delete_light.main(a.Log)
     
     # remove light linker
     mel.eval('jrLightLinksCleanUp()')
-        
-    # convert file texture's file name to relative
-    #fileTexture.FileTexture(a.Log).convert_all_texture_to_relative()
-    # check file texture exists or not
-    import digital37.maya.lighting.fileTexture as fileTexture
-    reload(fileTexture)
-    fileTexture.FileTexture(a.Log).check_file_texture_exists()
-    
+
     # remove unknown node
     import digital37.maya.general.delete_unknow_node as delete_unknow_node
     reload(delete_unknow_node)
@@ -117,6 +91,11 @@ def main(logFile=None,logLevel='debug'):
     reload(check_face_with_5_edge)
     if not check_face_with_5_edge.main(a.Log):
         stat = False
+    
+    # check animCurve
+    import digital37.maya.animation.animCurve as animCurve
+    reload(animCurve)
+    animCurve.check_nurbsCurve_with_key(a.Log)
     
     # write file info (time and qc value) to maya file
     import digital37.maya.general.fileInfo as fileInfo
