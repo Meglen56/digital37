@@ -1,6 +1,7 @@
 import os
 import traceback
 import itertools
+import pickle
 
 class PerformCreateDirectory():
     def __init__(self):
@@ -8,6 +9,7 @@ class PerformCreateDirectory():
         self.Dir_Framework = list()
         self.Dir_Name = dict()
         self.Dir_Acture = list()
+        self.V = None
         
     #self.Dir_Framework: [{['a']: ['1', '']}, {['b']: [{'2': ['I', 'II']}]}, ['c']]                                                                                 
     def create_directory(self,dir_root,dir_list):
@@ -78,32 +80,45 @@ class PerformCreateDirectory():
                     else:
                         fd.close()
 
-    def get_acture_name(self,sourceList):
+    def get_acture_name(self,sourceList,pattern=None):
         targetList = sourceList
+        #targetList = list()
         # self.Dir_Framework 
         # self.Dir_Name 
         # self.Dir_Framework: [{'sc': [{'sc+x+shot': [{'type': ['sc+x+shot+x+type+.mb']}]}]}]
         for l,i in zip(sourceList,xrange(len(sourceList))):
             targetList[i] = list()
+            #targetList.append(list())
             if type(l) is type(dict()) :
                 print 'l:\t%s' % l
-                for k,v in l.iteritems():
+                for k,self.V in l.iteritems():
                     # k: 'sc'
                     # v: [{'sc+x+shot': [{'type': ['sc+x+shot+x+type+.mb']}]}]
-                    returnList = self.get_acture_name(v)
-                    print 'returnList:%s\t' % returnList
-                    # rerurnList: {'type': ['sc+x+shot+x+type+.mb']}
+                    
                     # k = 'a' with no '+'
+                    print 'k:%s' % k
                     a = self.get_mapped_name( k )
+                    print 'a:',a
+                    returnList = self.get_acture_name(self.V)
+
+                    # rerurnList: {'type': ['sc+x+shot+x+type+.mb']}
                     for x in a:
+                        print 'x:\t%s' % x
+                        print 'self.V:\t%s' % self.V
+                        #returnList = self.get_mapped_name(self.V,x)
+                        print 'self.V:\t%s' % self.V
+                        print 'returnList:\t%s' % returnList
+                    
                         targetList[i].append( {x:returnList} )
             else :       
-                print 'l:\t%s' % l
-                targetList[i] = self.get_mapped_name(l)
+                print '*l:\t%s' % l
+                print '*pattern:\t%s' % pattern
+                targetList[i] = self.get_mapped_name(l,pattern)
             print 'targetList\t%s' % targetList
+            print 'sourceList\t%s' % sourceList
         return targetList
-     
-    def get_mapped_name(self,l):
+
+    def get_mapped_name(self,l,pattern=None):
         t = list()
         if l.find('+') == -1 :
             # l = 'c'
@@ -129,8 +144,20 @@ class PerformCreateDirectory():
                     t1.append(tmp)
             print 't1:\t%s' % t1
             
+            print 'pattern:\t%s' % pattern
             # t1 = {'a': ['aa', 'bb'], 'b': ['bb', 'cc']}
-            t1_product = list( self.product(t1) )
+            
+            # use pattern replace item in t1
+            t1_repl = list()
+            tmp_pattern = list()
+            tmp_pattern.append(pattern)
+            for x in t1:
+                if pattern in x:
+                    t1_repl.append(tmp_pattern)
+                else:
+                    t1_repl.append(x)
+            print t1_repl
+            t1_product = list( self.product(t1_repl) )
             print t1_product
             # t = [('aa', 'bb'), ('aa', 'cc'), ('bb', 'bb'), ('bb', 'cc')]
             for x in t1_product:
@@ -138,63 +165,6 @@ class PerformCreateDirectory():
         #t = ' '.join(t)
         print 't:\t%s' % t
         return t
-                
-#    def get_acture_name(self,sourceList):
-#        targetList = sourceList
-#        # self.Dir_Framework 
-#        # self.Dir_Name 
-#        # self.Dir_Framework: [{'sc': [{'sc+x+shot': [{'type': ['sc+x+shot+x+type+.mb']}]}]}]
-#        for l,i in zip(sourceList,xrange(len(sourceList))):
-#            if type(l) is type(dict()) :
-#                print 'l:\t%s' % l
-#                for k,v in l.iteritems():
-#                    # k: 'sc'
-#                    # v: [{'sc+x+shot': [{'type': ['sc+x+shot+x+type+.mb']}]}]
-#                    returnList = self.get_acture_name(v)
-#                    # k = 'a' with no '+'
-#                    a = self.get_mapped_name( k )
-#                    targetList[i] = {a:returnList}
-#            else :         
-#                print 'l:\t%s' % l
-#                targetList[i] = self.get_mapped_name(l)
-#            print 'targetList\t%s' % targetList
-#        return targetList
-#     
-#    def get_mapped_name(self,l):
-#        t = list()
-#        if l.find('+') == -1 :
-#            # l = 'c'
-#            if l in self.Dir_Name:# l in self.Dir_Name
-#                for x in self.Dir_Name[l].split() :
-#                    print 'x:\t%s' % x
-#                    t.append(x)
-#            else:# l not in self.Dir_Name
-#                # use l for value 
-#                t.append(l)
-#        else:
-#            # l = 'c+d'
-#            # split '+'
-#            t1 = list()
-#            for x in l.split('+') :
-#                tmp = list()
-#                if x in self.Dir_Name:# x in self.Dir_Name
-#                    for y in self.Dir_Name[x].split() :
-#                        tmp.append(y)
-#                    t1.append(tmp)
-#                else:# x not in self.Dir_Name
-#                    tmp.append(x)
-#                    t1.append(tmp)
-#            print 't1:\t%s' % t1
-#            
-#            # t1 = {'a': ['aa', 'bb'], 'b': ['bb', 'cc']}
-#            t1_product = list( self.product(t1) )
-#            print t1_product
-#            # t = [('aa', 'bb'), ('aa', 'cc'), ('bb', 'bb'), ('bb', 'cc')]
-#            for x in t1_product:
-#                t.append( ''.join(x) )
-#        t = ' '.join(t)
-#        print 't:\t%s' % t
-#        return t
                 
     # from itertools's product function
     def product(self,inputList):
@@ -221,8 +191,8 @@ class PerformCreateDirectory():
 def main():
     a = PerformCreateDirectory()
     a.Dir_Root='D:/Autodesk'
-    a.Dir_Framework=[{'sc':[{'sc+x+shot': [{'type':['sc+x+shot+x+type+.mb']}]}]}]
-    a.Dir_Name={'sc': 'sc010', 'shot': 'shot0010 shot0020', 'type': 'anim light', 'x':'_'}
+    a.Dir_Framework=[{'sc':[{'sc+_+shot': [{'type':['sc+_+shot+_+type+.mb']}]}]}]
+    a.Dir_Name={'sc': 'sc010', 'shot': 'shot0010 shot0020', 'type': 'anim light'}
     a.perform_create_directory()
     
 if __name__ == '__main__' :
